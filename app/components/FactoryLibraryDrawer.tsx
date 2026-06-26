@@ -10,8 +10,23 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Collapse, Drawer, MenuItem, TextField, Tooltip } from "@mui/material";
+import {
+  Button,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import { useRef, useState } from "react";
 import type {
   FactoryFolder,
@@ -49,6 +64,11 @@ interface EditState {
   value: string;
 }
 
+interface MenuState {
+  anchorEl: HTMLElement;
+  factoryId: string;
+}
+
 export default function FactoryLibraryDrawer({
   open,
   onClose,
@@ -64,6 +84,11 @@ export default function FactoryLibraryDrawer({
   );
   const [editState, setEditState] = useState<EditState | null>(null);
   const [moveMenuFactory, setMoveMenuFactory] = useState<string | null>(null);
+  const [menuState, setMenuState] = useState<MenuState | null>(null);
+  const [deleteConfirmFactory, setDeleteConfirmFactory] =
+    useState<SerializedFactory | null>(null);
+  const [deleteConfirmFolder, setDeleteConfirmFolder] =
+    useState<FactoryFolder | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   function toggleFolder(id: string) {
@@ -159,6 +184,14 @@ export default function FactoryLibraryDrawer({
     e.target.value = "";
   }
 
+  function closeMenu() {
+    setMenuState(null);
+  }
+
+  const menuFactory = menuState
+    ? (library.factories.find((f) => f.id === menuState.factoryId) ?? null)
+    : null;
+
   const rootFactories = library.factories.filter((f) => f.folderId === null);
   const rootFolders = library.folders.filter((f) => f.parentId === null);
 
@@ -175,8 +208,7 @@ export default function FactoryLibraryDrawer({
           style="default"
           onClick={() => !isEditing && onLoadFactory(factory)}
         >
-          <div style={{ width: depth * 16 }} />
-          <div className="w-5 flex-none" />
+          <div style={{ width: depth * 16 }} className="flex-none" />
           {factory.icon ? (
             // biome-ignore lint/performance/noImgElement: local game asset path
             <img
@@ -209,77 +241,22 @@ export default function FactoryLibraryDrawer({
             <span className="grow truncate text-sm">{factory.name}</span>
           )}
           {!isEditing && (
-            <div className="flex flex-row flex-none">
-              <Tooltip title="Rename">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditState({
-                        type: "factory",
-                        id: factory.id,
-                        value: factory.name,
-                      });
-                    }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Export">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleExportFactory(factory);
-                    }}
-                  >
-                    <DownloadIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Duplicate">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDuplicateFactory(factory);
-                    }}
-                  >
-                    <ContentCopyIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Move to folder">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMoveMenuFactory(isMoving ? null : factory.id);
-                    }}
-                  >
-                    <FolderIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteFactory(factory);
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-            </div>
+            <Tooltip title="Actions">
+              <span>
+                <Clickable
+                  className="p-1 flex-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuState({
+                      anchorEl: e.currentTarget as HTMLElement,
+                      factoryId: factory.id,
+                    });
+                  }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </Clickable>
+              </span>
+            </Tooltip>
           )}
         </Clickable>
         {isMoving && (
@@ -324,7 +301,7 @@ export default function FactoryLibraryDrawer({
           className="flex flex-row items-center gap-x-1 px-2 py-1"
           onClick={() => !isEditing && toggleFolder(folder.id)}
         >
-          <div style={{ width: depth * 16 }} />
+          <div style={{ width: depth * 16 }} className="flex-none" />
           <span className="flex-none text-inherit">
             {isExpanded ? (
               <ExpandMoreIcon fontSize="small" />
@@ -411,7 +388,7 @@ export default function FactoryLibraryDrawer({
                     className="p-1"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteFolder(folder);
+                      setDeleteConfirmFolder(folder);
                     }}
                   >
                     <DeleteIcon fontSize="small" />
@@ -504,6 +481,127 @@ export default function FactoryLibraryDrawer({
         </Tooltip>
         <span className="text-xs opacity-50 ml-1">Export all</span>
       </div>
+
+      {/* Factory actions dropdown */}
+      <Menu
+        anchorEl={menuState?.anchorEl}
+        open={menuState !== null}
+        onClose={closeMenu}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuFactory) {
+              setEditState({
+                type: "factory",
+                id: menuFactory.id,
+                value: menuFactory.name,
+              });
+            }
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Rename</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuFactory) handleExportFactory(menuFactory);
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Export</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuFactory) handleDuplicateFactory(menuFactory);
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <ContentCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Duplicate</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuFactory) setMoveMenuFactory(menuFactory.id);
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <FolderIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Move to folder</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuFactory) setDeleteConfirmFactory(menuFactory);
+            closeMenu();
+          }}
+          sx={{ color: "error.main" }}
+        >
+          <ListItemIcon sx={{ color: "inherit" }}>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+      <Dialog
+        open={deleteConfirmFolder !== null}
+        onClose={() => setDeleteConfirmFolder(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Delete folder?</DialogTitle>
+        <DialogContent>
+          &ldquo;{deleteConfirmFolder?.name}&rdquo; and all its contents will be
+          permanently deleted.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmFolder(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              if (deleteConfirmFolder) handleDeleteFolder(deleteConfirmFolder);
+              setDeleteConfirmFolder(null);
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={deleteConfirmFactory !== null}
+        onClose={() => setDeleteConfirmFactory(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Delete factory?</DialogTitle>
+        <DialogContent>
+          &ldquo;{deleteConfirmFactory?.name}&rdquo; will be permanently
+          deleted.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmFactory(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              if (deleteConfirmFactory)
+                handleDeleteFactory(deleteConfirmFactory);
+              setDeleteConfirmFactory(null);
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Drawer>
   );
 }

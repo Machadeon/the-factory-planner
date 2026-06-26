@@ -1,6 +1,7 @@
 "use client";
 
 import AddIcon from "@mui/icons-material/Add";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import {
@@ -10,6 +11,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Tooltip,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
@@ -78,6 +80,8 @@ export default function FactoryComponent() {
   const [unsavedPromptOpen, setUnsavedPromptOpen] = useState(false);
   const [pendingLoadFactory, setPendingLoadFactory] =
     useState<SerializedFactory | null>(null);
+  const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
+  const [dismissedError, setDismissedError] = useState<string | null>(null);
 
   factory.update = () => {
     factory._updateRates();
@@ -133,6 +137,10 @@ export default function FactoryComponent() {
         setCreatedAt(autosaved.createdAt);
         setIsDirty(true);
         setVersion((v) => v + 1);
+        if (!lib.factories.find((f) => f.id === autosaved.id)) {
+          setAutosaveEnabled(false);
+          autosaveEnabledRef.current = false;
+        }
         return;
       }
     }
@@ -163,7 +171,14 @@ export default function FactoryComponent() {
   }
 
   function addProductionLine(part: Part) {
-    factory.addProductionLine(part);
+    const libraryProducesIt = library.factories
+      .filter((f) => f.id !== currentFactoryId)
+      .some((f) =>
+        f.productionLines.some(
+          (pl) => pl.partSlug === part.slug && pl.outputRate > 0,
+        ),
+      );
+    factory.addProductionLine(part, false, libraryProducesIt);
     setAddingProduct(false);
   }
 
@@ -210,9 +225,16 @@ export default function FactoryComponent() {
   // Keep ref current so factory.update (which closes over the ref) always calls the latest doSave
   doSaveRef.current = doSave;
 
+  function enableAutosave() {
+    setAutosaveEnabled(true);
+    autosaveEnabledRef.current = true;
+    if (hasConsent()) setAutosavePref(true);
+  }
+
   function doSave() {
     const now = new Date().toISOString();
     const id = currentFactoryId ?? generateId();
+    const isFirstSave = !currentFactoryId;
     if (!currentFactoryId) {
       setCurrentFactoryId(id);
       setCreatedAt(now);
@@ -231,6 +253,31 @@ export default function FactoryComponent() {
     );
 
     const existingEntry = library.factories.find((f) => f.id === id);
+    if (currentFactoryId && !existingEntry) {
+      // Factory was deleted from the library while loaded — save as a new entry
+      const newId = generateId();
+      setCurrentFactoryId(newId);
+      setCreatedAt(now);
+      const reserialised = serializeFactory(
+        factory,
+        {
+          id: newId,
+          name: factoryName,
+          folderId: currentFolderId,
+          createdAt: now,
+          updatedAt: now,
+        },
+        library,
+      );
+      const updatedLib = addFactory(library, reserialised);
+      saveLibrary(updatedLib);
+      clearAutosave();
+      persistCurrentFactoryId(newId);
+      setLibrary(updatedLib);
+      setIsDirty(false);
+      if (isFirstSave) enableAutosave();
+      return;
+    }
     const updatedLib = existingEntry
       ? updateFactory(library, serialized)
       : addFactory(library, serialized);
@@ -240,6 +287,7 @@ export default function FactoryComponent() {
     persistCurrentFactoryId(id);
     setLibrary(updatedLib);
     setIsDirty(false);
+    if (isFirstSave) enableAutosave();
   }
 
   function handleSave() {
@@ -411,6 +459,8 @@ export default function FactoryComponent() {
     clearCurrentFactoryId();
     setVersion((v) => v + 1);
     setLibraryOpen(false);
+    setAutosaveEnabled(false);
+    autosaveEnabledRef.current = false;
   }
 
   function handleUnsavedCancel() {
@@ -433,6 +483,11 @@ export default function FactoryComponent() {
   function handleFactoryNameChange(name: string) {
     setFactoryName(name);
     setIsDirty(true);
+  }
+
+  function handleIconChange(icon: string | undefined) {
+    factory.icon = icon;
+    factory.update();
   }
 
   const currentFactory = factoryRef.current;
@@ -478,24 +533,62 @@ export default function FactoryComponent() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={jsonDialogOpen}
+        onClose={() => setJsonDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle className="flex items-center justify-between">
+          Factory JSON
+          <Tooltip title="Copy to clipboard">
+            <IconButton
+              size="small"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  JSON.stringify(buildSerialized(), null, 2),
+                )
+              }
+            >
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
+        <DialogContent>
+          <pre className="text-xs overflow-auto whitespace-pre-wrap break-all">
+            {JSON.stringify(buildSerialized(), null, 2)}
+          </pre>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setJsonDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="flex flex-col min-w-full min-h-full grow">
         <FactoryHeader
           factoryName={factoryName}
+          factoryIcon={currentFactory.icon}
           isDirty={isDirty}
           autosaveEnabled={autosaveEnabled}
           onNameChange={handleFactoryNameChange}
+          onIconChange={handleIconChange}
           onOpenLibrary={() => requireConsent("openLibrary")}
           onSave={handleSave}
           onToggleAutosave={handleToggleAutosave}
           onExport={handleExportCurrent}
           onImport={handleImport}
           onNewFactory={() => handleNewFactory(null)}
+          onViewJson={() => setJsonDialogOpen(true)}
         />
 
         <div className="flex flex-row grow">
           <div className="flex flex-col grow">
-            {currentFactory.solverError && (
-              <Alert severity="warning" className="m-2 text-sm">
+            {currentFactory.solverError && currentFactory.solverError !== dismissedError && (
+              <Alert
+                severity="warning"
+                className="m-2 text-sm"
+                onClose={() => setDismissedError(currentFactory.solverError ?? null)}
+              >
                 {currentFactory.solverError}
               </Alert>
             )}

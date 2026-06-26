@@ -1,0 +1,1354 @@
+{
+    "schemaVersion": 1,
+    "id": "16a63d46-6123-46b7-98b4-0da1b75de4db",
+    "name": "Mega Factory",
+    "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+    "icon": "/images/items/desc-singularitycell-c_256.png",
+    "autoAddProductLines": false,
+    "createdAt": "2026-06-17T02:13:01.872Z",
+    "updatedAt": "2026-06-17T04:49:14.337Z",
+    "productionLines": [
+        {
+            "partSlug": "ballistic-warp-drive",
+            "rate": 9.99999999,
+            "outputRate": 10,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "1457fedd-a4e7-4061-a3d6-165e14693377",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "1457fedd-a4e7-4061-a3d6-165e14693377",
+                        "name": "Project Assembly",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-spaceelevatorpart-11-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "a83522de-b315-4048-a27a-d0866056ca51",
+                            "2a77dff1-5977-449d-b91c-2483223e498a",
+                            "89b541e6-2396-4fe8-81be-8bab0d9b6426",
+                            "8512f709-d888-476e-bd49-600bf8b6595c",
+                            "2b06982e-e3ff-472e-a804-672e68882b30",
+                            "d3421d31-edb7-49a6-8ef1-99d61ff6278c",
+                            "7f842b61-c0bc-4eea-bed2-24588506003e",
+                            "b841d10e-0470-429c-9c0c-2785733fab41",
+                            "25c87531-307d-4b19-b5a3-318b001cf705"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-17T02:11:32.143Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "ballistic-warp-drive",
+                                "rate": 9.99999999,
+                                "outputRate": 10,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-11-c",
+                                        "rate": 9.99999999,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "ai-expansion-server",
+                                "rate": 12.8,
+                                "outputRate": 12.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-12-c",
+                                        "rate": 12.8,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "biochemical-sculptor",
+                                "rate": 50,
+                                "outputRate": 50,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-10-c",
+                                        "rate": 12.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "thermal-propulsion-rocket",
+                                "rate": 22.499999934651157,
+                                "outputRate": 12.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-8-c",
+                                        "rate": 11.249999967325579,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "magnetic-field-generator",
+                                "rate": 37.799999816319996,
+                                "outputRate": 25,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-6-c",
+                                        "rate": 18.899999908159998,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "assembly-director-system",
+                                "rate": 37.5,
+                                "outputRate": 25,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-7-c",
+                                        "rate": 37.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "adaptive-control-unit",
+                                "rate": 80,
+                                "outputRate": 5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-5-c",
+                                        "rate": 80,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "modular-engine",
+                                "rate": 81.24999992698415,
+                                "outputRate": 25,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-4-c",
+                                        "rate": 81.24999992698415,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "versatile-framework",
+                                "rate": 269.4999999029333,
+                                "outputRate": 175,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-flexibleframework-c",
+                                        "rate": 134.74999995146666,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "smart-plating",
+                                "rate": 215.00000007023806,
+                                "outputRate": 52.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-plasticsmartplating-c",
+                                        "rate": 107.50000003511903,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "circuit-board",
+            "rate": 1566.80000002,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "2a77dff1-5977-449d-b91c-2483223e498a",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "2a77dff1-5977-449d-b91c-2483223e498a",
+                        "name": "Circuit Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-highspeedconnector-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "7f842b61-c0bc-4eea-bed2-24588506003e",
+                            "b841d10e-0470-429c-9c0c-2785733fab41"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "high-speed-connector",
+                                "rate": 252.14999998,
+                                "outputRate": 252.15,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-highspeedconnector-c",
+                                        "rate": 126.07499999,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "ai-limiter",
+                                "rate": 451.8,
+                                "outputRate": 451.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-ailimiter-plastic-c",
+                                        "rate": 225.9,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "circuit-board",
+                                "rate": 1818.95,
+                                "outputRate": 1566.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-circuitboard-1-c",
+                                        "rate": 363.79,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "quickwire",
+                                "rate": 14341.49999964,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-quickwire-c",
+                                        "rate": 1195.12499997,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "copper-sheet",
+                                "rate": 4001.68999998,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-steamedcoppersheet-c",
+                                        "rate": 1333.89666666,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "copper-ingot",
+                                "rate": 12008.86167,
+                                "outputRate": 0,
+                                "autoCalculateRate": false,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-purecopperingot-c",
+                                        "rate": 800.590778,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "caterium-ingot",
+                                "rate": 3267.745,
+                                "outputRate": 2072.62,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-purecateriumingot-c",
+                                        "rate": 3267.745,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "quartz-crystal",
+                                "rate": 2758.99999995,
+                                "outputRate": 2759,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-quartz-purified-c",
+                                        "rate": 183.93333333,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "silica",
+                                "rate": 7153.56499973,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-silica-distilled-c",
+                                        "rate": 183.93333333,
+                                        "slooped": false
+                                    },
+                                    {
+                                        "recipeSlug": "recipe-alternate-silica-c",
+                                        "rate": 312.48071426,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "nitric-acid",
+                                "rate": 367.86666665999996,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-nitricacid-c",
+                                        "rate": 122.62222222,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "heavy-modular-frame",
+            "rate": 162.50000326000003,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "d3421d31-edb7-49a6-8ef1-99d61ff6278c",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "d3421d31-edb7-49a6-8ef1-99d61ff6278c",
+                        "name": "Steel Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-modularframeheavy-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "92ac2fdb-9d88-4f2c-80c5-32acf4e24774",
+                            "7f842b61-c0bc-4eea-bed2-24588506003e"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "heavy-modular-frame",
+                                "rate": 162.50000001,
+                                "outputRate": 162.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-modularframeheavy-c",
+                                        "rate": 54.16666667,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "encased-industrial-beam",
+                                "rate": 541.66666668,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-encasedindustrialbeam-c",
+                                        "rate": 541.66666668,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "steel-beam",
+                                "rate": 808.49999997,
+                                "outputRate": 808.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-steelbeam-molded-c",
+                                        "rate": 89.83333333,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "steel-ingot",
+                                "rate": 2156.00000001,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-ingotsteel-1-c",
+                                        "rate": 718.66666667,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1.00000002,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "neural-quantum-processor",
+            "rate": 12.8,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "2b06982e-e3ff-472e-a804-672e68882b30",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "2b06982e-e3ff-472e-a804-672e68882b30",
+                        "name": "SAM Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-temporalprocessor-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "476ac1a0-7a3a-4f21-bc3b-ec1400a8c439",
+                            "2a77dff1-5977-449d-b91c-2483223e498a",
+                            "89b541e6-2396-4fe8-81be-8bab0d9b6426",
+                            "1457fedd-a4e7-4061-a3d6-165e14693377"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-17T04:07:55.301Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "neural-quantum-processor",
+                                "rate": 12.8,
+                                "outputRate": 12.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-temporalprocessor-c",
+                                        "rate": 12.8,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "superposition-oscillator",
+                                "rate": 32.8,
+                                "outputRate": 32.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-superpositionoscillator-c",
+                                        "rate": 32.8,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "dark-matter-crystal",
+                                "rate": 696.8,
+                                "outputRate": 500,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-darkmatter-trap-c",
+                                        "rate": 348.4,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "ficsite-trigon",
+                                "rate": 1191.99999999,
+                                "outputRate": 1000,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-ficsitemesh-c",
+                                        "rate": 397.33333333,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "ficsite-ingot",
+                                "rate": 397.33333333,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-ficsiteingot-cat-c",
+                                        "rate": 397.33333333,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "time-crystal",
+                                "rate": 412.4,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-timecrystal-c",
+                                        "rate": 412.4,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "diamonds",
+                                "rate": 824.8,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-diamond-c",
+                                        "rate": 824.8,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "dark-matter-residue",
+                                "rate": 282,
+                                "outputRate": 0,
+                                "autoCalculateRate": false,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-darkenergy-c",
+                                        "rate": 28.2,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "reanimated-sam",
+                                "rate": 1332.99999999,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-ingotsam-c",
+                                        "rate": 1332.9999999899999,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "turbo-motor",
+            "rate": 22.50000045,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "a83522de-b315-4048-a27a-d0866056ca51",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "a83522de-b315-4048-a27a-d0866056ca51",
+                        "name": "Motor Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-motorlightweight-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "2a77dff1-5977-449d-b91c-2483223e498a",
+                            "89b541e6-2396-4fe8-81be-8bab0d9b6426",
+                            "7f842b61-c0bc-4eea-bed2-24588506003e"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "turbo-motor",
+                                "rate": 22.5,
+                                "outputRate": 22.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-turbomotor-1-c",
+                                        "rate": 7.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "automated-wiring",
+                                "rate": 405,
+                                "outputRate": 405,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-highspeedwiring-c",
+                                        "rate": 101.25,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "electromagnetic-control-rod",
+                                "rate": 75.3,
+                                "outputRate": 37.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-electromagneticcontrolrod-c",
+                                        "rate": 37.65,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "motor",
+                                "rate": 248.75,
+                                "outputRate": 196.25,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-motor-c",
+                                        "rate": 248.75,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "stator",
+                                "rate": 812.95,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-stator-c",
+                                        "rate": 812.95,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "rotor",
+                                "rate": 657.5,
+                                "outputRate": 107.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-rotor-c",
+                                        "rate": 657.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "wire",
+                                "rate": 14498.6000001,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-fusedwire-c",
+                                        "rate": 483.28666667,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1.00000002,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "supercomputer",
+            "rate": 50.3,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "89b541e6-2396-4fe8-81be-8bab0d9b6426",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "89b541e6-2396-4fe8-81be-8bab0d9b6426",
+                        "name": "Computer Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-computersuper-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "2a77dff1-5977-449d-b91c-2483223e498a",
+                            "476ac1a0-7a3a-4f21-bc3b-ec1400a8c439",
+                            "b841d10e-0470-429c-9c0c-2785733fab41"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "supercomputer",
+                                "rate": 50.3,
+                                "outputRate": 50.3,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-computersuper-c",
+                                        "rate": 50.3,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "radio-control-unit",
+                                "rate": 187.5,
+                                "outputRate": 187.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-radiocontrolsystem-c",
+                                        "rate": 62.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "computer",
+                                "rate": 361.2,
+                                "outputRate": 160,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-computer-2-c",
+                                        "rate": 180.6,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "crystal-oscillator",
+                                "rate": 275.9,
+                                "outputRate": 32.8,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-crystaloscillator-c",
+                                        "rate": 275.9,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "singularity-cell",
+            "rate": 50.000001000000005,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "25c87531-307d-4b19-b5a3-318b001cf705",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "25c87531-307d-4b19-b5a3-318b001cf705",
+                        "name": "Pasta Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-spaceelevatorpart-9-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "92ac2fdb-9d88-4f2c-80c5-32acf4e24774",
+                            "2b06982e-e3ff-472e-a804-672e68882b30",
+                            "7f842b61-c0bc-4eea-bed2-24588506003e",
+                            "8512f709-d888-476e-bd49-600bf8b6595c"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "nuclear-pasta",
+                                "rate": 60,
+                                "outputRate": 55,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-spaceelevatorpart-9-c",
+                                        "rate": 60,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "singularity-cell",
+                                "rate": 50,
+                                "outputRate": 50,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-singularitycell-c",
+                                        "rate": 5,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "copper-powder",
+                                "rate": 12000,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-copperdust-c",
+                                        "rate": 1200,
+                                        "slooped": true
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "copper-ingot",
+                                "rate": 36000,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-purecopperingot-c",
+                                        "rate": 2400,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1.00000002,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "pressure-conversion-cube",
+            "rate": 60,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "8512f709-d888-476e-bd49-600bf8b6595c",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "8512f709-d888-476e-bd49-600bf8b6595c",
+                        "name": "Advanced Aluminum Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-pressureconversioncube-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "476ac1a0-7a3a-4f21-bc3b-ec1400a8c439",
+                            "d3421d31-edb7-49a6-8ef1-99d61ff6278c",
+                            "a83522de-b315-4048-a27a-d0866056ca51",
+                            "89b541e6-2396-4fe8-81be-8bab0d9b6426"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "pressure-conversion-cube",
+                                "rate": 60,
+                                "outputRate": 60,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-pressureconversioncube-c",
+                                        "rate": 60,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "cooling-system",
+                                "rate": 67.5,
+                                "outputRate": 67.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-coolingdevice-c",
+                                        "rate": 33.75,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "fused-modular-frame",
+                                "rate": 82.5,
+                                "outputRate": 22.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-fusedmodularframe-c",
+                                        "rate": 82.5,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "modular-frame",
+            "rate": 568.0833413616666,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "7f842b61-c0bc-4eea-bed2-24588506003e",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "7f842b61-c0bc-4eea-bed2-24588506003e",
+                        "name": "Iron Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-modularframe-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "b841d10e-0470-429c-9c0c-2785733fab41"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "modular-frame",
+                                "rate": 568.0833299999999,
+                                "outputRate": 568.08333,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-modularframe-c",
+                                        "rate": 189.36111,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "steel-pipe",
+                                "rate": 10847.4611,
+                                "outputRate": 8953.85,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-steelpipe-iron-c",
+                                        "rate": 2169.49222,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "reinforced-iron-plate",
+                                "rate": 486.22221999,
+                                "outputRate": 107.5,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-reinforcedironplate-2-c",
+                                        "rate": 162.07407333,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "wire",
+                                "rate": 3241.4814666899997,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-wire-1-c",
+                                        "rate": 360.16460741,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "iron-plate",
+                                "rate": 2243.3629533000003,
+                                "outputRate": 622.62222,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-coatedironplate-c",
+                                        "rate": 224.33629533,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "iron-ingot",
+                                "rate": 47749.68224364,
+                                "outputRate": 1437.33333,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-pureironingot-c",
+                                        "rate": 3673.05248028,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1.00000002,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "heat-sink",
+            "rate": 135,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "476ac1a0-7a3a-4f21-bc3b-ec1400a8c439",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "476ac1a0-7a3a-4f21-bc3b-ec1400a8c439",
+                        "name": "Aluminum Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-aluminumplatereinforced-c_256.png",
+                        "autoAddProductLines": false,
+                        "supplierIds": [
+                            "b841d10e-0470-429c-9c0c-2785733fab41",
+                            "2a77dff1-5977-449d-b91c-2483223e498a"
+                        ],
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "heat-sink",
+                                "rate": 135,
+                                "outputRate": 135,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-heatsink-1-c",
+                                        "rate": 135,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "alclad-aluminum-sheet",
+                                "rate": 295.20000000000005,
+                                "outputRate": 295.2,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-aluminumsheet-c",
+                                        "rate": 98.4,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "aluminum-casing",
+                                "rate": 8280,
+                                "outputRate": 7875,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-aluminumcasing-c",
+                                        "rate": 2070,
+                                        "slooped": true
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "aluminum-ingot",
+                                "rate": 6505.2,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-purealuminumingot-c",
+                                        "rate": 6505.2,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "aluminum-scrap",
+                                "rate": 13010.4,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-electroaluminumscrap-c",
+                                        "rate": 650.52,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "alumina-solution",
+                                "rate": 7806.24,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-sloppyalumina-c",
+                                        "rate": 650.52,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "petroleum-coke",
+            "rate": 2602.08,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "b841d10e-0470-429c-9c0c-2785733fab41",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "b841d10e-0470-429c-9c0c-2785733fab41",
+                        "name": "Oil Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-petroleumcoke-c_256.png",
+                        "autoAddProductLines": false,
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "petroleum-coke",
+                                "rate": 2602.08,
+                                "outputRate": 2602.08,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-petroleumcoke-c",
+                                        "rate": 216.84,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "heavy-oil-residue",
+                                "rate": 5235.24724444,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-heavyoilresidue-c",
+                                        "rate": 1308.81181111,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "rubber",
+                                "rate": 10598.820263,
+                                "outputRate": 6508.05,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-recycledrubber-c",
+                                        "rate": 774.16737099,
+                                        "slooped": false
+                                    },
+                                    {
+                                        "recipeSlug": "recipe-residualrubber-c",
+                                        "rate": 654.40590556,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "plastic",
+                                "rate": 8181.540525960001,
+                                "outputRate": 3536.5363,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-plastic-1-c",
+                                        "rate": 681.79504383,
+                                        "slooped": false
+                                    }
+                                ]
+                            },
+                            {
+                                "partSlug": "fuel",
+                                "rate": 8735.7744889,
+                                "outputRate": 0,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-dilutedfuel-c",
+                                        "rate": 873.57744889,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1,
+                    "slooped": false
+                }
+            ]
+        },
+        {
+            "partSlug": "concrete",
+            "rate": 6337.333460066667,
+            "outputRate": 0,
+            "autoCalculateRate": true,
+            "autoCreated": false,
+            "assemblyLines": [
+                {
+                    "nestedFactoryId": "92ac2fdb-9d88-4f2c-80c5-32acf4e24774",
+                    "nestedFactoryData": {
+                        "schemaVersion": 1,
+                        "id": "92ac2fdb-9d88-4f2c-80c5-32acf4e24774",
+                        "name": "Concrete Factory",
+                        "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
+                        "icon": "/images/items/desc-cement-c_256.png",
+                        "autoAddProductLines": false,
+                        "createdAt": "2026-06-16T04:06:53.415Z",
+                        "updatedAt": "2026-06-16T04:06:53.415Z",
+                        "productionLines": [
+                            {
+                                "partSlug": "concrete",
+                                "rate": 6337.33333332,
+                                "outputRate": 6337.33333333333,
+                                "autoCalculateRate": true,
+                                "autoCreated": false,
+                                "assemblyLines": [
+                                    {
+                                        "recipeSlug": "recipe-alternate-wetconcrete-c",
+                                        "rate": 1584.33333333,
+                                        "slooped": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "rate": 1.00000002,
+                    "slooped": false
+                }
+            ]
+        }
+    ]
+}

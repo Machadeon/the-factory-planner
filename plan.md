@@ -10,28 +10,21 @@ committed via `factory.update()`).
 
 ### Features to implement
 
-- manually set factory icon (instead of always deriving it from the first product)
 - auto-production-line filler based on customizable aspects
   - raw resource availability
   - default/custom point scores (based on part cost + power usage + space/buildings required + tech limits)
-- When a new factory is created, disable autosave until the factory is saved manually
 - Graphical view of factories and factory groups (with nodes being assembly lines and edges being logistics links, i.e.
   belts and pipes)
 - Properly handle partial slooping (Power multiplier = (1 + filled slots / total slots)^2)
-- add the ability to view the source JSON for a factory
-- Adjust the sidebar so the buttons for each factory are contained in a dropdown. Also ensure the factory icons and
-  names are left aligned
 - add the ability to set constraints such as maximum throughput of a part, resource limits, etc.
 - add the ability to maximize a given part's output rate
 - adjust a factory to be a list of output parts and recipes rather than a list of production lines/assembly lines.
-  Alternatively this could be a completely separate factory builder UI, called "optimization mode" or "lazy mode".
-  Current is called "manual mode".
+  Alternatively this could be a completely separate factory builder UI, called "auto mode" or "lazy mode". Current is
+  called "manual mode".
 
 ### Bugs to fix
 
-- when a product is added that has only one recipe but a factory exists that produces it, the recipe is selected instead
-  of letting the user choose
-- images are not cached on the client
+- expand/collapse all is slow for large factories
 
 ---
 

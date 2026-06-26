@@ -138,16 +138,21 @@ export function renameFolder(
 }
 
 export function removeFolder(lib: StorageLibrary, id: string): StorageLibrary {
-  // Re-parent direct children to the deleted folder's parent
-  const folder = lib.folders.find((f) => f.id === id);
-  const parentId = folder?.parentId ?? null;
+  const deletedFolderIds = new Set<string>();
+  const queue = [id];
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (!current) break;
+    deletedFolderIds.add(current);
+    for (const f of lib.folders) {
+      if (f.parentId === current) queue.push(f.id);
+    }
+  }
   return {
     ...lib,
-    folders: lib.folders
-      .filter((f) => f.id !== id)
-      .map((f) => (f.parentId === id ? { ...f, parentId } : f)),
-    factories: lib.factories.map((f) =>
-      f.folderId === id ? { ...f, folderId: parentId } : f,
+    folders: lib.folders.filter((f) => !deletedFolderIds.has(f.id)),
+    factories: lib.factories.filter(
+      (f) => f.folderId === null || !deletedFolderIds.has(f.folderId),
     ),
   };
 }

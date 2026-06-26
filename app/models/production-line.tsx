@@ -40,6 +40,7 @@ export default class ProductionLine {
     factoryOutputRate: number,
     autoCalculateRate: boolean,
     autoCreated: boolean,
+    suppressAutoRecipe = false,
   ) {
     this.part = part;
     this.rate = productionRate;
@@ -49,7 +50,7 @@ export default class ProductionLine {
     this.assemblyLines = [];
 
     const recipes = recipeLookup[part.slug];
-    if (recipes.length === 1) {
+    if (recipes.length === 1 && !suppressAutoRecipe) {
       this.assemblyLines.push(
         new AssemblyLine(
           recipes[0],

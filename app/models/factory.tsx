@@ -168,7 +168,7 @@ export default class Factory {
     });
   }
 
-  addProductionLine(part: Part, autoCreated: boolean = false) {
+  addProductionLine(part: Part, autoCreated: boolean = false, suppressAutoRecipe = false) {
     if (part.slug in this._productionLineLookup) {
       console.warn(
         "Cannot add a production line that already exists!",
@@ -191,6 +191,7 @@ export default class Factory {
       outputRate,
       true,
       autoCreated,
+      suppressAutoRecipe,
     );
     this.productionLines.push(newProductionLine);
     if (!this.icon) this.icon = part.iconLarge;
@@ -209,12 +210,6 @@ export default class Factory {
     );
 
     delete this._productionLineLookup[part.slug];
-
-    if (this.icon === part.iconLarge) {
-      if (this.productionLines.length > 0) {
-        this.icon = this.productionLines[0].part.iconLarge;
-      }
-    }
 
     this.update();
   }

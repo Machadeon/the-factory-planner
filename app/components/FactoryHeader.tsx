@@ -1,6 +1,7 @@
 "use client";
 
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import DataObjectIcon from "@mui/icons-material/DataObject";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import SaveIcon from "@mui/icons-material/Save";
@@ -8,31 +9,38 @@ import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
 import { useRef } from "react";
 import Clickable from "./Clickable";
+import FactoryIconPicker from "./FactoryIconPicker";
 
 interface Props {
   factoryName: string;
+  factoryIcon?: string;
   isDirty: boolean;
   autosaveEnabled: boolean;
   onNameChange: (name: string) => void;
+  onIconChange: (icon: string | undefined) => void;
   onOpenLibrary: () => void;
   onSave: () => void;
   onToggleAutosave: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
   onNewFactory: () => void;
+  onViewJson: () => void;
 }
 
 export default function FactoryHeader({
   factoryName,
+  factoryIcon,
   isDirty,
   autosaveEnabled,
   onNameChange,
+  onIconChange,
   onOpenLibrary,
   onSave,
   onToggleAutosave,
   onExport,
   onImport,
   onNewFactory,
+  onViewJson,
 }: Props) {
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,24 +60,28 @@ export default function FactoryHeader({
         </span>
       </Tooltip>
 
-      <TextField
-        variant="outlined"
-        size="small"
-        value={factoryName}
-        onChange={(e) => onNameChange(e.target.value)}
-        placeholder="Unnamed Factory"
-        sx={{
-          flexGrow: 1,
-          maxWidth: "24rem",
-          "& .MuiOutlinedInput-root": {
-            fontWeight: 600,
-            fontSize: "1.5rem",
-            "& fieldset": { borderColor: "transparent" },
-            "&:hover fieldset": { borderColor: "rgba(128,128,128,0.4)" },
-            "&.Mui-focused fieldset": { borderColor: "rgba(128,128,128,0.6)" },
-          },
-        }}
-      />
+      <div className="flex flex-row items-center gap-0.5 grow">
+        <FactoryIconPicker icon={factoryIcon} onChange={onIconChange} />
+        <TextField
+          variant="outlined"
+          size="small"
+          value={factoryName}
+          onChange={(e) => onNameChange(e.target.value)}
+          placeholder="Unnamed Factory"
+          sx={{
+            flexGrow: 1,
+            "& .MuiOutlinedInput-root": {
+              fontWeight: 600,
+              fontSize: "1.5rem",
+              "& fieldset": { borderColor: "transparent" },
+              "&:hover fieldset": { borderColor: "rgba(128,128,128,0.4)" },
+              "&.Mui-focused fieldset": {
+                borderColor: "rgba(128,128,128,0.6)",
+              },
+            },
+          }}
+        />
+      </div>
 
       <div className="flex flex-row ml-auto">
         <Tooltip title="New factory">
@@ -100,6 +112,13 @@ export default function FactoryHeader({
           <span>
             <Clickable className="p-1" onClick={onExport}>
               <DownloadIcon />
+            </Clickable>
+          </span>
+        </Tooltip>
+        <Tooltip title="View factory JSON">
+          <span>
+            <Clickable className="p-1" onClick={onViewJson}>
+              <DataObjectIcon />
             </Clickable>
           </span>
         </Tooltip>

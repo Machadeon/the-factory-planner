@@ -28,6 +28,7 @@ export default function TextCalculatorField({
   useEffect(() => {
     if (!focused) {
       setValue(`${other.value}`);
+      setError(false);
     }
   }, [other.value, focused]);
 
@@ -38,11 +39,15 @@ export default function TextCalculatorField({
   }
 
   function calculate(newValue: string) {
-    var result = parseValue(`${other.value}`);
+    let result: number;
     try {
       result = parseValue(newValue);
     } catch {
-      console.warn("Invalid expression:", value);
+      setError(true);
+      return;
+    }
+
+    if (Number.isNaN(result)) {
       setError(true);
       return;
     }

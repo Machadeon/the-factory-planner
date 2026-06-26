@@ -136,7 +136,9 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
       if (alData.nestedFactoryId || !alData.recipeSlug) continue;
       const recipe = recipeSlugLookup[alData.recipeSlug];
       if (!recipe) continue;
-      pl.assemblyLines.push(new AssemblyLine(recipe, alData.rate, alData.slooped));
+      pl.assemblyLines.push(
+        new AssemblyLine(recipe, alData.rate, alData.slooped),
+      );
     }
     factory.productionLines.push(pl);
   }
