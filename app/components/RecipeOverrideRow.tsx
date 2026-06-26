@@ -1,12 +1,11 @@
 "use client";
 
 import EastIcon from "@mui/icons-material/East";
-import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
 import { displayNum } from "../utils";
+import Icon from "./Icon";
 
 /** Recipe name with any leading "Alternate:" prefix removed. */
 export function displayRecipeName(recipe: Recipe): string {
@@ -22,7 +21,7 @@ function recipePowerLabel(recipe: Recipe): string {
   return `${displayNum(recipe.building.basePowerUsage)} MW`;
 }
 
-function PartIcons({ parts }: { parts: RecipePart[] }) {
+const PartIcons = memo(function PartIcons({ parts }: { parts: RecipePart[] }) {
   return (
     <div className="flex w-40">
       {parts.map((p) => (
@@ -30,14 +29,7 @@ function PartIcons({ parts }: { parts: RecipePart[] }) {
           key={p.part.slug}
           className="flex flex-row items-center gap-x-0.5 ml-2"
         >
-          <Tooltip title={p.part.name}>
-            <Image
-              src={p.part.iconSmall}
-              alt={p.part.name}
-              width={20}
-              height={20}
-            />
-          </Tooltip>
+          <Icon src={p.part.iconSmall} label={p.part.name} size={20} />
           <span className="text-xs text-gray-400">
             {displayNum(p.quantity)}
           </span>
@@ -45,7 +37,7 @@ function PartIcons({ parts }: { parts: RecipePart[] }) {
       ))}
     </div>
   );
-}
+});
 
 interface RecipeOverrideRowProps {
   recipe: Recipe;
@@ -54,16 +46,30 @@ interface RecipeOverrideRowProps {
   leading?: ReactNode;
   /** Trailing control(s), e.g. an allow/deny toggle or remove button. */
   trailing?: ReactNode;
+  /**
+   * When true the row is kept mounted but hidden. Lets long lists filter via a
+   * cheap prop flip instead of unmounting hundreds of heavy MUI rows per
+   * keystroke (the dominant cost in RecipeListDialog search).
+   */
+  hidden?: boolean;
 }
 
-export default function RecipeOverrideRow({
+function RecipeOverrideRow({
   recipe,
   onClick,
   leading,
   trailing,
+  hidden,
 }: RecipeOverrideRowProps) {
   return (
     <div
+      // content-visibility lets the browser skip layout/paint for rows scrolled
+      // out of the dialog's viewport; contain-intrinsic-size reserves the height.
+      style={{
+        contentVisibility: "auto",
+        containIntrinsicSize: "auto 40px",
+        display: hidden ? "none" : undefined,
+      }}
       className={`flex flex-row items-center gap-x-2 py-1 px-1${
         onClick
           ? " cursor-pointer rounded hover:bg-black/5 dark:hover:bg-white/10"
@@ -72,20 +78,17 @@ export default function RecipeOverrideRow({
       onClick={onClick}
     >
       {leading}
-      <Tooltip title={recipe.building.name}>
-        <Image
-          src={recipe.building.iconSmall}
-          alt={recipe.building.name}
-          width={24}
-          height={24}
-        />
-      </Tooltip>
+      <Icon
+        src={recipe.building.iconSmall}
+        label={recipe.building.name}
+        size={24}
+      />
       <span className="text-sm w-44 shrink-0">{displayRecipeName(recipe)}</span>
       <span className="text-xs text-gray-400 w-20 shrink-0">
         {recipePowerLabel(recipe)}
       </span>
       <div className="flex flex-row items-center gap-x-1 grow flex-wrap">
-        <PartIcons parts={recipe.ingredients} className="" />
+        <PartIcons parts={recipe.ingredients} />
         <EastIcon fontSize="small" className="text-gray-500" />
         <PartIcons parts={recipe.products} />
       </div>
@@ -93,3 +96,5 @@ export default function RecipeOverrideRow({
     </div>
   );
 }
+
+export default memo(RecipeOverrideRow);

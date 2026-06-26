@@ -9,7 +9,6 @@ import LinkIcon from "@mui/icons-material/Link";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
@@ -30,6 +29,7 @@ import Clickable, {
   defaultHoverClass as clickableHoverClass,
 } from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
+import Icon from "./Icon";
 import RecipeComponent from "./RecipeComponent";
 import RecipeRejectDialog, { type RejectChoice } from "./RecipeRejectDialog";
 import SuggestedActions from "./SuggestedActions";
@@ -307,7 +307,7 @@ export default function ProductionLineComponent(
       >
         {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
         <div className="flex flex-row items-center gap-2 w-sm flex-none">
-          <Image src={part.iconSmall} alt={part.name} width={64} height={64} />
+          <Icon src={part.iconSmall} label={part.name} size={64} />
           <span className="text-xl">{part.name}</span>
           {props.productionLine.autoCreated && (
             <SuggestedActions onAccept={acceptLine} onReject={rejectLine} />
@@ -574,7 +574,7 @@ export default function ProductionLineComponent(
                 onClick={() => addFactoryAssemblyLine(sf.id, sf.name, f)}
               >
                 {sf.icon ? (
-                  <Image src={sf.icon} alt={sf.name} width={64} height={64} />
+                  <Icon src={sf.icon} label={sf.name} size={64} />
                 ) : (
                   <div className="w-16 h-16 flex items-center justify-center text-gray-400 text-xs border border-gray-600 rounded">
                     Factory

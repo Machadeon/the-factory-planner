@@ -2,10 +2,10 @@
 
 import ImageIcon from "@mui/icons-material/Image";
 import { Popover, TextField, Tooltip } from "@mui/material";
-import Image from "next/image";
 import { useRef, useState } from "react";
 import { parts } from "../models/library";
 import Clickable from "./Clickable";
+import Icon from "./Icon";
 
 interface Props {
   icon?: string;
@@ -32,7 +32,7 @@ export default function FactoryIconPicker({ icon, onChange }: Props) {
         <div ref={anchorRef}>
           <Clickable className="p-1" onClick={() => setOpen(true)}>
             {icon ? (
-              <Image src={icon} alt="Factory icon" width={36} height={36} />
+              <Icon src={icon} label="Factory icon" size={36} />
             ) : (
               <ImageIcon sx={{ fontSize: "2.25rem", opacity: 0.4 }} />
             )}
@@ -75,23 +75,17 @@ export default function FactoryIconPicker({ icon, onChange }: Props) {
             }}
           >
             {filtered.map((part) => (
-              <Tooltip key={part.slug} title={part.name}>
-                <button
-                  type="button"
-                  className="p-1 rounded hover:bg-white/10"
-                  onClick={() => {
-                    onChange(part.iconLarge);
-                    close();
-                  }}
-                >
-                  <Image
-                    src={part.iconSmall}
-                    alt={part.name}
-                    width={32}
-                    height={32}
-                  />
-                </button>
-              </Tooltip>
+              <button
+                key={part.slug}
+                type="button"
+                className="p-1 rounded hover:bg-white/10"
+                onClick={() => {
+                  onChange(part.iconLarge);
+                  close();
+                }}
+              >
+                <Icon src={part.iconSmall} label={part.name} size={32} />
+              </button>
             ))}
           </div>
         </div>

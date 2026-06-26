@@ -747,11 +747,14 @@ export default class Factory {
       }
     }
 
-    console.debug("Solver v3 model:", JSON.stringify(model));
+    // Pass objects directly (not JSON.stringify) so serialization only happens
+    // if devtools is actually open — stringifying the model/result eagerly on
+    // every solve was a per-interaction cost that scaled with factory size.
+    console.debug("Solver v3 model:", model);
     const start1 = performance.now();
     const raw1 = solver.Solve(model as ModelDefinition);
     console.debug(`solver-v3: ${(performance.now() - start1).toFixed(2)}ms`);
-    console.debug("Solver v3 result:", JSON.stringify(raw1));
+    console.debug("Solver v3 result:", raw1);
 
     // @ts-expect-error
     const solution: SolveResult = raw1.midpoint ?? raw1;

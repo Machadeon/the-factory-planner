@@ -1,10 +1,10 @@
 "use client";
 
 import EastIcon from "@mui/icons-material/East";
-import Image from "next/image";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
 import { displayNum } from "../utils";
+import Icon from "./Icon";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface NestedFactoryRowProps {
@@ -54,12 +54,7 @@ export default function NestedFactoryRow({
       <div className="w-2xs flex flex-row flex-wrap gap-x-2 items-center">
         {recipe.ingredients.map((ing) => (
           <span key={ing.part.slug} className="flex items-center gap-x-1">
-            <Image
-              src={ing.part.iconSmall}
-              alt={ing.part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={ing.part.iconSmall} label={ing.part.name} size={24} />
             {displayNum(ing.quantity * rate)}/min
           </span>
         ))}
@@ -68,12 +63,7 @@ export default function NestedFactoryRow({
       <div className="w-2xs flex flex-row flex-wrap gap-x-2 items-center">
         {recipe.products.map((prod) => (
           <span key={prod.part.slug} className="flex items-center gap-x-1">
-            <Image
-              src={prod.part.iconSmall}
-              alt={prod.part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={prod.part.iconSmall} label={prod.part.name} size={24} />
             {displayNum(prod.quantity * rate)}/min
           </span>
         ))}

@@ -4,7 +4,6 @@ import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
 import { type MouseEventHandler, useState } from "react";
 import type Factory from "../models/factory";
 import type Part from "../models/part";
@@ -15,6 +14,7 @@ import Clickable, {
   defaultClass as clickableClass,
   defaultHoverClass as clickableHoverClass,
 } from "./Clickable";
+import Icon from "./Icon";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface RecipeComponentProps {
@@ -70,33 +70,24 @@ export default function RecipeComponent({
 
   return (
     <div className={className} onClick={onClick}>
-      <Tooltip enterDelay={500} title={recipe.building.name}>
-        <Image
-          src={recipe.building.iconLarge}
-          alt={recipe.building.name}
-          width={64}
-          height={64}
-        />
-      </Tooltip>
+      <Icon
+        src={recipe.building.iconLarge}
+        label={recipe.building.name}
+        size={64}
+      />
       <span className="w-3xs">{recipe.name}</span>
       <div className="w-2xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.ingredients.flatMap((ing) => [
           <span className="text-right" key={`ing-${ing.part.slug}-quantity`}>
             {displayNum(ing.quantity)}x
           </span>,
-          <Tooltip
-            enterDelay={500}
-            title={ing.part.name}
+          <Icon
+            src={ing.part.iconSmall}
+            label={ing.part.name}
+            size={32}
+            className="m-1"
             key={`ing-${ing.part.slug}-image`}
-          >
-            <Image
-              src={ing.part.iconSmall}
-              alt={ing.part.name}
-              width={32}
-              height={32}
-              className="m-1"
-            />
-          </Tooltip>,
+          />,
           <div
             className="grow text-right"
             key={`ing-${ing.part.slug}-controls`}
@@ -164,18 +155,12 @@ export default function RecipeComponent({
               ? `${displayNum(prod.quantity)} MW`
               : `${displayNum(prod.quantity)}x`}
           </span>,
-          <Tooltip
-            enterDelay={500}
-            title={prod.part.name}
+          <Icon
+            src={prod.part.iconSmall}
+            label={prod.part.name}
+            size={32}
             key={`prod-${prod.part.slug}-image`}
-          >
-            <Image
-              src={prod.part.iconSmall}
-              alt={prod.part.name}
-              width={32}
-              height={32}
-            />
-          </Tooltip>,
+          />,
           <div
             className="grow text-right"
             key={`prod-${prod.part.slug}-controls`}

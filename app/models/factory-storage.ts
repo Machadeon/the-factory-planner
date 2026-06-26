@@ -11,6 +11,12 @@ import ProductionLine from "./production-line";
 export interface SerializedAssemblyLine {
   recipeSlug?: string;
   nestedFactoryId?: string;
+  /**
+   * @deprecated Schema <= 3 embedded the full nested factory here. Current saves
+   * reference factories by `nestedFactoryId` only; `migrateLibrary` extracts any
+   * embedded copies into independent library entries. Kept optional so legacy
+   * files and bundles can still be read.
+   */
   nestedFactoryData?: SerializedFactory;
   rate: number;
   sloopedSlots: number;
@@ -55,9 +61,15 @@ export interface StorageLibrary {
   schemaVersion: number;
   folders: FactoryFolder[];
   factories: SerializedFactory[];
+  /**
+   * Only set on exported bundles: the id of the factory the bundle was exported
+   * for. Lets import auto-load that factory instead of just opening the library.
+   * Absent on the persisted library.
+   */
+  rootId?: string;
 }
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 export function generateId(): string {
   return crypto.randomUUID();
@@ -65,6 +77,44 @@ export function generateId(): string {
 
 export function emptyLibrary(): StorageLibrary {
   return { schemaVersion: CURRENT_SCHEMA_VERSION, folders: [], factories: [] };
+}
+
+/** Ids of factories referenced (nested recipe or supplier) by `f`. */
+export function directDependencyIds(f: SerializedFactory): string[] {
+  const ids: string[] = [];
+  for (const pl of f.productionLines) {
+    for (const al of pl.assemblyLines) {
+      if (al.nestedFactoryId) ids.push(al.nestedFactoryId);
+    }
+  }
+  for (const sid of f.supplierIds ?? []) ids.push(sid);
+  return ids;
+}
+
+/**
+ * Collect `root` plus every factory it transitively references (by id) from
+ * `library`, producing a self-contained set for export. Missing references are
+ * skipped. The returned array starts with `root`.
+ */
+export function collectFactoryBundle(
+  root: SerializedFactory,
+  library: StorageLibrary,
+): SerializedFactory[] {
+  const byId = new Map(library.factories.map((f) => [f.id, f]));
+  const out = new Map<string, SerializedFactory>([[root.id, root]]);
+  const queue = [root];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) break;
+    for (const depId of directDependencyIds(current)) {
+      if (out.has(depId)) continue;
+      const dep = byId.get(depId);
+      if (!dep) continue;
+      out.set(depId, dep);
+      queue.push(dep);
+    }
+  }
+  return [...out.values()];
 }
 
 export function serializeFactory(
@@ -76,7 +126,6 @@ export function serializeFactory(
     createdAt: string;
     updatedAt: string;
   },
-  library?: StorageLibrary,
 ): SerializedFactory {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -105,12 +154,11 @@ export function serializeFactory(
       maximizeOutput: pl.maximizeOutput || undefined,
       assemblyLines: pl.assemblyLines.map((al) => {
         if (al.recipe.isFactoryRecipe) {
+          // Reference the nested factory by id only — it lives as its own
+          // independent library entry, not embedded here.
           const nestedId = al.recipe.slug.slice("factory:".length);
           return {
             nestedFactoryId: nestedId,
-            nestedFactoryData: library?.factories.find(
-              (f) => f.id === nestedId,
-            ),
             rate: al.rate,
             sloopedSlots: 0,
             machineSpeed: al.machineSpeed,
@@ -203,11 +251,12 @@ function migrateAssemblyLineRaw(al: any): SerializedAssemblyLine {
   delete result.slooped;
   if (!("machineSpeed" in result)) result.machineSpeed = 100;
   if (!("allowRemainder" in result)) result.allowRemainder = true;
-  if (result.nestedFactoryData) {
-    result.nestedFactoryData = migrateSerializedFactoryRaw(
-      result.nestedFactoryData,
-    );
+  // Schema <= 3 embedded the nested factory; recover the id reference and drop
+  // the embedded copy (it's been hoisted to an independent library entry).
+  if (result.nestedFactoryData && !result.nestedFactoryId) {
+    result.nestedFactoryId = result.nestedFactoryData.id;
   }
+  delete result.nestedFactoryData;
   return result as SerializedAssemblyLine;
 }
 
@@ -224,13 +273,38 @@ function migrateSerializedFactoryRaw(f: any): SerializedFactory {
   };
 }
 
+// Recursively gather every factory embedded via `nestedFactoryData` (schema <= 3)
+// into `acc`, keyed by id. Does not overwrite ids already present, so callers can
+// seed higher-precedence entries first.
+// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+function collectEmbeddedFactories(f: any, acc: Map<string, any>): void {
+  for (const pl of f.productionLines ?? []) {
+    for (const al of pl.assemblyLines ?? []) {
+      const nested = al.nestedFactoryData;
+      if (nested?.id != null) {
+        if (!acc.has(nested.id)) acc.set(nested.id, nested);
+        collectEmbeddedFactories(nested, acc);
+      }
+    }
+  }
+}
+
 // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
 export function migrateLibrary(raw: any): StorageLibrary {
+  // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+  const topLevel: any[] = raw.factories ?? [];
+  // Hoist embedded factories to independent entries. Top-level entries are the
+  // source of truth, so seed them last to override any embedded copy.
+  // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+  const byId = new Map<string, any>();
+  for (const f of topLevel) collectEmbeddedFactories(f, byId);
+  for (const f of topLevel) byId.set(f.id, f);
+
   return {
     ...raw,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     folders: raw.folders ?? [],
-    factories: (raw.factories ?? []).map(migrateSerializedFactoryRaw),
+    factories: [...byId.values()].map(migrateSerializedFactoryRaw),
   };
 }
 

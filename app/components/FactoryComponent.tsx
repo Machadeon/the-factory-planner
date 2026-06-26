@@ -15,8 +15,11 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import Factory from "../models/factory";
 import {
+  CURRENT_SCHEMA_VERSION,
+  collectFactoryBundle,
   deserializeFactory,
   generateId,
+  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
   serializeFactory,
@@ -49,6 +52,8 @@ import StorageConsentDialog from "./StorageConsentDialog";
 
 type PendingAction = "save" | "openLibrary" | null;
 
+const AUTOSAVE_DEBOUNCE_MS = 400;
+
 export default function FactoryComponent() {
   const [addingProduct, setAddingProduct] = useState(false);
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
@@ -66,6 +71,11 @@ export default function FactoryComponent() {
   const [autosaveEnabled, setAutosaveEnabled] = useState(true);
   const autosaveEnabledRef = useRef(true);
   const doSaveRef = useRef<() => void>(() => {});
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const buildSerializedRef = useRef<
+    (overrideName?: string) => SerializedFactory
+  >(() => ({}) as SerializedFactory);
+  const flushAutosaveRef = useRef<() => void>(() => {});
 
   const [library, setLibrary] = useState<StorageLibrary>({
     schemaVersion: 1,
@@ -120,28 +130,48 @@ export default function FactoryComponent() {
     factory._updateRates();
     setIsDirty(true);
     setVersion((v) => v + 1);
-    if (hasConsent()) {
-      if (autosaveEnabledRef.current) {
-        doSaveRef.current();
-      } else {
-        writeAutosave(buildSerialized());
-      }
-    }
+    scheduleAutosave();
   };
 
   function buildSerialized(overrideName?: string): SerializedFactory {
     const now = new Date().toISOString();
-    return serializeFactory(
-      factory,
-      {
-        id: currentFactoryId ?? generateId(),
-        name: overrideName ?? factoryName,
-        folderId: currentFolderId,
-        createdAt: createdAt || now,
-        updatedAt: now,
-      },
-      library,
-    );
+    return serializeFactory(factory, {
+      id: currentFactoryId ?? generateId(),
+      name: overrideName ?? factoryName,
+      folderId: currentFolderId,
+      createdAt: createdAt || now,
+      updatedAt: now,
+    });
+  }
+
+  // Persisting on every edit serializes the whole library to localStorage (and,
+  // when autosave is on, re-derives other factories). Debounce it so a burst of
+  // edits coalesces into one write. Refs keep the fired callback current.
+  buildSerializedRef.current = buildSerialized;
+
+  function flushAutosave() {
+    if (autosaveTimerRef.current !== null) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    if (!hasConsent()) return;
+    if (autosaveEnabledRef.current) {
+      doSaveRef.current();
+    } else {
+      writeAutosave(buildSerializedRef.current());
+    }
+  }
+  flushAutosaveRef.current = flushAutosave;
+
+  function scheduleAutosave() {
+    if (!hasConsent()) return;
+    if (autosaveTimerRef.current !== null) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      flushAutosaveRef.current();
+    }, AUTOSAVE_DEBOUNCE_MS);
   }
 
   // On mount: load library and restore session if consent given
@@ -196,6 +226,17 @@ export default function FactoryComponent() {
         }
       }
     }
+  }, []);
+
+  // Flush any pending debounced autosave before the tab closes or the component
+  // unmounts, so the last burst of edits isn't lost.
+  useEffect(() => {
+    const onBeforeUnload = () => flushAutosaveRef.current();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      flushAutosaveRef.current();
+    };
   }, []);
 
   function rebuildFactory() {
@@ -278,6 +319,11 @@ export default function FactoryComponent() {
   }
 
   function doSave() {
+    // An explicit/flushed save supersedes any pending debounced autosave.
+    if (autosaveTimerRef.current !== null) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
     const now = new Date().toISOString();
     const id = currentFactoryId ?? generateId();
     const isFirstSave = !currentFactoryId;
@@ -286,17 +332,13 @@ export default function FactoryComponent() {
       setCreatedAt(now);
     }
 
-    const serialized = serializeFactory(
-      factory,
-      {
-        id,
-        name: factoryName,
-        folderId: currentFolderId,
-        createdAt: currentFactoryId ? createdAt : now,
-        updatedAt: now,
-      },
-      library,
-    );
+    const serialized = serializeFactory(factory, {
+      id,
+      name: factoryName,
+      folderId: currentFolderId,
+      createdAt: currentFactoryId ? createdAt : now,
+      updatedAt: now,
+    });
 
     const existingEntry = library.factories.find((f) => f.id === id);
     if (currentFactoryId && !existingEntry) {
@@ -304,17 +346,13 @@ export default function FactoryComponent() {
       const newId = generateId();
       setCurrentFactoryId(newId);
       setCreatedAt(now);
-      const reserialised = serializeFactory(
-        factory,
-        {
-          id: newId,
-          name: factoryName,
-          folderId: currentFolderId,
-          createdAt: now,
-          updatedAt: now,
-        },
-        library,
-      );
+      const reserialised = serializeFactory(factory, {
+        id: newId,
+        name: factoryName,
+        folderId: currentFolderId,
+        createdAt: now,
+        updatedAt: now,
+      });
       const updatedLib = addFactory(library, reserialised);
       saveLibrary(updatedLib);
       clearAutosave();
@@ -343,8 +381,18 @@ export default function FactoryComponent() {
   // --- Export ---
 
   function handleExportCurrent() {
-    const serialized = buildSerialized();
-    downloadJson(serialized, `${factoryName.replace(/[^a-z0-9]/gi, "_")}.json`);
+    const root = buildSerialized();
+    // Self-contained bundle: the factory plus every factory it references, as
+    // independent entries that point to each other by id. Imports via the
+    // existing library-detection path ("factories" key).
+    const factories = collectFactoryBundle(root, library);
+    const bundle: StorageLibrary = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      folders: [],
+      factories,
+      rootId: root.id,
+    };
+    downloadJson(bundle, `${factoryName.replace(/[^a-z0-9]/gi, "_")}.json`);
   }
 
   // --- Import ---
@@ -371,48 +419,26 @@ export default function FactoryComponent() {
     reader.readAsText(file);
   }
 
-  function importSingleFactory(data: SerializedFactory) {
-    const now = new Date().toISOString();
-    const withNewId: SerializedFactory = {
-      ...data,
-      id: generateId(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    const lib = hasConsent()
-      ? library
-      : { schemaVersion: 1 as const, folders: [], factories: [] };
-    const updatedLib = addFactory(lib, withNewId);
-
-    if (hasConsent()) {
-      saveLibrary(updatedLib);
-      setLibrary(updatedLib);
-    }
-
-    loadFactoryFromSerialized(withNewId);
-  }
-
-  function importLibrary(data: StorageLibrary) {
-    if (!hasConsent()) {
-      requireConsent("openLibrary");
-      return;
-    }
-
+  // Migrate incoming data (hoists any legacy embedded factories), then assign
+  // fresh ids while preserving every cross-reference (folder parent, supplier,
+  // nested recipe). Returns the remapped entries plus the id mapping.
+  function remapImportedLibrary(data: StorageLibrary): {
+    folders: StorageLibrary["folders"];
+    factories: SerializedFactory[];
+    idMap: Map<string, string>;
+  } {
+    const migrated = migrateLibrary(data);
     const now = new Date().toISOString();
     const idMap = new Map<string, string>();
-    for (const folder of data.folders) {
-      idMap.set(folder.id, generateId());
-    }
-    for (const factory of data.factories) {
-      idMap.set(factory.id, generateId());
-    }
+    for (const folder of migrated.folders) idMap.set(folder.id, generateId());
+    for (const f of migrated.factories) idMap.set(f.id, generateId());
 
-    const newFolders = data.folders.map((f) => ({
+    const folders = migrated.folders.map((f) => ({
       ...f,
       id: idMap.get(f.id) ?? generateId(),
       parentId: f.parentId ? (idMap.get(f.parentId) ?? null) : null,
     }));
-    const newFactories = data.factories.map((f) => ({
+    const factories = migrated.factories.map((f) => ({
       ...f,
       id: idMap.get(f.id) ?? generateId(),
       folderId: f.folderId ? (idMap.get(f.folderId) ?? null) : null,
@@ -429,15 +455,63 @@ export default function FactoryComponent() {
         })),
       })),
     }));
+    return { folders, factories, idMap };
+  }
+
+  // Legacy single-factory files (schema <= 3) may embed nested factories. Run
+  // them through the same bundle path so embedded copies become independent
+  // entries, then load the imported factory.
+  function importSingleFactory(data: SerializedFactory) {
+    const { folders, factories, idMap } = remapImportedLibrary({
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      folders: [],
+      factories: [data],
+    });
+    const rootId = idMap.get(data.id);
+    const root = factories.find((f) => f.id === rootId);
+    if (!root) return;
 
     const updatedLib: StorageLibrary = {
-      schemaVersion: 1,
-      folders: [...library.folders, ...newFolders],
-      factories: [...library.factories, ...newFactories],
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      folders: [...library.folders, ...folders],
+      factories: [...library.factories, ...factories],
+    };
+    if (hasConsent()) {
+      saveLibrary(updatedLib);
+      setLibrary(updatedLib);
+    }
+
+    // Resolve nested references against the freshly merged library, not the
+    // stale state snapshot.
+    loadFactoryFromSerialized(root, updatedLib);
+  }
+
+  function importLibrary(data: StorageLibrary) {
+    if (!hasConsent()) {
+      requireConsent("openLibrary");
+      return;
+    }
+
+    const { folders, factories, idMap } = remapImportedLibrary(data);
+    const updatedLib: StorageLibrary = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      folders: [...library.folders, ...folders],
+      factories: [...library.factories, ...factories],
     };
     saveLibrary(updatedLib);
     setLibrary(updatedLib);
-    handleOpenLibrary();
+
+    // Exported bundles carry the root factory's id — load it directly (resolving
+    // references against the freshly merged library) instead of opening the drawer.
+    const newRootId = data.rootId ? idMap.get(data.rootId) : undefined;
+    const root = newRootId
+      ? factories.find((f) => f.id === newRootId)
+      : undefined;
+    if (root) {
+      loadFactoryFromSerialized(root, updatedLib);
+    } else {
+      handleOpenLibrary();
+    }
   }
 
   // --- Load factory from library ---
@@ -452,8 +526,11 @@ export default function FactoryComponent() {
     }
   }
 
-  function loadFactoryFromSerialized(serialized: SerializedFactory) {
-    const loaded = deserializeFactory(serialized, library);
+  function loadFactoryFromSerialized(
+    serialized: SerializedFactory,
+    lib: StorageLibrary = library,
+  ) {
+    const loaded = deserializeFactory(serialized, lib);
     if (!loaded) {
       alert(
         "Could not restore factory — some recipe or part data may be missing.",
@@ -493,6 +570,12 @@ export default function FactoryComponent() {
 
   function handleNewFactory(folderId: string | null) {
     if (isDirty) {
+      if (autosaveEnabled && hasConsent()) {
+        // Auto-save then clear without prompting — autosave is on so no data is lost
+        doSave();
+        performClearFactory(folderId);
+        return;
+      }
       setPendingClearFolderId(folderId);
       setClearConfirmOpen(true);
       return;

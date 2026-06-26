@@ -2,10 +2,10 @@
 
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import Image from "next/image";
 import type { SyntheticEvent } from "react";
 import { parts } from "../models/library";
 import type Part from "../models/part";
+import Icon from "./Icon";
 
 interface PartSelectorProps {
   existingParts: string[];
@@ -39,12 +39,11 @@ export default function PartSelector({
       renderInput={(params) => <TextField {...params} label="Part" autoFocus />}
       renderOption={(params, option) => (
         <li {...params} key={params.key}>
-          <Image
+          <Icon
             key={option.part.slug}
             src={option.part.iconSmall}
-            alt={option.label}
-            width={24}
-            height={24}
+            label={option.label}
+            size={24}
             className="inline mr-2"
           />
           {option.label}
