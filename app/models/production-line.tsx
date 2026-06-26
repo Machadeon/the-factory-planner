@@ -1,4 +1,4 @@
-import type AssemblyLine from "./assembly-line";
+import AssemblyLine from "./assembly-line";
 import { recipeLookup } from "./library";
 import type Part from "./part";
 
@@ -50,11 +50,11 @@ export default class ProductionLine {
 
     const recipes = recipeLookup[part.slug];
     if (recipes.length === 1) {
-      this.assemblyLines.push({
-        part: part,
-        recipe: recipes[0],
-        rate: productionRate / recipes[0].productLookup[part.slug],
-      });
+      this.assemblyLines.push(new AssemblyLine(
+        recipes[0],
+        productionRate / recipes[0].productLookup[part.slug],
+        false,
+      ));
     }
   }
 

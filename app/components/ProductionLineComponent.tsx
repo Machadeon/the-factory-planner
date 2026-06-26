@@ -19,6 +19,7 @@ import AssemblyLine from "./AssemblyLineComponent";
 import Clickable, { type ClickableStyle } from "./Clickable";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
+import AssemblyLineModel from "../models/assembly-line";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
@@ -33,7 +34,7 @@ export default function ProductionLineComponent(
   const recipeList = recipeLookup[part.slug];
   const actualProductionRate = props.productionLine.assemblyLines.reduce(
     (acc, assemblyLine) =>
-      acc + assemblyLine.rate * assemblyLine.recipe.productLookup[part.slug],
+      acc + assemblyLine.getPartProductionRate(part),
     0,
   );
 
@@ -60,9 +61,7 @@ export default function ProductionLineComponent(
     if (props.productionLine.assemblyLines.length === 1) {
       // if something changed and there is only one line, then set the line rate to the product rate
       const assemblyLine = props.productionLine.assemblyLines[0];
-      assemblyLine.rate =
-        props.productionLine.rate /
-        assemblyLine.recipe.productLookup[part.slug];
+      assemblyLine.setPartProductionRate(part, props.productionLine.rate);
     }
 
     props.factory.setPartRate(part, props.productionLine.rate);
@@ -79,11 +78,11 @@ export default function ProductionLineComponent(
   }
 
   function addAssemblyLine(recipe: Recipe) {
-    props.productionLine.assemblyLines.push({
-      part: part,
-      recipe: recipe,
-      rate: getProductionRateForRecipe(recipe),
-    });
+    props.productionLine.assemblyLines.push(new AssemblyLineModel(
+      recipe,
+      getProductionRateForRecipe(recipe),
+      false,
+    ));
     updateProductionLine();
     setShowRecipes(false);
   }
@@ -115,8 +114,9 @@ export default function ProductionLineComponent(
 
   function splitRecipes() {
     const currentRecipeCount = props.productionLine.assemblyLines.length;
+    const ratio = currentRecipeCount / (currentRecipeCount + 1);
     for (const assemblyLine of props.productionLine.assemblyLines) {
-      assemblyLine.rate *= currentRecipeCount / (currentRecipeCount + 1);
+      assemblyLine.rate *= ratio;
     }
     setShowRecipes(true);
   }
@@ -257,6 +257,7 @@ export default function ProductionLineComponent(
               >
                 <AssemblyLine
                   assemblyLine={assemblyLine}
+                  mainPart={part}
                   factory={props.factory}
                 />
                 {recipeList.length !== 1 ? (

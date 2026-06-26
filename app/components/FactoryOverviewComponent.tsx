@@ -23,6 +23,10 @@ export default function FactoryOverviewComponent({
     setTimeout(fn.bind(obj), 1);
   }
 
+  const factoryOutputs = factory.allOutputs();
+  const factoryInputs = factory.allInputs();
+  const intermediateParts = factory.allIntermediateParts();
+
   return (
     <div className="flex flex-col w-xs">
       <div className="text-lg mb-2">Controls</div>
@@ -41,8 +45,8 @@ export default function FactoryOverviewComponent({
         </Button>
       </div>
       <HorizontalDivider />
-      <div className="text-lg mb-2">Outputs</div>
-      {factory.allOutputs().map((part) => (
+      <div className="text-lg mb-2">Outputs ({factoryOutputs.length})</div>
+      {factoryOutputs.map((part) => (
         <PartRateSummary
           key={part.slug}
           part={part}
@@ -51,8 +55,8 @@ export default function FactoryOverviewComponent({
         />
       ))}
       <HorizontalDivider />
-      <div className="text-lg mb-2">Inputs</div>
-      {factory.allInputs().map((part) => (
+      <div className="text-lg mb-2">Inputs ({factoryInputs.length})</div>
+      {factoryInputs.map((part) => (
         <PartRateSummary
           key={part.slug}
           part={part}
@@ -62,7 +66,9 @@ export default function FactoryOverviewComponent({
       ))}
       <HorizontalDivider />
       <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">Intermediate Parts</span>
+        <span className="text-lg grow">
+          Intermediate Parts ({intermediateParts.length})
+        </span>
         <Clickable
           onClick={() => setShowIntermediateProducts(!showIntermediateProducts)}
           className="inline"
@@ -75,16 +81,14 @@ export default function FactoryOverviewComponent({
         </Clickable>
       </div>
       {showIntermediateProducts &&
-        factory
-          .allIntermediateParts()
-          .map((part) => (
-            <PartRateSummary
-              key={part.slug}
-              part={part}
-              rate={factory.rateLookup[part.slug]}
-              factory={factory}
-            />
-          ))}
+        intermediateParts.map((part) => (
+          <PartRateSummary
+            key={part.slug}
+            part={part}
+            rate={factory.rateLookup[part.slug]}
+            factory={factory}
+          />
+        ))}
     </div>
   );
 }
