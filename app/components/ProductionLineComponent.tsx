@@ -12,7 +12,6 @@ import Image from "next/image";
 import { type MouseEvent, useEffect, useState } from "react";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
-import { wouldCreateCycle } from "../models/factory-cycle-detection";
 import FactoryRecipe from "../models/factory-recipe";
 import {
   deserializeFactory,
@@ -41,6 +40,7 @@ interface ProductionLineComponentProps {
   onDeleteClicked: () => void;
   forceExpanded?: boolean | null;
   onToggle?: () => void;
+  onNavigateToFactory?: (id: string) => void;
 }
 
 export default function ProductionLineComponent(
@@ -65,12 +65,6 @@ export default function ProductionLineComponent(
 
   const factoryCandidates = props.library.factories.flatMap((sf) => {
     if (sf.id === props.currentFactoryId) return [];
-    if (
-      props.currentFactoryId &&
-      wouldCreateCycle(props.currentFactoryId, sf.id, props.library.factories)
-    ) {
-      return [];
-    }
     const f = deserializeFactory(sf, props.library);
     if (!f) return [];
     if (!f.allOutputs().some((p) => p.slug === part.slug)) return [];
@@ -185,8 +179,15 @@ export default function ProductionLineComponent(
     setShowRecipes(true);
   }
 
-  const actualProductionRateTextColorClass =
+  const isSlooped = props.productionLine.assemblyLines.some((al) =>
+    al.isSlooped(),
+  );
+  const baseProductionRateColorClass =
     getColorClassForProductionRate1(productionRateDiff);
+  const actualProductionRateTextColorClass =
+    isSlooped && baseProductionRateColorClass === "text-green-500"
+      ? "text-pink-600"
+      : baseProductionRateColorClass;
   var productionRateDiffStr: string;
   if (actualProductionRateTextColorClass === "text-amber-500") {
     productionRateDiffStr = ` (+${displayNum(productionRateDiff)})`;
@@ -328,6 +329,7 @@ export default function ProductionLineComponent(
                   assemblyLine={assemblyLine}
                   mainPart={part}
                   factory={props.factory}
+                  onNavigateToFactory={props.onNavigateToFactory}
                 />
                 {recipeList.length !== 1 ||
                 assemblyLine.recipe.isFactoryRecipe ||

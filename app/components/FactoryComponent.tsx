@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -417,6 +418,11 @@ export default function FactoryComponent() {
     setPendingLoadFactory(null);
   }
 
+  function handleNavigateToFactory(id: string) {
+    const sf = library.factories.find((f) => f.id === id);
+    if (sf) handleLoadFactory(sf);
+  }
+
   function handleToggleAutosave() {
     const next = !autosaveEnabled;
     setAutosaveEnabled(next);
@@ -488,6 +494,11 @@ export default function FactoryComponent() {
 
         <div className="flex flex-row grow">
           <div className="flex flex-col grow">
+            {currentFactory.solverError && (
+              <Alert severity="warning" className="m-2 text-sm">
+                {currentFactory.solverError}
+              </Alert>
+            )}
             {currentFactory.productionLines.length === 0 ? (
               <>
                 <p className="p-4">Add a product to get started</p>
@@ -527,6 +538,7 @@ export default function FactoryComponent() {
                       onDeleteClicked={() => removeProductionLine(product.part)}
                       forceExpanded={forceExpanded}
                       onToggle={() => setForceExpanded(null)}
+                      onNavigateToFactory={handleNavigateToFactory}
                     />
                     <HorizontalDivider />
                   </div>
@@ -556,6 +568,7 @@ export default function FactoryComponent() {
             onRebuild={rebuildFactory}
             library={library}
             currentFactoryId={currentFactoryId}
+            onNavigateToFactory={handleNavigateToFactory}
           />
         </div>
       </div>

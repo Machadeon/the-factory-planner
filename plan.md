@@ -14,20 +14,24 @@ committed via `factory.update()`).
 - auto-production-line filler based on customizable aspects
   - raw resource availability
   - default/custom point scores (based on part cost + power usage + space/buildings required + tech limits)
-- When an assembly line is slooped, the enclosing production line's output rate should be the slooped color
 - When a new factory is created, disable autosave until the factory is saved manually
-- Make other factory names links in the suppliers list to enable easy navigation between linked factories
 - Graphical view of factories and factory groups (with nodes being assembly lines and edges being logistics links, i.e.
   belts and pipes)
 - Properly handle partial slooping (Power multiplier = (1 + filled slots / total slots)^2)
-- We want to enable factories to supply each other, i.e. cycles
 - add the ability to view the source JSON for a factory
 - Adjust the sidebar so the buttons for each factory are contained in a dropdown. Also ensure the factory icons and
   names are left aligned
+- add the ability to set constraints such as maximum throughput of a part, resource limits, etc.
+- add the ability to maximize a given part's output rate
+- adjust a factory to be a list of output parts and recipes rather than a list of production lines/assembly lines.
+  Alternatively this could be a completely separate factory builder UI, called "optimization mode" or "lazy mode".
+  Current is called "manual mode".
 
 ### Bugs to fix
 
-- _(none currently identified)_
+- when a product is added that has only one recipe but a factory exists that produces it, the recipe is selected instead
+  of letting the user choose
+- images are not cached on the client
 
 ---
 

@@ -114,16 +114,43 @@ for (const recipe of recipes) {
   recipeSlugLookup[recipe.slug] = recipe;
 }
 
+// When a cycle is detected, deserialize the factory using only its standard
+// recipe assembly lines (no nested factory links) to break the recursion while
+// still providing usable output rates.
+function deserializeFactoryStub(data: SerializedFactory): Factory {
+  const factory = new Factory();
+  factory.icon = data.icon;
+  factory.autoAddProductLines = data.autoAddProductLines;
+  for (const plData of data.productionLines) {
+    const part = partSlugLookup[plData.partSlug];
+    if (!part) continue;
+    const pl = new ProductionLine(
+      part,
+      plData.rate,
+      plData.outputRate,
+      plData.autoCalculateRate,
+      plData.autoCreated,
+    );
+    pl.assemblyLines = [];
+    for (const alData of plData.assemblyLines) {
+      if (alData.nestedFactoryId || !alData.recipeSlug) continue;
+      const recipe = recipeSlugLookup[alData.recipeSlug];
+      if (!recipe) continue;
+      pl.assemblyLines.push(new AssemblyLine(recipe, alData.rate, alData.slooped));
+    }
+    factory.productionLines.push(pl);
+  }
+  factory._updateRates();
+  return factory;
+}
+
 export function deserializeFactory(
   data: SerializedFactory,
   library?: StorageLibrary,
   _visiting: Set<string> = new Set(),
 ): Factory | null {
   if (_visiting.has(data.id)) {
-    console.warn(
-      `[deserialize] Cycle detected for factory: ${data.id}, skipping`,
-    );
-    return null;
+    return deserializeFactoryStub(data);
   }
   _visiting.add(data.id);
   const factory = new Factory();

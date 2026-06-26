@@ -5,7 +5,7 @@ import solver, {
   type SolveResult,
   type VariableCoefficients,
 } from "javascript-lp-solver";
-import { parts } from "../models/library";
+import { partSlugLookup, parts } from "../models/library";
 import type AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
@@ -22,6 +22,7 @@ export default class Factory {
   autoAddProductLines: boolean;
   supplierFactories: FactoryRecipe[];
   update: () => void;
+  solverError: string | null;
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
@@ -37,6 +38,7 @@ export default class Factory {
     this.update = oldFactory?.update || (() => {});
     this.autoAddProductLines = oldFactory?.autoAddProductLines || false;
     this.supplierFactories = oldFactory?.supplierFactories || [];
+    this.solverError = oldFactory?.solverError ?? null;
 
     this.rateLookup = {};
     this._productionLineLookup = {};
@@ -310,7 +312,27 @@ export default class Factory {
   }
 
   autoCalculateRates() {
+    this.solverError = null;
     console.clear();
+
+    // applicable factory attributes:
+    // - list of recipes (either game recipes or factories. What matters is a recipe has input parts, output parts, and a set ratio between all parts involved)
+    // - list of output parts (subset of recipe outputs) and desired rate of each part (either static value or maximize)
+
+    // step 1: build one LP variable per recipe which defines that recipe's desired rate
+    // step 2: create constraints/optimizations for each output part: can maximize (as optimization), or set desired output rate (as constraint)
+    // step 3: create constraints/optimizations for each input part: maximize (consumption is negative)
+    // step 4: create constraints for each intermediate part: set to 0
+    // step 5: run solver
+    // if solver found a solution: report
+    // if solver did not find a solution, allow intermediate parts to have a nonzero rate but still minimized:
+    // step 6: remove constraints for each intermediate part. Create additional variables that for each intermediate part:
+    // - Let surplus_p ≥ 0 and deficit_p ≥ 0 absorb positive/negative net rates
+    // - Add the constraint: net_rate_p = surplus_p - deficit_p
+    // - Minimize surplus_p + deficit_p in the objective
+    // step 7: run solver
+    // if solver found a solution: report
+    // if solver did not find a solution: error (not solvable)
 
     type AssemblyLineInfo = {
       assemblyLine: AssemblyLine;
@@ -419,6 +441,7 @@ export default class Factory {
     const result1: SolveResult = raw1.midpoint ?? raw1;
 
     if (result1.feasible) {
+      this.solverError = null;
       this._applyRates(extractRateMap(result1));
       return;
     }
@@ -447,11 +470,34 @@ export default class Factory {
     const result2: SolveResult = raw2.midpoint ?? raw2;
 
     if (result2.feasible) {
+      const imbalanced: string[] = [];
+      for (const slug of intermediateSlugs) {
+        const surplus = (result2[`_surplus_${slug}`] as number) ?? 0;
+        const deficit = (result2[`_deficit_${slug}`] as number) ?? 0;
+        if (surplus > 0.001 || deficit > 0.001) {
+          const name = partSlugLookup[slug]?.name ?? slug;
+          const net = surplus - deficit;
+          imbalanced.push(
+            `${name} (${net > 0 ? "+" : ""}${net.toFixed(1)}/min)`,
+          );
+        }
+      }
+      this.solverError =
+        imbalanced.length > 0
+          ? `Circular recipe dependency: the following intermediate parts cannot be perfectly balanced and will have excess or deficit production: ${imbalanced.join(", ")}.`
+          : null;
       this._applyRates(extractRateMap(result2));
       return;
     }
 
-    console.error("autoCalculateRates2: no feasible solution found");
+    const outputList = [...factoryOutputs.entries()]
+      .map(([slug, rate]) => {
+        const name = partSlugLookup[slug]?.name ?? slug;
+        return `${name} (${rate}/min)`;
+      })
+      .join(", ");
+    this.solverError = `No feasible solution: the output target${factoryOutputs.size !== 1 ? "s" : ""} ${outputList} cannot be satisfied with the current recipe configuration. Check that all required parts have production recipes assigned.`;
+    this.update();
   }
 
   _applyRates(rateMap: Map<AssemblyLine, number>) {

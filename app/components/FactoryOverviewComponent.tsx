@@ -22,6 +22,7 @@ interface FactoryOverviewComponentProps {
   onRebuild: () => void;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
+  onNavigateToFactory?: (id: string) => void;
 }
 
 export default function FactoryOverviewComponent({
@@ -29,6 +30,7 @@ export default function FactoryOverviewComponent({
   onRebuild,
   library,
   currentFactoryId,
+  onNavigateToFactory,
 }: FactoryOverviewComponentProps) {
   const [showIntermediateProducts, setShowIntermediateProducts] =
     useState<boolean>(false);
@@ -45,7 +47,7 @@ export default function FactoryOverviewComponent({
   // and how much of that part they consume.
   const consumersByPartSlug = new Map<
     string,
-    { name: string; rate: number }[]
+    { id: string; name: string; rate: number }[]
   >();
   if (currentFactoryId && library) {
     for (const sf of library.factories) {
@@ -58,7 +60,7 @@ export default function FactoryOverviewComponent({
         const net = rate.consumpionRate - rate.productionRate;
         if (net <= 0.0001) continue;
         const existing = consumersByPartSlug.get(part.slug) ?? [];
-        existing.push({ name: sf.name, rate: net });
+        existing.push({ id: sf.id, name: sf.name, rate: net });
         consumersByPartSlug.set(part.slug, existing);
       }
     }
@@ -135,7 +137,17 @@ export default function FactoryOverviewComponent({
                     key={c.name}
                     className="flex flex-row items-center gap-x-1 pl-1 py-0.5"
                   >
-                    <span className="grow text-sm">{c.name}</span>
+                    {onNavigateToFactory ? (
+                      <button
+                        type="button"
+                        className="grow text-sm text-left underline cursor-pointer hover:opacity-70"
+                        onClick={() => onNavigateToFactory(c.id)}
+                      >
+                        {c.name}
+                      </button>
+                    ) : (
+                      <span className="grow text-sm">{c.name}</span>
+                    )}
                     <span className="text-sm text-right">
                       {displayNum(c.rate)}/min
                     </span>
@@ -208,7 +220,19 @@ export default function FactoryOverviewComponent({
                   {fr.icon && (
                     <Image src={fr.icon} alt={fr.name} width={24} height={24} />
                   )}
-                  <span className="grow font-medium">{fr.name}</span>
+                  {onNavigateToFactory ? (
+                    <button
+                      type="button"
+                      className="grow font-medium text-left underline cursor-pointer hover:opacity-70"
+                      onClick={() =>
+                        onNavigateToFactory(fr.slug.replace("factory:", ""))
+                      }
+                    >
+                      {fr.name}
+                    </button>
+                  ) : (
+                    <span className="grow font-medium">{fr.name}</span>
+                  )}
                   <Tooltip title="Remove supplier">
                     <span>
                       <Clickable

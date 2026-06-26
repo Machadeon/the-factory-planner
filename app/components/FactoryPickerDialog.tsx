@@ -8,7 +8,6 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Image from "next/image";
 import type Factory from "../models/factory";
-import { wouldCreateCycle } from "../models/factory-cycle-detection";
 import type { StorageLibrary } from "../models/factory-storage";
 import { deserializeFactory } from "../models/factory-storage";
 
@@ -31,13 +30,10 @@ export default function FactoryPickerDialog({
 }: FactoryPickerDialogProps) {
   const candidates = library.factories.flatMap((sf) => {
     if (sf.id === currentFactoryId) return [];
-    const isCycle =
-      currentFactoryId != null &&
-      wouldCreateCycle(currentFactoryId, sf.id, library.factories);
     const factory = deserializeFactory(sf, library);
     if (!factory) return [];
     if (!factory.allOutputs().some((p) => p.slug === targetPartSlug)) return [];
-    return [{ sf, factory, isCycle }];
+    return [{ sf, factory }];
   });
 
   return (
@@ -50,11 +46,10 @@ export default function FactoryPickerDialog({
           </p>
         ) : (
           <List disablePadding>
-            {candidates.map(({ sf, factory, isCycle }) => (
+            {candidates.map(({ sf, factory }) => (
               <ListItemButton
                 key={sf.id}
-                disabled={isCycle}
-                onClick={() => !isCycle && onPick(sf.id, sf.name, factory)}
+                onClick={() => onPick(sf.id, sf.name, factory)}
               >
                 {sf.icon && (
                   <Image
@@ -65,10 +60,7 @@ export default function FactoryPickerDialog({
                     className="mr-2"
                   />
                 )}
-                <ListItemText
-                  primary={sf.name}
-                  secondary={isCycle ? "Would create a cycle" : undefined}
-                />
+                <ListItemText primary={sf.name} />
               </ListItemButton>
             ))}
           </List>

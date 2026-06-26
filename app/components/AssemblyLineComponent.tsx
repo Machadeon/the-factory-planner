@@ -16,17 +16,21 @@ interface AssemblyLineComponentProps {
   assemblyLine: AssemblyLine;
   mainPart: Part;
   factory: Factory;
+  onNavigateToFactory?: (id: string) => void;
 }
 
 function NestedFactoryRow({
   assemblyLine,
   factory,
+  onNavigateToFactory,
 }: {
   assemblyLine: AssemblyLine;
   factory: Factory;
+  onNavigateToFactory?: (id: string) => void;
 }) {
   const recipe = assemblyLine.recipe;
   const rate = assemblyLine.rate;
+  const factoryId = recipe.slug.replace("factory:", "");
 
   function updateRate(newRate: number) {
     assemblyLine.rate = newRate;
@@ -35,7 +39,17 @@ function NestedFactoryRow({
 
   return (
     <div className="sp-recipe-component flex flex-row grow items-center gap-x-2 p-2">
-      <span className="w-3xs font-medium">{recipe.name}</span>
+      {onNavigateToFactory ? (
+        <button
+          type="button"
+          className="w-3xs font-medium text-left underline cursor-pointer hover:opacity-70"
+          onClick={() => onNavigateToFactory(factoryId)}
+        >
+          {recipe.name}
+        </button>
+      ) : (
+        <span className="w-3xs font-medium">{recipe.name}</span>
+      )}
       <div className="flex items-center gap-x-1">
         <TextCalculatorField
           variant="outlined"
@@ -86,6 +100,7 @@ export default function AssemblyLineComponent(
       <NestedFactoryRow
         assemblyLine={props.assemblyLine}
         factory={props.factory}
+        onNavigateToFactory={props.onNavigateToFactory}
       />
     );
   }
