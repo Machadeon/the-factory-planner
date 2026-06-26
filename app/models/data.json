@@ -7375,6 +7375,41 @@
             "maxPower": 1,
             "unlockPhase": 4
         },
+        "Recipe_Alternate_DilutedFuel_C": {
+            "slug": "recipe-alternate-dilutedfuel-c",
+            "name": "Alternate: Diluted Fuel",
+            "className": "Recipe_Alternate_DilutedFuel_C",
+            "alternate": true,
+            "time": 6,
+            "inHand": false,
+            "forBuilding": false,
+            "inWorkshop": false,
+            "inMachine": true,
+            "manualTimeMultiplier": 1,
+            "ingredients": [
+                {
+                    "item": "Desc_HeavyOilResidue_C",
+                    "amount": 5
+                },
+                {
+                    "item": "Desc_Water_C",
+                    "amount": 10
+                }
+            ],
+            "products": [
+                {
+                    "item": "Desc_LiquidFuel_C",
+                    "amount": 10
+                }
+            ],
+            "producedIn": [
+                "Desc_Blender_C"
+            ],
+            "isVariablePower": false,
+            "minPower": 0,
+            "maxPower": 1,
+            "unlockPhase": 4
+        },
         "Recipe_Alternate_DilutedPackagedFuel_C": {
             "slug": "recipe-alternate-dilutedpackagedfuel-c",
             "name": "Alternate: Diluted Packaged Fuel",
@@ -9348,41 +9383,6 @@
             ],
             "producedIn": [
                 "Desc_AssemblerMk1_C"
-            ],
-            "isVariablePower": false,
-            "minPower": 0,
-            "maxPower": 1,
-            "unlockPhase": 4
-        },
-        "Recipe_Alternate_DilutedFuel_C": {
-            "slug": "recipe-alternate-dilutedfuel-c",
-            "name": "Alternate: Diluted Fuel",
-            "className": "Recipe_Alternate_DilutedFuel_C",
-            "alternate": true,
-            "time": 6,
-            "inHand": false,
-            "forBuilding": false,
-            "inWorkshop": false,
-            "inMachine": true,
-            "manualTimeMultiplier": 1,
-            "ingredients": [
-                {
-                    "item": "Desc_HeavyOilResidue_C",
-                    "amount": 5
-                },
-                {
-                    "item": "Desc_Water_C",
-                    "amount": 10
-                }
-            ],
-            "products": [
-                {
-                    "item": "Desc_LiquidFuel_C",
-                    "amount": 10
-                }
-            ],
-            "producedIn": [
-                "Desc_Blender_C"
             ],
             "isVariablePower": false,
             "minPower": 0,

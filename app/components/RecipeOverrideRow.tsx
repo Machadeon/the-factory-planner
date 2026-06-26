@@ -14,9 +14,7 @@ export function displayRecipeName(recipe: Recipe): string {
 
 function recipePowerLabel(recipe: Recipe): string {
   if (recipe.customPowerUsage && recipe.building.basePowerUsage === 0) {
-    return `${displayNum(recipe.minPowerUsage ?? 0)}–${displayNum(
-      recipe.maxPowerUsage ?? 0,
-    )} MW`;
+    return `${displayNum(recipe.minPowerUsage ?? 0)}–${displayNum(recipe.maxPowerUsage ?? 0)} MW`;
   }
   return `${displayNum(recipe.building.basePowerUsage)} MW`;
 }

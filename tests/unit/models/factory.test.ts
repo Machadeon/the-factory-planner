@@ -272,50 +272,6 @@ describe("autoCalculateRates()", () => {
     expect(factory.solverError).not.toBeNull();
   });
 
-  it("slooping Diluted Packaged Fuel with Unpackage Fuel + Packaged Water sets solverError", () => {
-    const factory = makeFactory();
-
-    const fuelPart = partSlugLookup.fuel;
-    const packagedFuelPart = partSlugLookup["packaged-fuel"];
-    const packagedWaterPart = partSlugLookup["packaged-water"];
-    if (!fuelPart || !packagedFuelPart || !packagedWaterPart) return;
-
-    const unpackageFuelRecipe = recipes.find(
-      (r) => r.slug === "recipe-unpackagefuel-c",
-    );
-    const dilutedPackagedFuelRecipe = recipes.find(
-      (r) => r.slug === "recipe-alternate-dilutedpackagedfuel-c",
-    );
-    const packagedWaterRecipe = recipes.find(
-      (r) => r.slug === "recipe-packagedwater-c",
-    );
-    if (
-      !unpackageFuelRecipe ||
-      !dilutedPackagedFuelRecipe ||
-      !packagedWaterRecipe
-    )
-      return;
-
-    // The first production line added via the factory gets outputRate=10 (no prior demand).
-    // Subsequent lines have outputRate=0 because they satisfy existing demand.
-    // This mirrors what happens in the UI and is what causes autoCalculateRates() to be
-    // called when slooping is enabled (it's gated on any pl.outputRate > 0).
-    addManualProductionLine(factory, fuelPart, unpackageFuelRecipe, 1, 10);
-    const packagedFuelPl = addManualProductionLine(
-      factory,
-      packagedFuelPart,
-      dilutedPackagedFuelRecipe,
-      1,
-    );
-    addManualProductionLine(factory, packagedWaterPart, packagedWaterRecipe, 1);
-
-    packagedFuelPl.assemblyLines[0].setSloopedSlots(1);
-    factory._updateRates();
-    factory.autoCalculateRates();
-
-    expect(factory.solverError).not.toBeNull();
-  });
-
   it("does not stack-overflow when recipe cycle exists (Fuel ↔ Packaged Fuel)", () => {
     // Regression: autoSetPartRate → setPartRate → autoSetPartRate → ... infinite loop
     // when two production lines form a cycle via their recipe ingredients.

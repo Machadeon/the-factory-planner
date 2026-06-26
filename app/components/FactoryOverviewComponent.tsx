@@ -31,6 +31,7 @@ import PartRateSummary from "./PartRateSummary";
 import RecipeOptimizerOptionsDialog from "./RecipeOptimizerOptionsDialog";
 
 const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
+  minResources: "Min resources",
   sinkPoints: "Max sink points",
   power: "Min power",
   buildings: "Min buildings",

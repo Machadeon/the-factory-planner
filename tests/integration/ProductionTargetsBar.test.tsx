@@ -52,7 +52,7 @@ describe("ProductionTargetsBar", () => {
     const user = userEvent.setup();
     const factory = buildFactory();
     factory.optimizer.targets = [{ partSlug: "power", rate: 100000 }];
-    const solveSpy = vi.spyOn(factory, "autoCalculateRates");
+    const solveSpy = vi.spyOn(factory, "optimizeRecipes");
 
     render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
 

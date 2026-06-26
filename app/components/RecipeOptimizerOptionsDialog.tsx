@@ -47,6 +47,11 @@ const OBJECTIVE_OPTIONS: {
   help?: string;
 }[] = [
   {
+    value: "minResources",
+    label: "Minimum resource consumption",
+    help: "Prefer recipes that ultimately use fewer raw resources to produce the same output. This often uses more power and/or requires more space.",
+  },
+  {
     value: "sinkPoints",
     label: "Maximum AWESOME sink point yield",
     help: "Prefer recipes that use less valuable or fewer inputs to produce the same output. This often uses more power and/or requires more space.",
@@ -166,16 +171,25 @@ export default function RecipeOptimizerOptionsDialog({
   // recipes in it that also pass the phase + building filters; disabling removes
   // every recipe in the category. So enabling "alternate" never re-enables a
   // recipe whose building is off or that is locked above the current phase.
-  function toggleCategory(category: "default" | "alternate", enabled: boolean) {
+  function toggleCategory(
+    category: "default" | "alternate" | "oreConversion",
+    enabled: boolean,
+  ) {
     setConfig((prev) => {
       const next = {
         ...prev,
-        ...(category === "alternate"
-          ? { alternateRecipesEnabled: enabled }
-          : { defaultRecipesEnabled: enabled }),
+        ...(category === "default"
+          ? { defaultRecipesEnabled: enabled }
+          : category === "alternate"
+            ? { alternateRecipesEnabled: enabled }
+            : { oreConversionRecipesEnabled: enabled }),
       };
-      const inCategory = (r: (typeof recipes)[number]) =>
-        category === "alternate" ? r.alternate : !r.alternate;
+      const inCategory = (r: (typeof recipes)[number]) => {
+        if (category === "default") return !r.alternate;
+        if (category === "alternate") return r.alternate;
+        return r.isOreConversionRecipe();
+      };
+
       const affected = enabled
         ? recipes.filter((r) => inCategory(r) && recipeMatchesFilters(next, r))
         : recipes.filter(inCategory);
@@ -219,7 +233,7 @@ export default function RecipeOptimizerOptionsDialog({
 
   function addAvailablePart(slug: string) {
     update({
-      availableParts: [...config.availableParts, { partSlug: slug }],
+      availableParts: [...config.availableParts, { partSlug: slug, rate: 0 }],
     });
     setShowPartSelector(false);
   }
@@ -228,6 +242,14 @@ export default function RecipeOptimizerOptionsDialog({
     update({
       availableParts: config.availableParts.map((p) =>
         p.partSlug === slug ? { ...p, rate } : p,
+      ),
+    });
+  }
+
+  function updateAvailablePartHardLimit(slug: string, hardLimit: boolean) {
+    update({
+      availableParts: config.availableParts.map((p) =>
+        p.partSlug === slug ? { ...p, hardLimit } : p,
       ),
     });
   }
@@ -393,6 +415,19 @@ export default function RecipeOptimizerOptionsDialog({
           }
           label="Alternate recipes"
         />
+        <FormControlLabel
+          control={
+            <Switch
+              disabled={!config.defaultRecipesEnabled}
+              checked={
+                config.defaultRecipesEnabled &&
+                config.oreConversionRecipesEnabled
+              }
+              onChange={(_, v) => toggleCategory("oreConversion", v)}
+            />
+          }
+          label="Ore conversion recipes"
+        />
 
         {/* Buildings */}
         <p className="text-md mt-4">Buildings</p>
@@ -475,11 +510,26 @@ export default function RecipeOptimizerOptionsDialog({
                 size="small"
                 label="Available /min"
                 className="w-32"
-                value={ap.rate ?? ""}
+                value={ap.rate}
                 allowClear
                 onCalculate={(v) => updateAvailablePartRate(ap.partSlug, v)}
                 onClear={() => updateAvailablePartRate(ap.partSlug, undefined)}
               />
+              <Tooltip title="Only this supply is used; the optimizer won't produce more of this part.">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={ap.hardLimit ?? false}
+                      onChange={(_, v) =>
+                        updateAvailablePartHardLimit(ap.partSlug, v)
+                      }
+                    />
+                  }
+                  label={<span className="text-xs">Hard limit</span>}
+                  className="m-0"
+                />
+              </Tooltip>
               <Clickable
                 onClick={() => removeAvailablePart(ap.partSlug)}
                 className="p-1"

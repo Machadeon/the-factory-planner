@@ -1,4 +1,5 @@
 import type Building from "./building";
+import { rawResources } from "./library";
 import type Part from "./part";
 
 export interface RecipePart {
@@ -83,5 +84,12 @@ export default class Recipe {
     } else {
       return this._productLookup[part.slug];
     }
+  }
+
+  isOreConversionRecipe() {
+    return (
+      this.building.slug === "converter" &&
+      this.products.some((p) => rawResources.indexOf(p.part.slug) >= 0)
+    );
   }
 }

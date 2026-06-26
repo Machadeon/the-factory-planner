@@ -420,9 +420,12 @@ The following items are work in addition to the plans above.
 - add the ability to set default constraints for a folder
 - update page URL to enable bookmarks for specific factories and forward/back functionality
 - support custom game modes such as randomized resource nodes, recipe cost, power usage, etc.
+- implement custom part point values
+- set sink point values for all parts
 
 ### Improvements
 
 - Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
-- Constraints dialog should show global defaults
-- Source factories section in RecipeOptimizerOptionsDialog should match "Add available part" style (button that turns into autocomplete)
+- Add "getFootprint()" to the main recipe interface
+- prevent occasional freeze for some optimization runs (run solver on background thread, time out, display error)
+- hide default constraints by default with toggle to show

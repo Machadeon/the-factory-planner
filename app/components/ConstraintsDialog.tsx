@@ -46,8 +46,7 @@ export default function ConstraintsDialog({
     }
   }, [open]);
 
-  const allowedSlugs = new Set([...factory.allParts().map((p) => p.slug)]);
-
+  const allowedSlugs = new Set(parts.map((p) => p.slug));
   const existingSlugs = constraints.map((c) => c.partSlug);
 
   // PartSelector shows all parts minus existingParts — pass everything except allowedSlugs minus existing

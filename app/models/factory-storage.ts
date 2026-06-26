@@ -1,5 +1,6 @@
 import AssemblyLine from "./assembly-line";
 import Factory, {
+  type AvailablePart,
   defaultRecipeOptimizerConfig,
   type PartConstraint,
   type RecipeOptimizerConfig,
@@ -188,10 +189,10 @@ function normalizeRecipeOptimizer(
   if (!raw) return base;
   const rawParts = (raw.availableParts ?? []) as unknown as (
     | string
-    | { partSlug: string; rate?: number }
+    | AvailablePart
   )[];
   const availableParts = rawParts.map((p) =>
-    typeof p === "string" ? { partSlug: p } : p,
+    typeof p === "string" ? { partSlug: p, rate: 0 } : p,
   );
   return { ...base, ...raw, availableParts };
 }

@@ -69,7 +69,7 @@ export default function ProductionTargetsBar({
 
   function solve() {
     factory.optimizeRecipes();
-    factory.autoCalculateRates();
+    factory.update();
   }
 
   return (

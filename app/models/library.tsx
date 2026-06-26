@@ -27,6 +27,16 @@ export const rawResources = [
   "sulfur",
   "sam",
   "uranium",
+  "leaves",
+  "wood",
+  "mycelia",
+  "hog-remains",
+  "spitter-remains",
+  "stinger-remains",
+  "hatcher-remains",
+  "blue-power-slug",
+  "yellow-power-slug",
+  "purple-power-slug",
 ];
 
 export const defaultResourceLimits: Record<string, number> = {
@@ -42,6 +52,17 @@ export const defaultResourceLimits: Record<string, number> = {
   sulfur: 10800,
   sam: 10200,
   uranium: 2100,
+  // organic resources are not automatable so set the global limit to 0
+  wood: 0,
+  leaves: 0,
+  mycelia: 0,
+  "hog-remains": 0,
+  "spitter-remains": 0,
+  "stinger-remains": 0,
+  "hatcher-remains": 0,
+  "blue-power-slug": 0,
+  "yellow-power-slug": 0,
+  "purple-power-slug": 0,
 };
 
 for (const partData of Object.values(data.items)) {
@@ -206,6 +227,30 @@ for (const fuel of parts.filter((p) => p.fuelValue > 0)) {
     ingredientsLookup[ingredient.part.slug] = ingredient.quantity;
   }
 
+  const products = [
+    {
+      part: powerPart,
+      quantity: generator.powerProduction,
+    },
+  ];
+
+  if (fuel.slug === "uranium-fuel-rod") {
+    products.push({
+      part: partSlugLookup["uranium-waste"],
+      quantity: 10, // per minute
+    });
+  } else if (fuel.slug === "plutonium-fuel-rod") {
+    products.push({
+      part: partSlugLookup["plutonium-waste"],
+      quantity: 1, // per minute
+    });
+  }
+
+  const productsLookup: RecipePartLookup = {};
+  for (const product of products) {
+    productsLookup[product.part.slug] = product.quantity;
+  }
+
   const building = buildingLookup[generator.className];
 
   const recipe = new Recipe(
@@ -214,13 +259,8 @@ for (const fuel of parts.filter((p) => p.fuelValue > 0)) {
     `burn-${fuel.slug}`,
     ingredients,
     ingredientsLookup,
-    [
-      {
-        part: powerPart,
-        quantity: generator.powerProduction,
-      },
-    ],
-    { [powerPart.slug]: fuel.fuelValue },
+    products,
+    productsLookup,
     building,
     recipeTime,
     false,
