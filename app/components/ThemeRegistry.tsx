@@ -1,8 +1,8 @@
 "use client";
 
+import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import CssBaseline from "@mui/material/CssBaseline";
 
 export default function ThemeRegistry({
   children,

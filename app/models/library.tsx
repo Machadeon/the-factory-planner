@@ -48,7 +48,10 @@ for (const buildingData of Object.values(data.buildings)) {
   buildingLookup[building.className] = building;
 }
 
-function ingredientToRecipePart(ingredient: any): RecipePart {
+function ingredientToRecipePart(ingredient: {
+  item: string;
+  amount: number;
+}): RecipePart {
   return {
     part: partLookup[ingredient.item],
     quantity: ingredient.amount,

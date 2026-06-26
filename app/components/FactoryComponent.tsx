@@ -18,7 +18,7 @@ interface FactoryComponentProps {
 }
 
 export default function FactoryComponent({ factory }: FactoryComponentProps) {
-  if (factory == undefined) {
+  if (factory === undefined) {
     factory = { products: [] };
   }
 
@@ -43,8 +43,8 @@ export default function FactoryComponent({ factory }: FactoryComponentProps) {
       {productLines.length === 0 ? (
         <p>Add a product to get started</p>
       ) : (
-        productLines.map((product, i) => (
-          <div key={i}>
+        productLines.map((product) => (
+          <div key={product.part.slug}>
             <ProductLineComponent product={product} factory={factory} />
             <Divider />
           </div>
