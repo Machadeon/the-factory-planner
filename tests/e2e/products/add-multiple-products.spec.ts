@@ -13,8 +13,10 @@ test.describe("Adding and Removing Products", () => {
     });
     await page.reload();
 
-    // expect: The main area shows 'Add a product to get started'
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    // expect: The main area shows 'add a product to manually select recipes and rates'
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
 
     // 2. Click 'Add Product', type 'Iron Plate', and select 'Iron Plate'
     await page.getByText("Add Product").click();

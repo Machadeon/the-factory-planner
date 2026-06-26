@@ -38,7 +38,9 @@ test.describe("Factory Library", () => {
     await expect(dialog).not.toBeVisible();
 
     // expect: now on empty factory
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
 
     // 3. Open library again, click 'Factory A'
     await page.getByLabel("Open factory library").click();

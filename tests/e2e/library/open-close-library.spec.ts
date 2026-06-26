@@ -35,6 +35,8 @@ test.describe("Factory Library", () => {
 
     // expect: dialog closes, main factory view visible
     await expect(dialog).not.toBeVisible();
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
   });
 });

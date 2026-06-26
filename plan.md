@@ -424,5 +424,5 @@ The following items are work in addition to the plans above.
 ### Improvements
 
 - Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
-
-### Bugs
+- Constraints dialog should show global defaults
+- Source factories section in AutoFillDialog should match "Add available part" style (button that turns into autocomplete)

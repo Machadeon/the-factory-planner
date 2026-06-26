@@ -13,8 +13,10 @@ test.describe("Adding and Removing Products", () => {
     });
     await page.reload();
 
-    // expect: The main area shows 'Add a product to get started' and an 'Add Product' button
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    // expect: The main area shows 'add a product to manually select recipes and rates' and an 'Add Product' button
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
     await expect(page.getByText("Add Product")).toBeVisible();
     // expect: The overview sidebar shows 'Outputs (0)', 'Inputs (0)', and 'Intermediate Parts (0)'
     await expect(page.getByText("Outputs (0)")).toBeVisible();

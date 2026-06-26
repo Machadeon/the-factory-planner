@@ -569,3 +569,105 @@ describe("serialization — constraints + maximizeOutput", () => {
     expect(restored?.productionLines[0].maximizeOutput).toBe(false);
   });
 });
+
+describe("targetConstraints()", () => {
+  it("maps fixed-rate targets to the fixed map", () => {
+    const factory = makeFactory();
+    factory.autoFill.targets = [{ partSlug: "iron-plate", rate: 20 }];
+    const { fixed, maximize } = factory.targetConstraints();
+    expect(fixed.get("iron-plate")).toBe(20);
+    expect(maximize.size).toBe(0);
+  });
+
+  it("maps maximize targets to the maximize set and ignores their rate", () => {
+    const factory = makeFactory();
+    factory.autoFill.targets = [
+      { partSlug: "iron-plate", rate: 20, maximize: true },
+    ];
+    const { fixed, maximize } = factory.targetConstraints();
+    expect(maximize.has("iron-plate")).toBe(true);
+    expect(fixed.has("iron-plate")).toBe(false);
+  });
+
+  it("ignores fixed targets with missing or non-positive rate", () => {
+    const factory = makeFactory();
+    factory.autoFill.targets = [
+      { partSlug: "iron-plate" },
+      { partSlug: "iron-rod", rate: 0 },
+    ];
+    const { fixed } = factory.targetConstraints();
+    expect(fixed.size).toBe(0);
+  });
+});
+
+describe("autoCalculateRates() — targets", () => {
+  it("a fixed target drives an existing line's rate", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      0, // no per-line output target
+    );
+    pl.autoCalculateRate = true;
+    factory.autoFill.targets = [{ partSlug: "iron-ingot", rate: 30 }];
+
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(pl.rate).toBeCloseTo(30);
+  });
+
+  it("a target overrides a same-slug line outputRate", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      30, // per-line target = 30
+    );
+    pl.autoCalculateRate = true;
+    factory.autoFill.targets = [{ partSlug: "iron-ingot", rate: 10 }];
+
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(pl.rate).toBeCloseTo(10);
+  });
+});
+
+describe("serialization — autoFill targets", () => {
+  const meta = {
+    id: "test-id",
+    name: "Test",
+    folderId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  it("round-trips autoFill.targets", () => {
+    const factory = makeFactory();
+    factory.autoFill.targets = [
+      { partSlug: "power", rate: 100000 },
+      { partSlug: "iron-plate", maximize: true },
+    ];
+
+    const restored = deserializeFactory(serializeFactory(factory, meta));
+    expect(restored?.autoFill.targets).toEqual([
+      { partSlug: "power", rate: 100000 },
+      { partSlug: "iron-plate", maximize: true },
+    ]);
+  });
+
+  it("defaults targets to [] for legacy saves without the field", () => {
+    const factory = makeFactory();
+    const serialized = serializeFactory(factory, meta);
+    // Simulate old save data predating autoFill.targets
+    delete (serialized.autoFill as { targets?: unknown }).targets;
+
+    const restored = deserializeFactory(serialized);
+    expect(restored?.autoFill.targets).toEqual([]);
+  });
+});

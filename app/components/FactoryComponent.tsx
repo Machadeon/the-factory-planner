@@ -48,6 +48,7 @@ import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
 import FactoryOverviewComponent from "./FactoryOverviewComponent";
 import PartSelector from "./PartSelector";
 import ProductionLineComponent from "./ProductionLineComponent";
+import ProductionTargetsBar from "./ProductionTargetsBar";
 import StorageConsentDialog from "./StorageConsentDialog";
 
 type PendingAction = "save" | "openLibrary" | null;
@@ -770,6 +771,12 @@ export default function FactoryComponent() {
 
         <div className="flex flex-row grow">
           <div className="flex flex-col grow">
+            <ProductionTargetsBar
+              factory={currentFactory}
+              library={library}
+              currentFactoryId={currentFactoryId}
+            />
+            <HorizontalDivider />
             {currentFactory.solverError &&
               currentFactory.solverError !== dismissedError && (
                 <Alert
@@ -783,10 +790,9 @@ export default function FactoryComponent() {
                 </Alert>
               )}
             {currentFactory.productionLines.length === 0 ? (
-              <>
-                <p className="p-4">Add a product to get started</p>
-                <HorizontalDivider />
-              </>
+              <p className="p-4 pb-1 text-gray-400 text-sm">
+                Or, add a product to manually select recipes and rates
+              </p>
             ) : (
               currentFactory.productionLines.map((product) => (
                 <div key={product.part.slug}>
@@ -814,11 +820,11 @@ export default function FactoryComponent() {
               />
             ) : (
               <Clickable
-                className="flex min-w-full items-center p-4"
+                className="flex flex-row items-center p-1 mx-4 grow-x"
                 onClick={() => setAddingProduct(true)}
               >
-                <AddIcon />
-                Add Product
+                <AddIcon fontSize="small" />
+                <span className="text-sm ml-1">Add product</span>
               </Clickable>
             )}
           </div>

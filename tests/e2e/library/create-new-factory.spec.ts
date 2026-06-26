@@ -26,9 +26,11 @@ test.describe("Factory Library", () => {
 
     await page.getByLabel("New factory").click();
 
-    // expect: dialog closes, main area resets to 'Add a product to get started'
+    // expect: dialog closes, main area resets to 'add a product to manually select recipes and rates'
     await expect(dialog).not.toBeVisible();
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
 
     // expect: factory name resets to 'Unnamed Factory'
     await expect(

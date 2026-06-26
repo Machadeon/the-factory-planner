@@ -44,6 +44,15 @@ export interface AvailablePart {
   rate?: number;
 }
 
+/** A declared production goal: a part the factory should output. */
+export interface Target {
+  partSlug: string;
+  /** Fixed output rate (/min, or MW for power). Ignored when maximize=true. */
+  rate?: number;
+  /** Maximize this part's output instead of pinning a fixed rate. */
+  maximize?: boolean;
+}
+
 /**
  * User-configurable settings for the auto-fill recipes feature. The
  * recipe-selection algorithm that consumes these lives separately; this config
@@ -56,6 +65,8 @@ export interface AutoFillConfig {
   objective: ScoringObjective;
   /** Parts preferred as already-available inputs, with optional supply rate. */
   availableParts: AvailablePart[];
+  /** Declared production goals that drive the solver, independent of lines. */
+  targets: Target[];
   /** Source factory ids whose outputs are treated as available. */
   availableFactoryIds: string[];
   /** Game phase ceiling for recipe unlocks. */
@@ -85,6 +96,7 @@ export function defaultAutoFillConfig(): AutoFillConfig {
     eager: false,
     objective: "sinkPoints",
     availableParts: [],
+    targets: [],
     availableFactoryIds: [],
     phase: MAX_GAME_PHASE,
     defaultRecipesEnabled: true,
@@ -269,6 +281,31 @@ export default class Factory {
   autoFillProductionLines() {
     // TODO: implement LP-based recipe selection. No-op for now so the UI wiring
     // (Run button, eager mode) is in place ahead of the algorithm.
+    //
+    // Contract for the future algorithm: call targetConstraints() to get the
+    // declared goals, expand LP variables over recipeLookup filtered by
+    // autoFill.enabledRecipes (respecting availableParts as free inputs, phase,
+    // and objective), emit { equal: rate } for each fixed target and
+    // opType "max" for each maximize target, materialize the chosen recipes into
+    // ProductionLine/AssemblyLine objects, then call this.update().
+  }
+
+  /**
+   * Translate declared {@link Target}s into solver inputs:
+   *  - fixed-rate target -> equality constraint { equal: rate }
+   *  - maximize target    -> membership in the maximize set (opType "max")
+   * The single contract both the rate solver and the recipe-selection algorithm
+   * consume. Targets are independent of production lines.
+   */
+  targetConstraints(): { fixed: Map<string, number>; maximize: Set<string> } {
+    const fixed = new Map<string, number>();
+    const maximize = new Set<string>();
+    for (const t of this.autoFill.targets) {
+      if (t.maximize) maximize.add(t.partSlug);
+      else if (t.rate !== undefined && t.rate > 0)
+        fixed.set(t.partSlug, t.rate);
+    }
+    return { fixed, maximize };
   }
 
   /** True when rejecting a suggestion should prompt the user. */
@@ -609,6 +646,13 @@ export default class Factory {
         });
       }
     }
+
+    // Merge declared targets into the same maps the per-line settings feed.
+    // Applied after the line loop so a target overrides a same-slug line.
+    const { fixed: targetFixed, maximize: targetMax } =
+      this.targetConstraints();
+    for (const [slug, rate] of targetFixed) factoryOutputs.set(slug, rate);
+    for (const slug of targetMax) maximizeSlugs.add(slug);
 
     const intermediateSlugs = new Set(
       [...allOutputSlugs].filter((s) => allInputSlugs.has(s)),

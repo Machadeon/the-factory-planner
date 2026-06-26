@@ -22,8 +22,10 @@ test.describe("Factory Toolbar Actions", () => {
     // 2. Click 'Clear factory' button (trash icon) in top toolbar
     await page.getByLabel("Clear factory").click();
 
-    // expect: factory cleared, main area shows 'Add a product to get started'
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    // expect: factory cleared, main area shows 'add a product to manually select recipes and rates'
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
     // expect: sidebar resets to Outputs (0), Inputs (0)
     await expect(page.getByText("Outputs (0)")).toBeVisible();
     await expect(page.getByText("Inputs (0)")).toBeVisible();
@@ -131,7 +133,9 @@ test.describe("Factory Toolbar Actions", () => {
     await expect(
       page.getByRole("dialog", { name: "Clear factory?" }),
     ).not.toBeVisible();
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
     // expect: Outputs and Inputs reset
     await expect(page.getByText("Outputs (0)")).toBeVisible();
     await expect(page.getByText("Inputs (0)")).toBeVisible();
@@ -170,7 +174,9 @@ test.describe("Factory Toolbar Actions", () => {
     await expect(
       page.getByRole("dialog", { name: "Clear factory?" }),
     ).not.toBeVisible();
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
     // expect: Outputs and Inputs reset
     await expect(page.getByText("Outputs (0)")).toBeVisible();
     await expect(page.getByText("Inputs (0)")).toBeVisible();

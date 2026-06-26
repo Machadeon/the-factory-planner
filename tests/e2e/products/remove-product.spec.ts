@@ -13,8 +13,10 @@ test.describe("Adding and Removing Products", () => {
     });
     await page.reload();
 
-    // expect: The main area shows 'Add a product to get started'
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    // expect: The main area shows 'add a product to manually select recipes and rates'
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
 
     // 2. Click 'Add Product', type 'Iron Plate', and select 'Iron Plate' from the dropdown
     await page.getByText("Add Product").click();
@@ -30,8 +32,10 @@ test.describe("Adding and Removing Products", () => {
     // 3. Click the 'Remove product' button (trash icon) at the far right of the Iron Plate production line header
     await page.getByLabel("Remove product").click();
 
-    // expect: The Iron Plate production line is removed and the main area shows 'Add a product to get started' again
-    await expect(page.getByText("Add a product to get started")).toBeVisible();
+    // expect: The Iron Plate production line is removed and the main area shows 'add a product to manually select recipes and rates' again
+    await expect(
+      page.getByText("add a product to manually select recipes and rates"),
+    ).toBeVisible();
     await expect(page.getByText("Iron Plate")).not.toBeVisible();
 
     // expect: The overview sidebar resets to 'Outputs (0)', 'Inputs (0)'
