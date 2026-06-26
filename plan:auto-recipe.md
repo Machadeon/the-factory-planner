@@ -96,12 +96,12 @@ purely on default map part limits (sink points include part limits as well as te
 For example, Raw Quartz has a sink point value of 15 and a global limit of 13,500 parts per minute. However, Bauxite has
 a sink point value of only 8 but has a lower global limit of 12,300 parts per minute. This means that there are over
 double the sink points per minute of Raw Quartz available when compared to Bauxite. A different way of scoring these
-parts could be to ensure all raw resources have the same global maximum sink points per limit. If Raw Quartz stayed at
-15 points, this would make Bauxite worth 16.46 points.
+parts could be to ensure all raw resources have the same global maximum sink points. If Raw Quartz stayed at 15 points,
+this would make Bauxite worth 16.46 points.
 
 Additionally, point value for constructed parts could be calculated while ignoring things like power and space used and
-be nothing more than the sum of the parts used to construct it. The average of all recipes could be taken or some other
-heuristic.
+be nothing more than the sum of the parts used to construct it. The average of all recipes for the part could be taken
+or some other heuristic.
 
 Ultimately the optimization approach is to minimize the total value of a factory's inputs.
 
