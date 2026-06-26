@@ -1,0 +1,13 @@
+{
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "files": {
+    "includes": ["**", "!.next"]
+  },
+  "formatter": {
+    "indentStyle": "space"
+  }
+}
