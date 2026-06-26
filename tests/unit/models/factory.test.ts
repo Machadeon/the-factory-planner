@@ -442,10 +442,9 @@ describe("autoCalculateRates() — maximize output (Item 8)", () => {
 
     expect(factory.solverError).toBeNull();
     expect(pl.rate).toBeCloseTo(60);
-    expect(pl.outputRate).toBeCloseTo(60);
   });
 
-  it("maximizeOutput writes solved rate back to outputRate", () => {
+  it("maximizeOutput solves for constrained rate", () => {
     const factory = makeFactory();
     const pl = addManualProductionLine(
       factory,
@@ -458,7 +457,7 @@ describe("autoCalculateRates() — maximize output (Item 8)", () => {
     factory.constraints = [{ partSlug: "iron-ore", max: 20 }];
     factory.autoCalculateRates();
 
-    expect(pl.outputRate).toBeCloseTo(pl.rate);
+    expect(pl.rate).toBeCloseTo(20);
   });
 
   it("maximizeOutput bounded by DEFAULT_RESOURCE_LIMITS when no user constraint", () => {
@@ -511,8 +510,8 @@ describe("autoCalculateRates() — maximize output (Item 8)", () => {
     expect(factory.solverError).toBeNull();
     // All ore should be consumed (LP maximizes until hitting constraint)
     expect(ironIngotPl.rate).toBeCloseTo(30);
-    // Maximize lines write back outputRate
-    expect(ironRodPl.outputRate).toBeGreaterThan(0);
+    // Both maximize lines are solved
+    expect(ironRodPl.rate).toBeGreaterThan(0);
   });
 });
 

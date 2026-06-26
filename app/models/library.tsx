@@ -58,12 +58,33 @@ for (const partData of Object.values(data.items)) {
     sinkable: partData.sinkPoints > 0,
     color: `rgba(${partData.fluidColor.r}, ${partData.fluidColor.g}, ${partData.fluidColor.b}, ${partData.fluidColor.a})`,
     isRawResource: rawResources.indexOf(partData.slug) >= 0,
+    fuelValue: partData.energyValue,
   };
 
   parts.push(part);
   partLookup[part.className] = part;
   partSlugLookup[part.slug] = part;
 }
+
+const powerPart: Part = {
+  name: "Power",
+  className: "Power",
+  slug: "power",
+  iconSmall: "/images/items/power_192.png",
+  iconLarge: "/images/items/power_192.png",
+  fluid: false,
+  gas: false,
+  description: "Power (MW)",
+  stackSize: 100,
+  sinkPoints: 0,
+  sinkable: false,
+  color: `rgba(255,255,255,0)`,
+  isRawResource: false,
+  fuelValue: 0,
+};
+parts.push(powerPart);
+partLookup.Power = powerPart;
+partSlugLookup.power = powerPart;
 
 parts.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -83,7 +104,11 @@ const somersloopSlots: Record<string, number> = {
 };
 
 for (const buildingData of Object.values(data.buildings)) {
-  if (buildingData.metadata.manufacturingSpeed === 0) continue;
+  if (
+    buildingData.metadata.manufacturingSpeed === 0 &&
+    buildingData.className.indexOf("Desc_Generator") !== 0
+  )
+    continue;
 
   const building: Building = {
     name: buildingData.name,
@@ -154,3 +179,77 @@ for (const recipeData of Object.values(data.recipes)) {
     }
   }
 }
+
+interface Generator {
+  className: string;
+  fuel: string[];
+  powerProduction: number;
+  powerProductionExponent: number;
+  waterToPowerRatio: number;
+}
+
+const generatorLookup: { [className: string]: Generator } = {};
+for (const generator of Object.values(data.generators)) {
+  for (const fuel of generator.fuel) {
+    generatorLookup[fuel] = generator;
+  }
+}
+
+for (const fuel of parts.filter((p) => p.fuelValue > 0)) {
+  const generator = generatorLookup[fuel.className];
+  if (!generator) continue;
+
+  const recipeTime = fuel.fuelValue / generator.powerProduction;
+  const recipesPerMinute = 60 / recipeTime;
+  const ingredients = [
+    {
+      part: fuel,
+      quantity: recipesPerMinute,
+    },
+  ];
+
+  if (generator.waterToPowerRatio > 0) {
+    const waterNeeds = generator.powerProduction * generator.waterToPowerRatio;
+
+    ingredients.push({
+      part: partSlugLookup.water,
+      quantity: waterNeeds,
+    });
+  }
+
+  const ingredientsLookup: RecipePartLookup = {};
+  for (const ingredient of ingredients) {
+    ingredientsLookup[ingredient.part.slug] = ingredient.quantity;
+  }
+
+  const recipe = new Recipe(
+    `Burn ${fuel.name}`,
+    `Burn_${fuel.className}`,
+    `burn-${fuel.slug}`,
+    ingredients,
+    ingredientsLookup,
+    [
+      {
+        part: powerPart,
+        quantity: generator.powerProduction,
+      },
+    ],
+    { [powerPart.slug]: fuel.fuelValue },
+    buildingLookup[generator.className],
+    recipeTime,
+    false,
+  );
+
+  recipes.push(recipe);
+
+  for (const product of recipe.products) {
+    const slug = product.part.slug;
+    if (recipeLookup[slug]) {
+      recipeLookup[slug] = [...recipeLookup[slug], recipe];
+    } else {
+      recipeLookup[slug] = [recipe];
+    }
+  }
+}
+
+// console.log(recipes[0]);

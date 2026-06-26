@@ -520,7 +520,12 @@ export default class Factory {
       // no parts maximized, minimize raw resources and intermediate products
       model.optimize = {};
       for (const slug of rawInputSlugs) {
-        model.optimize[`_raw_${slug}`] = "min";
+        const rawSlug = `_raw_${slug}`;
+        if (rawSlug in constraints) {
+          model.optimize[rawSlug] = "min";
+        } else {
+          model.optimize[slug] = "max";
+        }
       }
 
       for (const slug of intermediateSlugs) {
@@ -528,16 +533,19 @@ export default class Factory {
       }
     }
 
-    console.debug("Solver v3 model:", JSON.stringify(model, null, 2));
+    console.debug("Solver v3 model:", JSON.stringify(model));
     const start1 = performance.now();
     const raw1 = solver.Solve(model as ModelDefinition);
     console.debug(`solver-v3: ${(performance.now() - start1).toFixed(2)}ms`);
-    console.debug("Solver v3 result:", JSON.stringify(raw1, null, 2));
+    console.debug("Solver v3 result:", JSON.stringify(raw1));
 
     // @ts-expect-error
     const solution: SolveResult = raw1.midpoint ?? raw1;
 
-    if (solution.feasible) {
+    const actuallyFeasible =
+      (solution as SolveResult & { feasible?: boolean }).feasible !== false &&
+      Object.keys(solution).some((k) => k.indexOf("al_") === 0);
+    if (actuallyFeasible) {
       // extract rates
       const map = new Map<AssemblyLine, number>();
       for (const { assemblyLine, varName } of assemblyLineInfos) {
@@ -569,6 +577,58 @@ export default class Factory {
 
       this.solverError = null;
       this._applyRates(map);
+
+      // wait until after changes are applied and verify constraints are met
+      setTimeout(() => {
+        var rate: Rate;
+        var part: Part;
+        const existingSolverError = this.solverError;
+        const errors = [];
+
+        for (const [partSlug, constraint] of Object.entries(constraints)) {
+          if (partSlug.indexOf("_raw_") === 0) {
+            const realPartSlug = partSlug.substring(5);
+            rate = this.rateLookup[realPartSlug];
+            rate.consumptionRate = -rate.consumptionRate;
+            rate.productionRate = -rate.productionRate;
+
+            part = partSlugLookup[realPartSlug];
+          } else {
+            rate = this.rateLookup[partSlug];
+            part = partSlugLookup[partSlug];
+          }
+
+          if (!rate) continue;
+          if (!part) {
+            console.warn("Unable to find part for constraint", partSlug);
+            continue;
+          }
+
+          const netRate = rate.productionRate - rate.consumptionRate;
+          if (constraint.min && constraint.min - netRate > 0.0001) {
+            errors.push(
+              `${part.name} must be ${constraint.min}/min or greater, but is ${netRate}/min`,
+            );
+          } else if (constraint.max && constraint.max - netRate < -0.0001) {
+            errors.push(
+              `${part.name} must be ${constraint.max}/min or less, but is ${netRate}/min`,
+            );
+          } else if (
+            constraint.equal &&
+            Math.abs(constraint.equal - netRate) > 0.0001
+          ) {
+            errors.push(
+              `${part.name} must be exactly ${constraint.min}/min, but is ${netRate}/min`,
+            );
+          }
+        }
+
+        if (errors.length > 0) {
+          this.solverError = `No feasible solution! One or more constraints could not be satisified: ${errors.join("; ")}.`;
+          if (this.solverError !== existingSolverError) this.update();
+        }
+      });
+
       return;
     }
 
@@ -582,7 +642,7 @@ export default class Factory {
         return `${name} (maximize)`;
       }),
     ];
-    this.solverError = `No feasible solution: the output target${outputList.length !== 1 ? "s" : ""} ${outputList.join(", ")} cannot be satisfied with the current recipe configuration. Check that all required parts have production recipes assigned.`;
+    this.solverError = `No feasible solution: the output target${outputList.length !== 1 ? "s" : ""} ${outputList.join(", ")} cannot be satisfied with the current recipe configuration.`;
     this.update();
   }
 
@@ -662,9 +722,6 @@ export default class Factory {
         },
         0,
       );
-      if (productionLine.maximizeOutput) {
-        productionLine.outputRate = productionLine.rate;
-      }
     }
 
     this.update();

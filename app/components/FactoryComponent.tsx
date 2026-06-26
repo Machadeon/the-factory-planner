@@ -12,7 +12,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Factory from "../models/factory";
 import {
   deserializeFactory,
@@ -86,6 +86,35 @@ export default function FactoryComponent() {
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
   const prevSolverErrorRef = useRef<string | null | undefined>(undefined);
+
+  const otherFactoriesKey = useMemo(
+    () =>
+      JSON.stringify(
+        library.factories
+          .filter((sf) => sf.id !== currentFactoryId)
+          .map((sf) => {
+            return {
+              id: sf.id,
+              products: sf.productionLines
+                .filter((pl) => pl.outputRate > 0)
+                .map((pl) => pl.partSlug),
+            };
+          }),
+      ),
+    [library.factories, currentFactoryId],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only update when the lookup key updates
+  const deserializedOtherFactories = useMemo(
+    () =>
+      library.factories.flatMap((sf) => {
+        if (sf.id === currentFactoryId) return [];
+        const f = deserializeFactory(sf, library);
+        if (!f) return [];
+        return [{ sf, factory: f }];
+      }),
+    [otherFactoriesKey],
+  );
 
   factory.update = () => {
     factory._updateRates();
@@ -683,6 +712,7 @@ export default function FactoryComponent() {
                     factory={currentFactory}
                     library={library}
                     currentFactoryId={currentFactoryId}
+                    candidateFactories={deserializedOtherFactories}
                     onDeleteClicked={() => removeProductionLine(product.part)}
                     forceExpanded={forceExpanded}
                     onToggle={() => setForceExpanded(null)}

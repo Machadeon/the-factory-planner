@@ -41084,7 +41084,7 @@
             ],
             "powerProduction": 75,
             "powerProductionExponent": 1.6,
-            "waterToPowerRatio": 10.0
+            "waterToPowerRatio": 0.6
         },
         "Desc_GeneratorNuclear_C": {
             "className": "Desc_GeneratorNuclear_C",
@@ -41095,7 +41095,7 @@
             ],
             "powerProduction": 2500,
             "powerProductionExponent": 1.6,
-            "waterToPowerRatio": 1.6
+            "waterToPowerRatio": 0.096
         },
         "Desc_GeneratorFuel_C": {
             "className": "Desc_GeneratorFuel_C",

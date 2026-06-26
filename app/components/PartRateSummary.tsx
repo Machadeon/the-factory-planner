@@ -69,7 +69,9 @@ export default function PartRateSummary({
         />
         <span className="grow text-sm">{part.name}</span>
         <span className="text-sm text-right min-w-16">
-          {netRateDisplay}/min
+          {part.slug === "power"
+            ? `${netRateDisplay} MW`
+            : `${netRateDisplay}/min`}
         </span>
         {netRate < 0 && !hideActions && !showDetail && (
           <>

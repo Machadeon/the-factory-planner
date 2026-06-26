@@ -12,4 +12,5 @@ export default interface Part {
   sinkable: boolean;
   color: string;
   isRawResource: boolean;
+  fuelValue: number;
 }

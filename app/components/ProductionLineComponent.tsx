@@ -10,13 +10,13 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
-import {
-  deserializeFactory,
-  type StorageLibrary,
+import type {
+  SerializedFactory,
+  StorageLibrary,
 } from "../models/factory-storage";
 import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
@@ -38,6 +38,7 @@ interface ProductionLineComponentProps {
   factory: Factory;
   library: StorageLibrary;
   currentFactoryId: string | null;
+  candidateFactories: Array<{ sf: SerializedFactory; factory: Factory }>;
   onDeleteClicked: () => void;
   forceExpanded?: boolean | null;
   onToggle?: () => void;
@@ -64,20 +65,17 @@ export default function ProductionLineComponent(
     props.productionLine.assemblyLines.length <
     recipeLookup[props.productionLine.part.slug].length;
 
-  const factoryCandidates = props.library.factories.flatMap((sf) => {
-    if (sf.id === props.currentFactoryId) return [];
-    const f = deserializeFactory(sf, props.library);
-    if (!f) return [];
-    if (!f.allOutputs().some((p) => p.slug === part.slug)) return [];
-    if (
-      props.productionLine.assemblyLines.some(
-        (al) => al.recipe.slug === `factory:${sf.id}`,
-      )
-    ) {
-      return [];
-    }
-    return [{ sf, factory: f }];
-  });
+  const factoryCandidates = useMemo(
+    () =>
+      props.candidateFactories.filter(
+        ({ sf, factory: f }) =>
+          f.allOutputs().some((p) => p.slug === part.slug) &&
+          !props.productionLine.assemblyLines.some(
+            (al) => al.recipe.slug === `factory:${sf.id}`,
+          ),
+      ),
+    [props.candidateFactories, part.slug, props.productionLine.assemblyLines],
+  );
 
   const [expanded, setExpanded] = useState<boolean>(
     props.productionLine.assemblyLines.length !== 1 ||
@@ -232,6 +230,13 @@ export default function ProductionLineComponent(
     }
   }, [props.forceExpanded]);
 
+  var outputRateDisplay: number;
+  if (props.productionLine.maximizeOutput) {
+    outputRateDisplay = props.productionLine.rate;
+  } else {
+    outputRateDisplay = props.productionLine.outputRate;
+  }
+
   return (
     <div className="flex flex-col gap-y-2 grow">
       <Clickable
@@ -255,7 +260,7 @@ export default function ProductionLineComponent(
               label="Factory Output Rate"
               className="w-40"
               disabled
-              value={displayNum(props.productionLine.outputRate)}
+              value={outputRateDisplay}
               slotProps={{
                 htmlInput: { className: "text-right" },
               }}
@@ -266,7 +271,7 @@ export default function ProductionLineComponent(
               size="small"
               label="Factory Output Rate"
               className="w-40"
-              value={props.productionLine.outputRate}
+              value={outputRateDisplay}
               onCalculate={updateOutputRate}
               onClick={(e) => e.stopPropagation()}
               slotProps={{
@@ -308,7 +313,7 @@ export default function ProductionLineComponent(
               }}
             />
           )}
-          <span>/min</span>
+          <span>{part.slug === "power" ? <> MW</> : "/min"}</span>
           {props.productionLine.autoCalculateRate ? (
             <Tooltip title="Override rate">
               <span>
@@ -351,7 +356,7 @@ export default function ProductionLineComponent(
           <span className={`font-bold ${actualProductionRateTextColorClass}`}>
             {displayNum(actualProductionRate)}
           </span>
-          /min
+          {part.slug === "power" ? <> MW</> : "/min"}
           <span className={`font-bold ${actualProductionRateTextColorClass}`}>
             {productionRateDiffStr}
           </span>

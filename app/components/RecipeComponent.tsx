@@ -82,7 +82,7 @@ export default function RecipeComponent({
       <div className="w-2xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.ingredients.flatMap((ing) => [
           <span className="text-right" key={`ing-${ing.part.slug}-quantity`}>
-            {ing.quantity}x
+            {displayNum(ing.quantity)}x
           </span>,
           <Tooltip
             enterDelay={500}
@@ -156,8 +156,13 @@ export default function RecipeComponent({
       <EastIcon />
       <div className="w-3xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.products.flatMap((prod) => [
-          <span className="text-right" key={`prod-${prod.part.slug}-quantity`}>
-            {prod.quantity}x
+          <span
+            className="text-right whitespace-nowrap"
+            key={`prod-${prod.part.slug}-quantity`}
+          >
+            {prod.part.slug === "power"
+              ? `${displayNum(prod.quantity)} MW`
+              : `${displayNum(prod.quantity)}x`}
           </span>,
           <Tooltip
             enterDelay={500}
