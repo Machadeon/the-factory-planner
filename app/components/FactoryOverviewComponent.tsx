@@ -113,12 +113,22 @@ export default function FactoryOverviewComponent({
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <div
-                  className={`text-xs mb-1 ${overAllocated ? "text-red-400" : "text-gray-400"}`}
-                >
-                  {displayNum(totalConsumed)}/{displayNum(produced)}/min
-                  consumed
-                  {!overAllocated && ` · ${displayNum(unused)}/min unused`}
+                <div className="text-xs mb-1">
+                  <span className="text-gray-400">
+                    {displayNum(totalConsumed)}/{displayNum(produced)}/min
+                    consumed
+                  </span>
+                  {overAllocated ? (
+                    <span className="text-red-400">
+                      {" "}
+                      · {displayNum(totalConsumed - produced)}/min unfulfilled
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">
+                      {" "}
+                      · {displayNum(unused)}/min unused
+                    </span>
+                  )}
                 </div>
                 {consumers.map((c) => (
                   <div
@@ -226,16 +236,17 @@ export default function FactoryOverviewComponent({
                     return (
                       <div
                         key={rp.part.slug}
-                        className="flex flex-row items-center gap-x-1 pl-1 py-0.5"
+                        className="flex flex-row items-center gap-x-1 pl-4 py-0.5"
                       >
                         <Image
                           src={rp.part.iconSmall}
                           alt={rp.part.name}
                           width={24}
                           height={24}
+                          className="shrink-0"
                         />
                         <span className="grow text-sm">{rp.part.name}</span>
-                        <span className="text-sm text-right">
+                        <span className="text-sm text-right whitespace-nowrap">
                           {displayNum(demanded)} of {displayNum(rp.quantity)}
                           /min
                         </span>

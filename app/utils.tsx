@@ -1,8 +1,9 @@
 export function displayNum(num: number): string {
-  return num.toLocaleString(undefined, {
+  const result = num.toLocaleString(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
   });
+  return result === "-0" ? "0" : result;
 }
 
 export function getColorClassForProductionRate1(rate: number): string {

@@ -90,7 +90,8 @@ export default function ProductionLineComponent(
   );
 
   const recipeIsSet = props.productionLine.assemblyLines.length > 0;
-  const isExpanded = props.forceExpanded === true || !recipeIsSet ? true : expanded;
+  const isExpanded =
+    props.forceExpanded === true || !recipeIsSet ? true : expanded;
   const [showRecipes, setShowRecipes] = useState<boolean>(false);
 
   function getProductionRateForRecipe(recipe: Recipe): number {
@@ -329,7 +330,8 @@ export default function ProductionLineComponent(
                   factory={props.factory}
                 />
                 {recipeList.length !== 1 ||
-                assemblyLine.recipe.isFactoryRecipe ? (
+                assemblyLine.recipe.isFactoryRecipe ||
+                props.productionLine.assemblyLines.length > 1 ? (
                   <Tooltip title="Remove recipe">
                     <span>
                       <Clickable
@@ -350,21 +352,21 @@ export default function ProductionLineComponent(
             <div className="flex flex-row items-center gap-x-2">
               <Clickable
                 onClick={splitRecipes}
-                className="flex flex-row items-center"
+                className="flex flex-row items-center p-1"
               >
                 <AddIcon />
                 Add Recipe
               </Clickable>
               <Clickable
                 onClick={() => setShowFactoryPicker(true)}
-                className="flex flex-row items-center"
+                className="flex flex-row items-center p-1"
               >
                 <AddIcon />
-                Use Factory
+                Use Factory as Recipe
               </Clickable>
               <Clickable
                 onClick={() => setShowSupplyPicker(true)}
-                className="flex flex-row items-center"
+                className="flex flex-row items-center p-1"
               >
                 <AddIcon />
                 Supply from Factory
@@ -375,14 +377,14 @@ export default function ProductionLineComponent(
             <div className="flex flex-row items-center gap-x-2">
               <Clickable
                 onClick={() => setShowFactoryPicker(true)}
-                className="flex flex-row items-center"
+                className="flex flex-row items-center p-1"
               >
                 <AddIcon />
-                Use Factory
+                Use Factory as Recipe
               </Clickable>
               <Clickable
                 onClick={() => setShowSupplyPicker(true)}
-                className="flex flex-row items-center"
+                className="flex flex-row items-center p-1"
               >
                 <AddIcon />
                 Supply from Factory

@@ -21,14 +21,13 @@ committed via `factory.update()`).
   belts and pipes)
 - Properly handle partial slooping (Power multiplier = (1 + filled slots / total slots)^2)
 - We want to enable factories to supply each other, i.e. cycles
+- add the ability to view the source JSON for a factory
+- Adjust the sidebar so the buttons for each factory are contained in a dropdown. Also ensure the factory icons and
+  names are left aligned
 
 ### Bugs to fix
 
-- Ensure nothing displays "negative zero" (`-0`). Current sample is in the consumers list in FactoryOverviewComponent.
-- Increase indentation of parts lines within suppliers list - currently it's hard to tell the difference between a
-  factory row and a part row.
-- No padding in "Add Recipe", "Use Factory", and "Supply from Factory" buttons. Adjust to match other buttons
-- Rename "Use Factory" button to "Use Factory as Recipe"
+- _(none currently identified)_
 
 ---
 

@@ -3,7 +3,12 @@
 import TextField, {
   type OutlinedTextFieldProps,
 } from "@mui/material/TextField";
-import { type FocusEvent, type KeyboardEvent, useState } from "react";
+import {
+  type FocusEvent,
+  type KeyboardEvent,
+  useEffect,
+  useState,
+} from "react";
 import { calculate as evaluateExpression } from "../utils";
 
 export interface TextCalculatorFieldProps extends OutlinedTextFieldProps {
@@ -16,6 +21,15 @@ export default function TextCalculatorField({
 }: TextCalculatorFieldProps) {
   const [value, setValue] = useState<string>(`${other.value}`);
   const [error, setError] = useState<boolean>(false);
+  const [focused, setFocused] = useState(false);
+
+  // Sync internal display value when the external prop changes (e.g. after LP solver runs)
+  // but only while the field is not being actively edited.
+  useEffect(() => {
+    if (!focused) {
+      setValue(`${other.value}`);
+    }
+  }, [other.value, focused]);
 
   function parseValue(value: string): number {
     const result = evaluateExpression(value);
@@ -56,7 +70,13 @@ export default function TextCalculatorField({
   }
 
   function handleFocus(event: FocusEvent<HTMLInputElement>) {
+    setFocused(true);
     event.target.select();
+  }
+
+  function handleBlur() {
+    setFocused(false);
+    finalize();
   }
 
   return (
@@ -67,7 +87,7 @@ export default function TextCalculatorField({
       onFocus={handleFocus}
       onKeyDown={onKeyDown}
       onChange={(e) => setValue(e.target.value)}
-      onBlur={finalize}
+      onBlur={handleBlur}
     />
     // TODO: add calculate/reset buttons
   );

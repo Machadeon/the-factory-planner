@@ -10,7 +10,6 @@ import type AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
 import ProductionLine from "./production-line";
-import type { RecipeLike } from "./recipe-like";
 
 export interface Rate {
   consumpionRate: number;
@@ -313,117 +312,166 @@ export default class Factory {
   autoCalculateRates() {
     console.clear();
 
-    const recipeOutputs = new Set<Part>();
-    const recipeInputs = new Set<Part>();
-    const factoryOutputs = new Set<[Part, number]>();
-    const allRecipes = new Set<RecipeLike>();
-    const assemblyLineLookup = new Map<string, AssemblyLine>();
-
-    // step 1: determine included parts
-    for (const productionLine of this.productionLines) {
-      if (productionLine.outputRate > 0) {
-        factoryOutputs.add([productionLine.part, productionLine.outputRate]);
-      }
-
-      for (const assemblyLine of productionLine.assemblyLines) {
-        allRecipes.add(assemblyLine.recipe);
-        assemblyLineLookup.set(assemblyLine.recipe.slug, assemblyLine);
-
-        for (const ingredient of assemblyLine.recipe.ingredients) {
-          recipeInputs.add(ingredient.part);
-        }
-
-        for (const product of assemblyLine.recipe.products) {
-          recipeOutputs.add(product.part);
-        }
-      }
-    }
-
-    const intermediateParts = recipeOutputs.intersection(recipeInputs);
-    const factoryInputs = recipeInputs.difference(intermediateParts);
-
-    const optimize: Record<string, ObjectiveDirection> = {};
-    for (const part of factoryInputs) {
-      if (part.slug === "water") continue; // do we really need to minimize our water usage?
-
-      optimize[part.slug] = "max"; // input values are negative so we want to maximize them
-    }
-
-    const constraints: Record<string, ConstraintBound | ConstraintRelation> =
-      {};
-    constraints.water = { max: 0 }; // water needs to be an input
-    // constraints["dissolved-silica"] = { equal: 0 } // this one really needs to balance
-
-    for (const part of intermediateParts) {
-      if (Object.hasOwn(constraints, part.slug)) continue; // water is already accounted for
-
-      constraints[part.slug] = { equal: 0 };
-    }
-
-    for (const factoryOutput of factoryOutputs) {
-      const part = factoryOutput[0];
-      const rate = factoryOutput[1];
-      constraints[part.slug] = { equal: rate }; // set output rates
-    }
-
-    const variables: Record<string, VariableCoefficients> = {};
-    for (const recipe of allRecipes) {
-      const assemblyLine = assemblyLineLookup.get(recipe.slug);
-      const sloopMultiplier = assemblyLine?.isSlooped() ? 2 : 1;
-      variables[recipe.slug] = {};
-      for (const ingredient of recipe.ingredients) {
-        variables[recipe.slug][ingredient.part.slug] = -ingredient.quantity;
-      }
-      for (const product of recipe.products) {
-        variables[recipe.slug][product.part.slug] =
-          product.quantity * sloopMultiplier;
-      }
-    }
-
-    const model = {
-      optimize,
-      constraints,
-      variables,
+    type AssemblyLineInfo = {
+      assemblyLine: AssemblyLine;
+      productionLine: ProductionLine;
+      varName: string;
     };
 
-    console.log(model);
-    console.time("solver-runtime");
-    const rawResult = solver.Solve(model);
-    console.timeEnd("solver-runtime");
-    console.log(rawResult);
+    const assemblyLineInfos: AssemblyLineInfo[] = [];
+    const allOutputSlugs = new Set<string>();
+    const allInputSlugs = new Set<string>();
+    const factoryOutputs = new Map<string, number>();
+
+    let varIndex = 0;
+    for (const productionLine of this.productionLines) {
+      if (productionLine.outputRate > 0) {
+        factoryOutputs.set(productionLine.part.slug, productionLine.outputRate);
+      }
+      for (const assemblyLine of productionLine.assemblyLines) {
+        for (const ingredient of assemblyLine.recipe.ingredients) {
+          allInputSlugs.add(ingredient.part.slug);
+        }
+        for (const product of assemblyLine.recipe.products) {
+          allOutputSlugs.add(product.part.slug);
+        }
+        assemblyLineInfos.push({
+          assemblyLine,
+          productionLine,
+          varName: `al_${varIndex++}`,
+        });
+      }
+    }
+
+    const intermediateSlugs = new Set(
+      [...allOutputSlugs].filter((s) => allInputSlugs.has(s)),
+    );
+    const rawInputSlugs = new Set(
+      [...allInputSlugs].filter((s) => !allOutputSlugs.has(s)),
+    );
+
+    const buildVariables = (): Record<string, VariableCoefficients> => {
+      const vars: Record<string, VariableCoefficients> = {};
+      for (const { assemblyLine, varName } of assemblyLineInfos) {
+        const sloopMult = assemblyLine.isSlooped() ? 2 : 1;
+        const coeffs: VariableCoefficients = {};
+        for (const ingredient of assemblyLine.recipe.ingredients) {
+          coeffs[ingredient.part.slug] =
+            (coeffs[ingredient.part.slug] ?? 0) - ingredient.quantity;
+        }
+        for (const product of assemblyLine.recipe.products) {
+          coeffs[product.part.slug] =
+            (coeffs[product.part.slug] ?? 0) + product.quantity * sloopMult;
+        }
+        vars[varName] = coeffs;
+      }
+      return vars;
+    };
+
+    const buildBaseConstraints = (): Record<
+      string,
+      ConstraintBound | ConstraintRelation
+    > => {
+      const c: Record<string, ConstraintBound | ConstraintRelation> = {};
+      c.water = { max: 0 };
+      for (const slug of intermediateSlugs) {
+        if (!Object.hasOwn(c, slug)) c[slug] = { equal: 0 };
+      }
+      for (const [slug, rate] of factoryOutputs) {
+        c[slug] = { equal: rate };
+      }
+      return c;
+    };
+
+    const extractRateMap = (
+      solution: SolveResult,
+    ): Map<AssemblyLine, number> => {
+      const map = new Map<AssemblyLine, number>();
+      for (const { assemblyLine, varName } of assemblyLineInfos) {
+        map.set(
+          assemblyLine,
+          typeof solution[varName] === "number"
+            ? (solution[varName] as number)
+            : 0,
+        );
+      }
+      return map;
+    };
+
+    // Phase 1: strict intermediate balancing
+    const optimize1: Record<string, ObjectiveDirection> = {};
+    for (const slug of rawInputSlugs) {
+      if (slug !== "water") optimize1[slug] = "max";
+    }
+
+    const model1 = {
+      optimize: optimize1,
+      constraints: buildBaseConstraints(),
+      variables: buildVariables(),
+    };
+    console.log("Phase 1 model:", model1);
+    console.time("solver-v2-phase1");
+    const raw1 = solver.Solve(model1);
+    console.timeEnd("solver-v2-phase1");
+    console.log("Phase 1 result:", raw1);
 
     // @ts-expect-error
-    const result: SolveResult = rawResult.midpoint ?? rawResult;
+    const result1: SolveResult = raw1.midpoint ?? raw1;
 
-    // if (!result.feasible) {
-    //   return;
-    // }
+    if (result1.feasible) {
+      this._applyRates(extractRateMap(result1));
+      return;
+    }
+
+    // Phase 2: relax intermediate constraints by adding surplus/deficit slack variables.
+    // For each intermediate part p: net_rate_p - surplus_p + deficit_p = 0
+    // Minimize (surplus_p + deficit_p) via the _obj constraint.
+    const variables2 = buildVariables();
+    for (const slug of intermediateSlugs) {
+      variables2[`_surplus_${slug}`] = { [slug]: -1, _obj: -1 };
+      variables2[`_deficit_${slug}`] = { [slug]: 1, _obj: -1 };
+    }
+
+    const model2 = {
+      optimize: { _obj: "max" } as Record<string, ObjectiveDirection>,
+      constraints: buildBaseConstraints(),
+      variables: variables2,
+    };
+    console.log("Phase 2 model:", model2);
+    console.time("solver-v2-phase2");
+    const raw2 = solver.Solve(model2);
+    console.timeEnd("solver-v2-phase2");
+    console.log("Phase 2 result:", raw2);
+
+    // @ts-expect-error
+    const result2: SolveResult = raw2.midpoint ?? raw2;
+
+    if (result2.feasible) {
+      this._applyRates(extractRateMap(result2));
+      return;
+    }
+
+    console.error("autoCalculateRates2: no feasible solution found");
+  }
+
+  _applyRates(rateMap: Map<AssemblyLine, number>) {
+    const affected = new Set<ProductionLine>();
 
     for (const productionLine of this.productionLines) {
-      productionLine.rate = 0;
       for (const assemblyLine of productionLine.assemblyLines) {
-        const product = assemblyLine.recipe.getProduct(productionLine.part);
-        if (!product) {
-          throw new Error(
-            `assembly line recipe '${assemblyLine.recipe.slug}' did not have a product that matched its production line part '${productionLine.part.slug}'`,
-          );
-        }
-
-        const rate = result[assemblyLine.recipe.slug] ?? 0;
-        if (typeof rate === "number") {
+        const rate = rateMap.get(assemblyLine);
+        if (rate !== undefined) {
           assemblyLine.rate = rate;
-          productionLine.rate += assemblyLine.getPartProductionRate(
-            product.part,
-          );
+          affected.add(productionLine);
         }
       }
+    }
+
+    for (const productionLine of affected) {
       productionLine.rate = productionLine.assemblyLines.reduce(
         (acc, assemblyLine) => {
           const product = assemblyLine.recipe.getProduct(productionLine.part);
-          if (!product)
-            throw new Error(
-              `assembly line recipe '${assemblyLine.recipe.slug}' did not have a product that matched its production line part '${productionLine.part.slug}'`,
-            );
+          if (!product) return acc;
           return acc + assemblyLine.getPartProductionRate(product.part);
         },
         0,

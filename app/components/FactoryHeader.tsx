@@ -72,13 +72,13 @@ export default function FactoryHeader({
       />
 
       <div className="flex flex-row ml-auto">
-      <Tooltip title="New factory">
-        <span>
-          <Clickable className="p-1" onClick={onNewFactory}>
-            <AddBoxIcon />
-          </Clickable>
-        </span>
-      </Tooltip>
+        <Tooltip title="New factory">
+          <span>
+            <Clickable className="p-1" onClick={onNewFactory}>
+              <AddBoxIcon />
+            </Clickable>
+          </span>
+        </Tooltip>
         <Tooltip title="Import factory from file">
           <span>
             <Clickable

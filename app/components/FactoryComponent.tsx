@@ -321,8 +321,18 @@ export default function FactoryComponent() {
       ...f,
       id: idMap.get(f.id) ?? generateId(),
       folderId: f.folderId ? (idMap.get(f.folderId) ?? null) : null,
+      supplierIds: f.supplierIds?.map((sid) => idMap.get(sid) ?? sid),
       createdAt: now,
       updatedAt: now,
+      productionLines: f.productionLines.map((pl) => ({
+        ...pl,
+        assemblyLines: pl.assemblyLines.map((al) => ({
+          ...al,
+          nestedFactoryId: al.nestedFactoryId
+            ? (idMap.get(al.nestedFactoryId) ?? al.nestedFactoryId)
+            : undefined,
+        })),
+      })),
     }));
 
     const updatedLib: StorageLibrary = {
