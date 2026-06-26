@@ -163,7 +163,7 @@ export default function AssemblyLineControls({
           }
           label={
             <span className="text-xs text-gray-500 whitespace-nowrap">
-              All equal
+              All machines equal
             </span>
           }
           labelPlacement="end"

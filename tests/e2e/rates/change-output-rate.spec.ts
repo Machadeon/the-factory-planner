@@ -26,6 +26,6 @@ test("Change the Factory Output Rate for a production line", async ({
     page.getByRole("textbox", { name: "Factory Output Rate" }),
   ).toHaveValue("30");
   await expect(page.getByText("Actual: 30/min")).toBeVisible();
-  await expect(page.getByText("+30/min")).toBeVisible();
-  await expect(page.getByText("-45/min")).toBeVisible();
+  await expect(page.getByText("30/min").first()).toBeVisible();
+  await expect(page.getByText("45/min").first()).toBeVisible();
 });

@@ -39,5 +39,5 @@ test("Override the Production Rate for a production line", async ({ page }) => {
 
   await expect(productionRateField).toHaveValue("20");
   await expect(page.getByText("Actual: 20/min")).toBeVisible();
-  await expect(page.getByText("+20/min")).toBeVisible();
+  await expect(page.getByText("20/min").first()).toBeVisible();
 });

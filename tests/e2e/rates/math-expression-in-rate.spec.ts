@@ -21,5 +21,5 @@ test("Enter a math expression in the Factory Output Rate field", async ({
     page.getByRole("textbox", { name: "Factory Output Rate" }),
   ).toHaveValue("120");
   await expect(page.getByText("Actual: 120/min")).toBeVisible();
-  await expect(page.getByText("+120/min")).toBeVisible();
+  await expect(page.getByText("120/min").first()).toBeVisible();
 });

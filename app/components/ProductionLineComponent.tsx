@@ -324,152 +324,152 @@ export default function ProductionLineComponent(
           </span>
         </Tooltip>
       </Clickable>
-      {isExpanded && (
-        <div className="flex flex-col pl-12">
-          {props.productionLine.assemblyLines.map((assemblyLine) => {
+      <div
+        className="flex flex-col pl-12"
+        style={{ display: isExpanded ? "flex" : "none" }}
+      >
+        {props.productionLine.assemblyLines.map((assemblyLine) => {
+          return (
+            <div
+              key={assemblyLine.recipe.slug}
+              className="flex flex-row items-stretch-x items-center pe-4"
+            >
+              <AssemblyLine
+                assemblyLine={assemblyLine}
+                mainPart={part}
+                factory={props.factory}
+                onNavigateToFactory={props.onNavigateToFactory}
+              />
+              {recipeList.length !== 1 ||
+              assemblyLine.recipe.isFactoryRecipe ||
+              props.productionLine.assemblyLines.length > 1 ? (
+                <Tooltip title="Remove recipe">
+                  <span>
+                    <Clickable
+                      onClick={() => removeAssemblyLine(assemblyLine.recipe)}
+                      className="p-1"
+                    >
+                      <DeleteIcon />
+                    </Clickable>
+                  </span>
+                </Tooltip>
+              ) : (
+                <div className="w-[1.5rem]"></div>
+              )}
+            </div>
+          );
+        })}
+        {hasMoreRecipes && !needMoreProduction && !showRecipes && (
+          <div className="flex flex-row items-center gap-x-2">
+            <Clickable
+              onClick={splitRecipes}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Add Recipe
+            </Clickable>
+            <Clickable
+              onClick={() => setShowFactoryPicker(true)}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Use Factory as Recipe
+            </Clickable>
+            <Clickable
+              onClick={() => setShowSupplyPicker(true)}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Supply from Factory
+            </Clickable>
+          </div>
+        )}
+        {!hasMoreRecipes && !needMoreProduction && !showRecipes && (
+          <div className="flex flex-row items-center gap-x-2">
+            <Clickable
+              onClick={() => setShowFactoryPicker(true)}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Use Factory as Recipe
+            </Clickable>
+            <Clickable
+              onClick={() => setShowSupplyPicker(true)}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Supply from Factory
+            </Clickable>
+          </div>
+        )}
+        <FactoryPickerDialog
+          open={showFactoryPicker}
+          library={props.library}
+          currentFactoryId={props.currentFactoryId}
+          targetPartSlug={part.slug}
+          onPick={addFactoryAssemblyLine}
+          onClose={() => setShowFactoryPicker(false)}
+        />
+        <FactoryPickerDialog
+          open={showSupplyPicker}
+          library={props.library}
+          currentFactoryId={props.currentFactoryId}
+          targetPartSlug={part.slug}
+          onPick={addSupplierFactory}
+          onClose={() => setShowSupplyPicker(false)}
+        />
+        {(needMoreProduction || showRecipes) &&
+          recipeList.map((recipe) => {
+            if (
+              props.productionLine.assemblyLines.find(
+                (assemblyLine) => assemblyLine.recipe.slug === recipe.slug,
+              )
+            ) {
+              return "";
+            }
+
+            return (
+              <RecipeComponent
+                recipe={recipe}
+                rate={
+                  -productionRateDiff /
+                  (recipe.getProduct(props.productionLine.part)?.quantity ?? 1)
+                }
+                onClick={() => addAssemblyLine(recipe)}
+                key={recipe.slug}
+              />
+            );
+          })}
+        {(needMoreProduction || showRecipes) &&
+          factoryCandidates.map(({ sf, factory: f }) => {
+            const fr = new FactoryRecipe(sf.id, sf.name, f);
+            const qty = fr.getProduct(part.slug)?.quantity ?? 1;
+            const instanceRate = -productionRateDiff / qty;
             return (
               <div
-                key={assemblyLine.recipe.slug}
-                className="flex flex-row items-stretch-x items-center pe-4"
+                key={sf.id}
+                className={`sp-recipe-component flex flex-row grow items-center gap-x-2 p-2 ${clickableClass}${clickableHoverClass}`}
+                onClick={() => addFactoryAssemblyLine(sf.id, sf.name, f)}
               >
-                <AssemblyLine
-                  assemblyLine={assemblyLine}
-                  mainPart={part}
-                  factory={props.factory}
-                  onNavigateToFactory={props.onNavigateToFactory}
-                />
-                {recipeList.length !== 1 ||
-                assemblyLine.recipe.isFactoryRecipe ||
-                props.productionLine.assemblyLines.length > 1 ? (
-                  <Tooltip title="Remove recipe">
-                    <span>
-                      <Clickable
-                        onClick={() => removeAssemblyLine(assemblyLine.recipe)}
-                        className="p-1"
-                      >
-                        <DeleteIcon />
-                      </Clickable>
-                    </span>
-                  </Tooltip>
+                {sf.icon ? (
+                  <Image src={sf.icon} alt={sf.name} width={64} height={64} />
                 ) : (
-                  <div className="w-[1.5rem]"></div>
+                  <div className="w-16 h-16 flex items-center justify-center text-gray-400 text-xs border border-gray-600 rounded">
+                    Factory
+                  </div>
                 )}
+                <span className="w-3xs font-medium">{sf.name}</span>
+                <span className="text-sm text-gray-400">
+                  {displayNum(instanceRate)} instance
+                  {instanceRate !== 1 ? "s" : ""}
+                </span>
+                <span className="text-sm text-gray-400">
+                  → {displayNum(qty * instanceRate)}/min
+                </span>
               </div>
             );
           })}
-          {hasMoreRecipes && !needMoreProduction && !showRecipes && (
-            <div className="flex flex-row items-center gap-x-2">
-              <Clickable
-                onClick={splitRecipes}
-                className="flex flex-row items-center p-1"
-              >
-                <AddIcon />
-                Add Recipe
-              </Clickable>
-              <Clickable
-                onClick={() => setShowFactoryPicker(true)}
-                className="flex flex-row items-center p-1"
-              >
-                <AddIcon />
-                Use Factory as Recipe
-              </Clickable>
-              <Clickable
-                onClick={() => setShowSupplyPicker(true)}
-                className="flex flex-row items-center p-1"
-              >
-                <AddIcon />
-                Supply from Factory
-              </Clickable>
-            </div>
-          )}
-          {!hasMoreRecipes && !needMoreProduction && !showRecipes && (
-            <div className="flex flex-row items-center gap-x-2">
-              <Clickable
-                onClick={() => setShowFactoryPicker(true)}
-                className="flex flex-row items-center p-1"
-              >
-                <AddIcon />
-                Use Factory as Recipe
-              </Clickable>
-              <Clickable
-                onClick={() => setShowSupplyPicker(true)}
-                className="flex flex-row items-center p-1"
-              >
-                <AddIcon />
-                Supply from Factory
-              </Clickable>
-            </div>
-          )}
-          <FactoryPickerDialog
-            open={showFactoryPicker}
-            library={props.library}
-            currentFactoryId={props.currentFactoryId}
-            targetPartSlug={part.slug}
-            onPick={addFactoryAssemblyLine}
-            onClose={() => setShowFactoryPicker(false)}
-          />
-          <FactoryPickerDialog
-            open={showSupplyPicker}
-            library={props.library}
-            currentFactoryId={props.currentFactoryId}
-            targetPartSlug={part.slug}
-            onPick={addSupplierFactory}
-            onClose={() => setShowSupplyPicker(false)}
-          />
-          {(needMoreProduction || showRecipes) &&
-            recipeList.map((recipe) => {
-              if (
-                props.productionLine.assemblyLines.find(
-                  (assemblyLine) => assemblyLine.recipe.slug === recipe.slug,
-                )
-              ) {
-                return "";
-              }
-
-              return (
-                <RecipeComponent
-                  recipe={recipe}
-                  rate={
-                    -productionRateDiff /
-                    (recipe.getProduct(props.productionLine.part)?.quantity ??
-                      1)
-                  }
-                  onClick={() => addAssemblyLine(recipe)}
-                  key={recipe.slug}
-                />
-              );
-            })}
-          {(needMoreProduction || showRecipes) &&
-            factoryCandidates.map(({ sf, factory: f }) => {
-              const fr = new FactoryRecipe(sf.id, sf.name, f);
-              const qty = fr.getProduct(part.slug)?.quantity ?? 1;
-              const instanceRate = -productionRateDiff / qty;
-              return (
-                <div
-                  key={sf.id}
-                  className={`sp-recipe-component flex flex-row grow items-center gap-x-2 p-2 ${clickableClass}${clickableHoverClass}`}
-                  onClick={() => addFactoryAssemblyLine(sf.id, sf.name, f)}
-                >
-                  {sf.icon ? (
-                    <Image src={sf.icon} alt={sf.name} width={64} height={64} />
-                  ) : (
-                    <div className="w-16 h-16 flex items-center justify-center text-gray-400 text-xs border border-gray-600 rounded">
-                      Factory
-                    </div>
-                  )}
-                  <span className="w-3xs font-medium">{sf.name}</span>
-                  <span className="text-sm text-gray-400">
-                    {displayNum(instanceRate)} instance
-                    {instanceRate !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-sm text-gray-400">
-                    → {displayNum(qty * instanceRate)}/min
-                  </span>
-                </div>
-              );
-            })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import type { Rate } from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
 import type { StorageLibrary } from "../models/factory-storage";
 import type Part from "../models/part";
-import { displayNum, getColorClassForProductionRate2 } from "../utils";
+import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 

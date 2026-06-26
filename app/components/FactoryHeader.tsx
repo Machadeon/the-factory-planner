@@ -4,9 +4,9 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SaveIcon from "@mui/icons-material/Save";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
 import { useRef } from "react";
@@ -106,7 +106,7 @@ export default function FactoryHeader({
                   className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
                   onClick={productionLineCount ? onExpandAll : () => {}}
                 >
-                  <KeyboardArrowDownIcon fontSize="small" />
+                  <UnfoldMoreIcon fontSize="small" />
                 </Clickable>
               </span>
             </Tooltip>
@@ -120,7 +120,7 @@ export default function FactoryHeader({
                   className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
                   onClick={productionLineCount ? onCollapseAll : () => {}}
                 >
-                  <KeyboardArrowRightIcon fontSize="small" />
+                  <UnfoldLessIcon fontSize="small" />
                 </Clickable>
               </span>
             </Tooltip>

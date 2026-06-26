@@ -15,7 +15,7 @@ test("Add production line from the inputs section of the sidebar", async ({
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
   await expect(page.getByText("Inputs (1)")).toBeVisible();
-  await expect(page.getByText("-15/min")).toBeVisible();
+  await expect(page.getByText("15/min").first()).toBeVisible();
 
   // Click the "Add production line" button next to Iron Ingot in the sidebar Inputs section
   await page

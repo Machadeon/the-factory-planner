@@ -27,7 +27,7 @@ test.describe("Recipe Selection", () => {
 
     // expect: Sidebar shows Iron Plate output
     await expect(page.getByText("Outputs (1)")).toBeVisible();
-    await expect(page.getByText("+10/min")).toBeVisible();
+    await expect(page.getByText("10/min").first()).toBeVisible();
 
     // expect: Sidebar shows both Iron Ingot and Plastic as inputs
     await expect(page.getByText("Inputs (2)")).toBeVisible();

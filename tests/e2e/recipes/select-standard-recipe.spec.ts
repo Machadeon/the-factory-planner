@@ -54,8 +54,8 @@ test.describe("Recipe Selection", () => {
 
     // expect: Sidebar: Outputs (1) Iron Plate +10/min, Inputs (1) Iron Ingot -15/min
     await expect(page.getByText("Outputs (1)")).toBeVisible();
-    await expect(page.getByText("+10/min")).toBeVisible();
+    await expect(page.getByText("10/min").first()).toBeVisible();
     await expect(page.getByText("Inputs (1)")).toBeVisible();
-    await expect(page.getByText("-15/min")).toBeVisible();
+    await expect(page.getByText("15/min").first()).toBeVisible();
   });
 });

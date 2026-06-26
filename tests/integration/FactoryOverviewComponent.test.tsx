@@ -129,6 +129,81 @@ describe("FactoryOverviewComponent", () => {
     expect(ironIngotElements.length).toBeGreaterThan(0);
   });
 
+  it("hides Outputs section when toggle is clicked", async () => {
+    const user = userEvent.setup();
+    const factory = buildFactory();
+    render(
+      <FactoryOverviewComponent
+        factory={factory}
+        library={emptyLibrary()}
+        currentFactoryId={null}
+      />,
+    );
+
+    const outputsHeader = screen.getByText(/Outputs/i).closest(".flex");
+    expect(outputsHeader).not.toBeNull();
+    const toggle = outputsHeader?.querySelector<HTMLElement>(".cursor-pointer");
+    expect(toggle).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: already checked
+    await user.click(toggle!);
+
+    // The wrapper div after the header should have contentVisibility: hidden
+    const wrapper = outputsHeader?.nextElementSibling as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.style.contentVisibility).toBe("hidden");
+  });
+
+  it("hides Inputs section when toggle is clicked", async () => {
+    const user = userEvent.setup();
+    const factory = buildFactory();
+    render(
+      <FactoryOverviewComponent
+        factory={factory}
+        library={emptyLibrary()}
+        currentFactoryId={null}
+      />,
+    );
+
+    const inputsHeader = screen.getByText(/Inputs/i).closest(".flex");
+    expect(inputsHeader).not.toBeNull();
+    const toggle = inputsHeader?.querySelector<HTMLElement>(".cursor-pointer");
+    expect(toggle).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: already checked
+    await user.click(toggle!);
+
+    const wrapper = inputsHeader?.nextElementSibling as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.style.contentVisibility).toBe("hidden");
+  });
+
+  it("shows Intermediate Parts section when toggle is clicked", async () => {
+    const user = userEvent.setup();
+    const factory = buildFactory();
+    render(
+      <FactoryOverviewComponent
+        factory={factory}
+        library={emptyLibrary()}
+        currentFactoryId={null}
+      />,
+    );
+
+    const intermediateHeading = screen.getByText(/Intermediate Parts/i);
+    const row = intermediateHeading.closest(".flex");
+    expect(row).not.toBeNull();
+
+    // Starts hidden by default
+    const wrapper = row?.nextElementSibling as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.style.contentVisibility).toBe("hidden");
+
+    const toggle = row?.querySelector<HTMLElement>(".cursor-pointer");
+    expect(toggle).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: already checked
+    await user.click(toggle!);
+
+    expect(wrapper?.style.contentVisibility).toBe("visible");
+  });
+
   it("renders Power & Modules section", () => {
     const factory = buildFactory();
     render(
