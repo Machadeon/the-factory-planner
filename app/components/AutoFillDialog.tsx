@@ -3,6 +3,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import TuneIcon from "@mui/icons-material/Tune";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -24,20 +25,20 @@ import {
   type AutoFillConfig,
   defaultAutoFillConfig,
   MAX_GAME_PHASE,
+  recipeMatchesFilters,
   type ScoringObjective,
+  setRecipesEnabled,
 } from "../models/factory";
 import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
 import { buildings, partSlugLookup, recipes } from "../models/library";
-import type Recipe from "../models/recipe";
 import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
-import RecipeOverrideRow from "./RecipeOverrideRow";
-import RecipeSelector from "./RecipeSelector";
+import RecipeListDialog from "./RecipeListDialog";
 import TextCalculatorField from "./TextCalculatorField";
 
 const OBJECTIVE_OPTIONS: {
@@ -71,9 +72,6 @@ const OBJECTIVE_OPTIONS: {
     help: "Prefer recipes that minimize total resource consumption based on global limits using a custom point system. Configure part point value by clicking on the button to the right.",
   },
 ];
-
-const recipeBySlug: Record<string, Recipe> = {};
-for (const r of recipes) recipeBySlug[r.slug] = r;
 
 // Buildings that actually run craftable recipes, grouped by menuGroup/menuGroupIndex.
 const recipeBuildings = buildings
@@ -131,14 +129,14 @@ export default function AutoFillDialog({
     ...factory.autoFill,
   }));
   const [showPartSelector, setShowPartSelector] = useState(false);
-  const [showRecipeSelector, setShowRecipeSelector] = useState(false);
+  const [showRecipeList, setShowRecipeList] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only when dialog opens, not on every factory.autoFill mutation
   useEffect(() => {
     if (open) {
       setConfig({ ...defaultAutoFillConfig(), ...factory.autoFill });
       setShowPartSelector(false);
-      setShowRecipeSelector(false);
+      setShowRecipeList(false);
     }
   }, [open]);
 
@@ -146,80 +144,74 @@ export default function AutoFillDialog({
     setConfig((prev) => ({ ...prev, ...patch }));
   }
 
+  // The phase select is a definer: it recomputes the full enabled set across the
+  // whole phase range. Buildings unlocked at or below `phase` are enabled, which
+  // cascades to recipes — a recipe is enabled when it passes every bulk filter.
   function updatePhase(phase: number) {
     setConfig((prev) => {
-      const buildingOverrides = { ...prev.buildingOverrides };
-      for (const b of recipeBuildings) {
-        if (b.unlockPhase > phase) buildingOverrides[b.slug] = false;
-        else delete buildingOverrides[b.slug];
-      }
-      return { ...prev, phase, buildingOverrides };
+      const buildingsEnabled = recipeBuildings
+        .filter((b) => b.unlockPhase <= phase)
+        .map((b) => b.slug);
+      const next = { ...prev, phase, buildingsEnabled };
+      next.enabledRecipes = recipes
+        .filter((r) => recipeMatchesFilters(next, r))
+        .map((r) => r.slug);
+      return next;
     });
   }
 
-  // Toggling a master switch clears the per-recipe overrides in that category so
-  // the switch is the source of truth again. Reversible via Cancel.
+  // Master switches keep their own state. Enabling a category adds only the
+  // recipes in it that also pass the phase + building filters; disabling removes
+  // every recipe in the category. So enabling "alternate" never re-enables a
+  // recipe whose building is off or that is locked above the current phase.
   function toggleCategory(category: "default" | "alternate", enabled: boolean) {
     setConfig((prev) => {
-      const overrides = { ...prev.recipeOverrides };
-      for (const slug of Object.keys(overrides)) {
-        const recipe = recipeBySlug[slug];
-        if (!recipe) continue;
-        if (
-          (category === "alternate" && recipe.alternate) ||
-          (category === "default" && !recipe.alternate)
-        ) {
-          delete overrides[slug];
-        }
-      }
-      return category === "alternate"
-        ? {
-            ...prev,
-            alternateRecipesEnabled: enabled,
-            recipeOverrides: overrides,
-          }
-        : {
-            ...prev,
-            defaultRecipesEnabled: enabled,
-            recipeOverrides: overrides,
-          };
+      const next = {
+        ...prev,
+        ...(category === "alternate"
+          ? { alternateRecipesEnabled: enabled }
+          : { defaultRecipesEnabled: enabled }),
+      };
+      const inCategory = (r: (typeof recipes)[number]) =>
+        category === "alternate" ? r.alternate : !r.alternate;
+      const affected = enabled
+        ? recipes.filter((r) => inCategory(r) && recipeMatchesFilters(next, r))
+        : recipes.filter(inCategory);
+      next.enabledRecipes = setRecipesEnabled(
+        prev.enabledRecipes,
+        affected.map((r) => r.slug),
+        enabled,
+      );
+      return next;
     });
   }
 
-  // Adding an override via the autocomplete denies the recipe by default (the
-  // common case is excluding a recipe). The active row can flip it.
-  function addRecipeOverride(recipe: Recipe) {
+  function toggleRecipe(slug: string, enabled: boolean) {
     setConfig((prev) => ({
       ...prev,
-      recipeOverrides: { ...prev.recipeOverrides, [recipe.slug]: false },
-    }));
-    setShowRecipeSelector(false);
-  }
-
-  function flipRecipeOverride(slug: string) {
-    setConfig((prev) => ({
-      ...prev,
-      recipeOverrides: {
-        ...prev.recipeOverrides,
-        [slug]: !prev.recipeOverrides[slug],
-      },
+      enabledRecipes: setRecipesEnabled(prev.enabledRecipes, [slug], enabled),
     }));
   }
 
-  function removeRecipeOverride(slug: string) {
-    setConfig((prev) => {
-      const overrides = { ...prev.recipeOverrides };
-      delete overrides[slug];
-      return { ...prev, recipeOverrides: overrides };
-    });
-  }
-
+  // Building switches keep their own state (buildingsEnabled list). Enabling a
+  // building adds only its recipes that also pass the phase + category filters;
+  // disabling removes every recipe in that building.
   function toggleBuilding(slug: string, enabled: boolean) {
     setConfig((prev) => {
-      const buildingOverrides = { ...prev.buildingOverrides };
-      if (enabled) delete buildingOverrides[slug];
-      else buildingOverrides[slug] = false;
-      return { ...prev, buildingOverrides };
+      const buildingsEnabled = enabled
+        ? [...prev.buildingsEnabled, slug]
+        : prev.buildingsEnabled.filter((s) => s !== slug);
+      const next = { ...prev, buildingsEnabled };
+      const buildingRecipes = recipes.filter((r) => r.building.slug === slug);
+      const affected = enabled
+        ? buildingRecipes.filter((r) => recipeMatchesFilters(next, r))
+        : buildingRecipes;
+      next.enabledRecipes = setRecipesEnabled(
+        prev.enabledRecipes,
+        affected.map((r) => r.slug),
+        enabled,
+      );
+      return next;
     });
   }
 
@@ -262,8 +254,6 @@ export default function AutoFillDialog({
     onApply();
     onClose();
   }
-
-  const overrideSlugs = Object.keys(config.recipeOverrides);
 
   // Resolve selected source factories to their names + produced parts/rates.
   const sourceFactories = useMemo(() => {
@@ -401,57 +391,9 @@ export default function AutoFillDialog({
           label="Alternate recipes"
         />
 
-        {/* Active overrides */}
-        <p className="text-md mt-4 mb-1">Recipe overrides</p>
-        {overrideSlugs.length === 0 ? (
-          <p className="text-sm text-gray-400">
-            Disable or enable specific recipes regardless of game phase or
-            recipe type.
-          </p>
-        ) : (
-          overrideSlugs.map((slug) => {
-            const recipe = recipeBySlug[slug];
-            if (!recipe) return null;
-            return (
-              <RecipeOverrideRow
-                key={slug}
-                recipe={recipe}
-                denied={config.recipeOverrides[slug] === false}
-                onClick={() => flipRecipeOverride(slug)}
-                trailing={
-                  <Clickable
-                    onClick={() => removeRecipeOverride(slug)}
-                    className="p-1"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </Clickable>
-                }
-              />
-            );
-          })
-        )}
-        {showRecipeSelector ? (
-          <div className="mt-2">
-            <RecipeSelector
-              existingRecipes={overrideSlugs}
-              onRecipeSelected={addRecipeOverride}
-            />
-          </div>
-        ) : (
-          <Clickable
-            onClick={() => setShowRecipeSelector(true)}
-            className="flex flex-row items-center p-1 mt-1"
-          >
-            <AddIcon fontSize="small" />
-            <span className="text-sm ml-1">Add recipe override</span>
-          </Clickable>
-        )}
-
-        <HorizontalDivider />
-
         {/* Buildings */}
         <p className="text-md mt-4">Buildings</p>
-        <p className="text-sm mt-2 mb-2 text-gray-700 dark:text-gray-300">
+        <p className="text-sm mt-2 mb-2 text-gray-400">
           Enable or disable which buildings are allowed.
         </p>
         <div className="flex flex-row flex-wrap gap-x-6">
@@ -466,9 +408,8 @@ export default function AutoFillDialog({
                   control={
                     <Switch
                       size="small"
-                      checked={
-                        config.buildingOverrides[building.slug] !== false
-                      }
+                      checked={config.buildingsEnabled.includes(building.slug)}
+                      disabled={config.phase < building.unlockPhase}
                       onChange={(_, v) => toggleBuilding(building.slug, v)}
                     />
                   }
@@ -488,6 +429,22 @@ export default function AutoFillDialog({
             </div>
           ))}
         </div>
+
+        <HorizontalDivider />
+
+        {/* Recipe management */}
+        <p className="text-md mt-4 mb-1">Recipes</p>
+        <p className="text-sm text-gray-400 mb-1">
+          {config.enabledRecipes.length} of {recipes.length} recipes enabled.
+          The controls above are helpers; fine-tune individual recipes here.
+        </p>
+        <Clickable
+          onClick={() => setShowRecipeList(true)}
+          className="flex flex-row items-center p-1 mt-1"
+        >
+          <TuneIcon fontSize="small" />
+          <span className="text-sm ml-1">Manage recipes</span>
+        </Clickable>
 
         <HorizontalDivider />
 
@@ -614,6 +571,12 @@ export default function AutoFillDialog({
           Apply
         </Button>
       </DialogActions>
+      <RecipeListDialog
+        open={showRecipeList}
+        onClose={() => setShowRecipeList(false)}
+        enabledRecipes={config.enabledRecipes}
+        onToggle={toggleRecipe}
+      />
     </Dialog>
   );
 }

@@ -33,8 +33,10 @@ test.describe("Auto-fill Dialog", () => {
     const dialog = page.getByRole("dialog", { name: "Auto-fill Recipes" });
     await expect(dialog).toBeVisible();
 
-    // Switch objective to Min power and enable eager.
-    await dialog.getByRole("radio", { name: "Min power" }).click();
+    // Switch objective to Minimum power consumption and enable eager.
+    await dialog
+      .getByRole("radio", { name: "Minimum power consumption" })
+      .click();
     await dialog
       .getByRole("switch", { name: "Re-run on every edit (eager)" })
       .check();
@@ -53,7 +55,7 @@ test.describe("Auto-fill Dialog", () => {
     await page.getByText("Configure auto-fill").click();
     const reopened = page.getByRole("dialog", { name: "Auto-fill Recipes" });
     await expect(
-      reopened.getByRole("radio", { name: "Min power" }),
+      reopened.getByRole("radio", { name: "Minimum power consumption" }),
     ).toBeChecked();
     await expect(
       reopened.getByRole("switch", {

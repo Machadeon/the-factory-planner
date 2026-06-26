@@ -24,11 +24,11 @@ function recipePowerLabel(recipe: Recipe): string {
 
 function PartIcons({ parts }: { parts: RecipePart[] }) {
   return (
-    <>
+    <div className="flex w-40">
       {parts.map((p) => (
         <span
           key={p.part.slug}
-          className="flex flex-row items-center gap-x-0.5"
+          className="flex flex-row items-center gap-x-0.5 ml-2"
         >
           <Tooltip title={p.part.name}>
             <Image
@@ -43,32 +43,35 @@ function PartIcons({ parts }: { parts: RecipePart[] }) {
           </span>
         </span>
       ))}
-    </>
+    </div>
   );
 }
 
 interface RecipeOverrideRowProps {
   recipe: Recipe;
-  /** When true the recipe is denied — render dimmed/struck-through. */
-  denied?: boolean;
   onClick?: () => void;
+  /** Leading control(s) rendered before the building icon, e.g. a toggle. */
+  leading?: ReactNode;
   /** Trailing control(s), e.g. an allow/deny toggle or remove button. */
   trailing?: ReactNode;
 }
 
 export default function RecipeOverrideRow({
   recipe,
-  denied,
   onClick,
+  leading,
   trailing,
 }: RecipeOverrideRowProps) {
   return (
     <div
-      className={`flex flex-row items-center gap-x-2 py-1${
-        onClick ? " cursor-pointer" : ""
+      className={`flex flex-row items-center gap-x-2 py-1 px-1${
+        onClick
+          ? " cursor-pointer rounded hover:bg-black/5 dark:hover:bg-white/10"
+          : ""
       }`}
       onClick={onClick}
     >
+      {leading}
       <Tooltip title={recipe.building.name}>
         <Image
           src={recipe.building.iconSmall}
@@ -77,18 +80,12 @@ export default function RecipeOverrideRow({
           height={24}
         />
       </Tooltip>
-      <span
-        className={`text-sm w-44 shrink-0 ${
-          denied ? "line-through text-gray-500" : ""
-        }`}
-      >
-        {displayRecipeName(recipe)}
-      </span>
+      <span className="text-sm w-44 shrink-0">{displayRecipeName(recipe)}</span>
       <span className="text-xs text-gray-400 w-20 shrink-0">
         {recipePowerLabel(recipe)}
       </span>
       <div className="flex flex-row items-center gap-x-1 grow flex-wrap">
-        <PartIcons parts={recipe.ingredients} />
+        <PartIcons parts={recipe.ingredients} className="" />
         <EastIcon fontSize="small" className="text-gray-500" />
         <PartIcons parts={recipe.products} />
       </div>

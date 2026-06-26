@@ -293,3 +293,67 @@ Files: `app/models/factory.tsx` (config shape + default), `factory-storage.ts`
 manually confirm 6-ingredient row fits, available-part rate persists, building
 toggle hides a building's recipes from the override search results' effective
 state.
+
+## Revision 3 — searchable recipe list
+
+Supersedes Rev 1's per-recipe override list and Rev 2 §4 (override autocomplete)
+and §5's `buildingOverrides` semantics.
+
+The Rev 2 override UI was awkward — an empty list you populated one recipe at a
+time via autocomplete, each added row defaulting to *deny*. Replaced with a
+**searchable list of every recipe, each a `Switch`** in a new modal.
+
+Two principles:
+
+1. **A recipe's state is the toggle**, not styled text — no dim/strikethrough; the
+   `Switch` is the only indicator.
+2. **The solver's input is one explicit field, `enabledRecipes: string[]`.** The
+   phase / default / alternate / building controls keep their own persisted UI
+   state but act as **helpers that mutate `enabledRecipes`** — they are no longer
+   independent inputs the solver resolves.
+
+### Model (`app/models/factory.tsx`)
+
+- `AutoFillConfig`: **removed** `recipeOverrides`; **replaced** `buildingOverrides:
+  Record<string,boolean>` (sparse diff) with **`buildingsEnabled: string[]`**
+  (explicit list of enabled building slugs); **added** `enabledRecipes: string[]`
+  (solver source of truth). Kept `phase`, `defaultRecipesEnabled`,
+  `alternateRecipesEnabled` as persisted control state.
+- `defaultAutoFillConfig`: `buildingsEnabled` = all recipe-running building slugs;
+  `enabledRecipes` = all recipe slugs (start permissive). Imports `buildings` +
+  `recipes` from `../models/library`.
+- New exported helpers: `isRecipeEnabled(config, slug)` and
+  `setRecipesEnabled(current, slugs, enabled)` (Set-based add/remove, returns a new
+  array) — shared by the dialog and reusable by the future solver.
+- `_denyRecipes` (reject flow) now **removes** slugs from `enabledRecipes` instead
+  of writing a deny override.
+
+### Storage (`app/models/factory-storage.ts`)
+
+No change needed — `normalizeAutoFill` already merges raw onto
+`defaultAutoFillConfig()` (`{ ...base, ...raw }`), so the new fields fall back to
+defaults when absent and the whole `autoFill` object is serialized as-is.
+
+### Components
+
+- **New `app/components/RecipeListDialog.tsx`** — `Dialog maxWidth="md"`; search
+  `TextField` (filters by `displayRecipeName` + `building.name`); flat
+  alphabetical list in a `max-h-[60vh] overflow-y-auto` of `RecipeOverrideRow`s,
+  each with `trailing={<Switch checked={enabledSet.has(slug)} .../>}`, **no
+  `denied`/`onClick`**. `DialogActions`: single "Done".
+- **`AutoFillDialog.tsx`** — override section replaced with a "Recipes: N of M
+  enabled" summary + `TuneIcon` "Manage recipes" `Clickable` opening
+  `RecipeListDialog`; new `showRecipeList` state + `toggleRecipe` handler.
+  `updatePhase`, `toggleCategory`, `toggleBuilding` rewritten to set their own
+  control state **and** call `setRecipesEnabled` on the relevant slugs (phase =
+  one-way removal of above-phase recipes). Pruned `RecipeSelector`,
+  `RecipeOverrideRow` import, `recipeBySlug`, and the add/flip/remove override
+  handlers.
+- **Deleted `app/components/RecipeSelector.tsx`** (no remaining callers).
+  `RecipeOverrideRow.tsx` kept (used by the new modal; `displayRecipeName` lives
+  there).
+
+Verify: Biome lint/typecheck pass; "Manage recipes" modal lists all recipes with
+working search + toggles; toggling a recipe/phase/category/building updates the
+"N of M" count and persists across Apply + reload; Cancel discards; reject flow
+drops the slug from `enabledRecipes`.

@@ -5,14 +5,17 @@ import solver, {
   type VariableCoefficients,
 } from "javascript-lp-solver";
 import {
+  buildings,
   defaultResourceLimits,
   partSlugLookup,
   parts,
+  recipes,
 } from "../models/library";
 import type AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
 import ProductionLine from "./production-line";
+import type Recipe from "./recipe";
 
 export interface Rate {
   consumptionRate: number;
@@ -61,10 +64,14 @@ export interface AutoFillConfig {
   defaultRecipesEnabled: boolean;
   /** Master toggle: alternate recipes selectable. */
   alternateRecipesEnabled: boolean;
-  /** Per-recipe allow(true)/deny(false) overrides over building/master toggles. */
-  recipeOverrides: Record<string, boolean>;
-  /** Per-building enable(true)/disable(false); disabling blocks its recipes. */
-  buildingOverrides: Record<string, boolean>;
+  /** Explicit list of building slugs enabled as auto-fill helpers (UI state). */
+  buildingsEnabled: string[];
+  /**
+   * The exact set of recipe slugs the solver may use — the single source of
+   * truth for the solver. The phase / master / building controls above are
+   * helpers that mutate this set; they retain their own UI state independently.
+   */
+  enabledRecipes: string[];
   /** Overwrite all production lines vs only fill gaps. */
   overwrite: boolean;
   /** Whether rejecting a suggestion also removes the recipe from auto-fill. */
@@ -82,11 +89,52 @@ export function defaultAutoFillConfig(): AutoFillConfig {
     phase: MAX_GAME_PHASE,
     defaultRecipesEnabled: true,
     alternateRecipesEnabled: true,
-    recipeOverrides: {},
-    buildingOverrides: {},
+    buildingsEnabled: buildings
+      .filter((b) => recipes.some((r) => r.building.slug === b.slug))
+      .map((b) => b.slug),
+    enabledRecipes: recipes.map((r) => r.slug),
     overwrite: false,
     rejectPrompt: "ask",
   };
+}
+
+/** Whether `slug` is in the solver's enabled-recipe set. */
+export function isRecipeEnabled(config: AutoFillConfig, slug: string): boolean {
+  return config.enabledRecipes.includes(slug);
+}
+
+/**
+ * Return the next `enabledRecipes` array with `slugs` added (enabled=true) or
+ * removed (enabled=false). Order-insensitive; preserves existing membership for
+ * untouched slugs.
+ */
+export function setRecipesEnabled(
+  current: string[],
+  slugs: string[],
+  enabled: boolean,
+): string[] {
+  const set = new Set(current);
+  if (enabled) for (const s of slugs) set.add(s);
+  else for (const s of slugs) set.delete(s);
+  return [...set];
+}
+
+/**
+ * Whether a recipe passes the bulk filters: within the phase ceiling, its
+ * building enabled, and its category (default/alternate) master toggle on. The
+ * bulk controls compose this so enabling a category never re-enables a recipe a
+ * stricter filter (phase or building) excludes. Per-recipe modal toggles may
+ * still diverge from this until the next bulk action.
+ */
+export function recipeMatchesFilters(
+  config: AutoFillConfig,
+  recipe: Recipe,
+): boolean {
+  if (recipe.unlockPhase > config.phase) return false;
+  if (!config.buildingsEnabled.includes(recipe.building.slug)) return false;
+  return recipe.alternate
+    ? config.alternateRecipesEnabled
+    : config.defaultRecipesEnabled;
 }
 
 export interface FactoryOutput {
@@ -258,9 +306,10 @@ export default class Factory {
   }
 
   _denyRecipes(recipeSlugs: string[]) {
-    for (const slug of recipeSlugs) {
-      if (slug) this.autoFill.recipeOverrides[slug] = false;
-    }
+    const deny = new Set(recipeSlugs.filter(Boolean));
+    this.autoFill.enabledRecipes = this.autoFill.enabledRecipes.filter(
+      (s) => !deny.has(s),
+    );
   }
 
   _hasRecycledRubberPlasticLoop(): boolean {

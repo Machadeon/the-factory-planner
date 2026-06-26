@@ -1,4 +1,4 @@
-.PHONY: dev format lint test build run
+.PHONY: dev format lint test build run verify
 
 dev:
 	npm run dev
@@ -19,3 +19,5 @@ build:
 
 run:
 	npm run start
+
+verify: format lint test
