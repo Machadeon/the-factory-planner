@@ -10,6 +10,7 @@ export default interface Building {
   unlockPhase: number;
   menuGroup: BuildingCategory;
   menuGroupIndex: number;
+  size: { width: number; length: number; height: number };
 }
 
 export type BuildingCategory = "factory" | "smelter" | "refinery" | "generator";
