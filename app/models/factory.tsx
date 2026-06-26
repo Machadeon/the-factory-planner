@@ -32,22 +32,8 @@ export default class Factory {
     this.autoAddProductLines = oldFactory?.autoAddProductLines || false;
 
     this.rateLookup = {};
-
     this._productionLineLookup = {};
     this._assemblyLineLookup = {};
-    for (const productionLine of this.productionLines) {
-      this._productionLineLookup[productionLine.part.slug] = productionLine;
-
-      for (const assemblyLine of productionLine.assemblyLines) {
-        for (const recipePart of assemblyLine.recipe.ingredients) {
-          this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
-        }
-
-        for (const recipePart of assemblyLine.recipe.products) {
-          this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
-        }
-      }
-    }
 
     this._updateRates();
   }
@@ -64,8 +50,12 @@ export default class Factory {
     this.rateLookup = {};
 
     for (const productionLine of this.productionLines) {
+      this._productionLineLookup[productionLine.part.slug] = productionLine;
+
       for (const assemblyLine of productionLine.assemblyLines) {
         for (const recipePart of assemblyLine.recipe.ingredients) {
+          this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
+
           const rate = this.rateLookup[recipePart.part.slug] || {
             consumpionRate: 0,
             productionRate: 0,
@@ -76,6 +66,8 @@ export default class Factory {
         }
 
         for (const recipePart of assemblyLine.recipe.products) {
+          this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
+
           const rate = this.rateLookup[recipePart.part.slug] || {
             consumpionRate: 0,
             productionRate: 0,
@@ -121,6 +113,18 @@ export default class Factory {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
       return rate.consumpionRate - rate.productionRate > 0.0001;
+    });
+  }
+
+  recipeOutputs(): Part[] {
+    return parts.filter((part) => {
+      for (const assemblyLine of this._assemblyLineLookup[part.slug] || []) {
+        if (assemblyLine.recipe.getProduct(part)) {
+          return true;
+        }
+      }
+
+      return false;
     });
   }
 
@@ -264,6 +268,8 @@ export default class Factory {
   }
 
   autoCalculateRates() {
+    console.clear();
+
     /*
      * Calculates the rates for each recipe assuming all outputs (including byproducts) have been specified.
      *
@@ -404,8 +410,6 @@ export default class Factory {
       equations.push(...recipeEquations);
     }
 
-    // console.log(variables, equations);
-
     // preparation is complete, so ready, set, solve!
     const variableList: string[] = [];
     const variableLookup: { [variableName: string]: number } = {};
@@ -415,6 +419,9 @@ export default class Factory {
       variableLookup[variable] = index;
     }
 
+    // console.log(variableList, equations);
+    // console.log(JSON.stringify(equations, undefined, 2))
+
     const matrix = equations.map((e) => e.toArray(variableList));
     const constantsArray = equations.map((e) => e.constant);
     const solution = solve(matrix, constantsArray);
@@ -422,7 +429,8 @@ export default class Factory {
     // apply solution to factory. First set all recipe rates, then set production line rates from applicable recipes
     for (const variable of variables) {
       const newRate =
-        Math.round(solution[variableLookup[variable]] * 10e10) / 10e10;
+        Math.round(solution[variableLookup[variable]] * 10e6) / 10e6;
+      // console.log(variable, newRate);
 
       if (variable.indexOf("_") >= 0) {
         // recipe product rate
@@ -430,7 +438,8 @@ export default class Factory {
         const possibleAssemblyLines = this._assemblyLineLookup[
           partSlug
         ]?.filter((al) => al.recipe.slug === recipeSlug);
-        if (possibleAssemblyLines?.length > 0) { // if it's more than 1 it's a duplicate (water for recipes that consume and produce it)
+        if (possibleAssemblyLines?.length > 0) {
+          // if it's more than 1 it's a duplicate (water for recipes that consume and produce it)
           const assemblyLine = possibleAssemblyLines[0];
           const recipePart = assemblyLine.recipe.getProduct(partSlug);
           if (recipePart) {

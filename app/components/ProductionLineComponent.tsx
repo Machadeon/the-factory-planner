@@ -1,5 +1,6 @@
 "use client";
 
+import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -7,16 +8,17 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import TextField from "@mui/material/TextField";
 import Image from "next/image";
-import { type MouseEvent, useState } from "react";
+import { type MouseEvent, useState, useEffect } from "react";
 import type Factory from "../models/factory";
 import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import { displayNum, getColorClassForProductionRate1 } from "../utils";
 import AssemblyLine from "./AssemblyLineComponent";
-import Clickable, {ClickableStyle} from "./Clickable";
+import Clickable, { ClickableStyle } from "./Clickable";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
+import Tooltip from "@mui/material/Tooltip";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
@@ -27,12 +29,27 @@ interface ProductionLineComponentProps {
 export default function ProductionLineComponent(
   props: ProductionLineComponentProps,
 ) {
-  const [expanded, setExpanded] = useState(
+  const part = props.productionLine.part;
+  const recipeList = recipeLookup[part.slug];
+  const actualProductionRate = props.productionLine.assemblyLines.reduce(
+    (acc, assemblyLine) =>
+      acc + assemblyLine.rate * assemblyLine.recipe.productLookup[part.slug],
+    0,
+  );
+
+  const productionRateDiff = actualProductionRate - props.productionLine.rate;
+  const needMoreProduction =
+    props.productionLine.assemblyLines.length === 0 ||
+    Math.abs(productionRateDiff) > 0.0001;
+  const hasMoreRecipes =
+    props.productionLine.assemblyLines.length <
+    recipeLookup[props.productionLine.part.slug].length;
+
+  const [expanded, setExpanded] = useState<boolean>(
     props.productionLine.assemblyLines.length !== 1 ||
       !props.productionLine.autoCreated,
   );
-  const part = props.productionLine.part;
-  const recipeList = recipeLookup[part.slug];
+  const [showRecipes, setShowRecipes] = useState<boolean>(false);
 
   function getProductionRateForRecipe(recipe: Recipe): number {
     const partRate = props.productionLine.rate - actualProductionRate;
@@ -61,12 +78,6 @@ export default function ProductionLineComponent(
     props.factory.autoCalculateRates();
   }
 
-  const actualProductionRate = props.productionLine.assemblyLines.reduce(
-    (acc, assemblyLine) =>
-      acc + assemblyLine.rate * assemblyLine.recipe.productLookup[part.slug],
-    0,
-  );
-
   function addAssemblyLine(recipe: Recipe) {
     props.productionLine.assemblyLines.push({
       part: part,
@@ -74,6 +85,7 @@ export default function ProductionLineComponent(
       rate: getProductionRateForRecipe(recipe),
     });
     updateProductionLine();
+    setShowRecipes(false);
   }
 
   function removeAssemblyLine(recipe: Recipe) {
@@ -101,7 +113,14 @@ export default function ProductionLineComponent(
     }
   }
 
-  const productionRateDiff = actualProductionRate - props.productionLine.rate;
+  function splitRecipes() {
+    const currentRecipeCount = props.productionLine.assemblyLines.length;
+    for (const assemblyLine of props.productionLine.assemblyLines) {
+      assemblyLine.rate *= currentRecipeCount / (currentRecipeCount + 1);
+    }
+    setShowRecipes(true);
+  }
+
   const actualProductionRateTextColorClass =
     getColorClassForProductionRate1(productionRateDiff);
   var productionRateDiffStr;
@@ -114,11 +133,19 @@ export default function ProductionLineComponent(
   }
 
   var mainStyle: ClickableStyle = "default";
-  if (props.productionLine.assemblyLines.every(al => al.rate < 0)) {
+  if (props.productionLine.assemblyLines.every((al) => al.rate < 0)) {
     mainStyle = "danger";
-  } else if (!props.productionLine.assemblyLines.every(al => al.rate > 0)) {
+  } else if (!props.productionLine.assemblyLines.every((al) => al.rate > 0)) {
     mainStyle = "warning";
   }
+
+  useEffect(() => {
+    if (needMoreProduction) {
+      setShowRecipes(true);
+    } else {
+      setShowRecipes(false);
+    }
+  }, [needMoreProduction, setShowRecipes]);
 
   return (
     <div className="flex flex-col gap-y-2 grow">
@@ -184,13 +211,23 @@ export default function ProductionLineComponent(
             />
           )}
           <span>/min</span>
-          <Clickable onClick={toggleAutoCalculateRate} className="p-1">
-            {props.productionLine.autoCalculateRate ? (
-              <EditIcon />
-            ) : (
-              <LinkIcon />
-            )}
-          </Clickable>
+          {props.productionLine.autoCalculateRate ? (
+            <Tooltip title="Override rate">
+              <span>
+                <Clickable onClick={toggleAutoCalculateRate} className="p-1">
+                  <EditIcon />
+                </Clickable>
+              </span>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Autocalculate rate">
+              <span>
+                <Clickable onClick={toggleAutoCalculateRate} className="p-1">
+                  <LinkIcon />
+                </Clickable>
+              </span>
+            </Tooltip>
+          )}
         </div>
         <p className="grow">
           Actual:{" "}
@@ -202,9 +239,13 @@ export default function ProductionLineComponent(
             {productionRateDiffStr}
           </span>
         </p>
-        <Clickable onClick={removeSelf} className="p-1">
-          <DeleteIcon />
-        </Clickable>
+        <Tooltip title="Remove product">
+          <span>
+            <Clickable onClick={removeSelf} className="p-1">
+              <DeleteIcon />
+            </Clickable>
+          </span>
+        </Tooltip>
       </Clickable>
       {expanded && (
         <div className="flex flex-col pl-12">
@@ -219,21 +260,31 @@ export default function ProductionLineComponent(
                   factory={props.factory}
                 />
                 {recipeList.length !== 1 ? (
-                  <Clickable
-                    onClick={() => removeAssemblyLine(assemblyLine.recipe)}
-                    className="p-1"
-                  >
-                    <DeleteIcon />
-                  </Clickable>
+                  <Tooltip title="Remove recipe">
+                    <span>
+                      <Clickable
+                        onClick={() => removeAssemblyLine(assemblyLine.recipe)}
+                        className="p-1"
+                      >
+                        <DeleteIcon />
+                      </Clickable>
+                    </span>
+                  </Tooltip>
                 ) : (
                   <div className="w-[1.5rem]"></div>
                 )}
               </div>
             );
           })}
-          {(props.productionLine.assemblyLines.length === 0 ||
-            Math.abs(actualProductionRate - props.productionLine.rate) >
-              0.0001) &&
+          {hasMoreRecipes && !needMoreProduction && !showRecipes && (
+            <div>
+              <Clickable onClick={splitRecipes} className="flex flex-row items-center">
+                <AddIcon />
+                Add Recipe
+              </Clickable>
+            </div>
+          )}
+          {(needMoreProduction || showRecipes) &&
             recipeList.map((recipe) => {
               if (
                 props.productionLine.assemblyLines.find(
@@ -247,7 +298,9 @@ export default function ProductionLineComponent(
                 <RecipeComponent
                   recipe={recipe}
                   rate={
-                    props.productionLine.rate - actualProductionRate
+                    -productionRateDiff /
+                    (recipe.getProduct(props.productionLine.part)?.quantity ??
+                      1)
                   }
                   onClick={() => addAssemblyLine(recipe)}
                   key={recipe.slug}

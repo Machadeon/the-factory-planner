@@ -19,12 +19,25 @@ export default function FactoryOverviewComponent({
   const [showIntermediateProducts, setShowIntermediateProducts] =
     useState<boolean>(false);
 
+  function schedule(obj: object, fn: Function) {
+    setTimeout(fn.bind(obj), 1);
+  }
+
   return (
     <div className="flex flex-col w-xs">
       <div className="text-lg mb-2">Controls</div>
-      <Button variant="contained" onClick={() => factory.autoCalculateRates()}>
-        Run Calculation
-      </Button>
+      <div className="flex flex-col gap-y-2">
+        <Button variant="contained" onClick={() => schedule(factory, factory.update)}>
+          Update
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => schedule(factory, factory.autoCalculateRates)}
+        >
+          Run Solver
+        </Button>
+      </div>
+      <HorizontalDivider />
       <div className="text-lg mb-2">Outputs</div>
       {factory.allOutputs().map((part) => (
         <PartRateSummary

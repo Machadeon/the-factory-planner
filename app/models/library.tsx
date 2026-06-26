@@ -6,10 +6,27 @@ import type { RecipePart, RecipePartLookup } from "./recipe";
 
 export const parts: Part[] = [];
 export const partLookup: { [className: string]: Part } = {};
+export const partSlugLookup: { [partSlug: string]: Part } = {};
 export const buildings: Building[] = [];
 export const buildingLookup: { [className: string]: Building } = {};
 export const recipes: Recipe[] = [];
 export const recipeLookup: { [partSlug: string]: Recipe[] } = {};
+
+export const rawResources = [
+  "water",
+  "iron-ore",
+  "limestone",
+  "coal",
+  "copper-ore",
+  "caterium-ore",
+  "raw-quartz",
+  "crude-oil",
+  "bauxite",
+  "nitrogen-gas",
+  "sulfur",
+  "sam",
+  "uranium",
+];
 
 for (const partData of Object.values(data.items)) {
   const part: Part = {
@@ -25,10 +42,12 @@ for (const partData of Object.values(data.items)) {
     sinkPoints: partData.sinkPoints,
     sinkable: partData.sinkPoints > 0,
     color: `rgba(${partData.fluidColor.r}, ${partData.fluidColor.g}, ${partData.fluidColor.b}, ${partData.fluidColor.a})`,
+    isRawResource: rawResources.indexOf(partData.slug) >= 0,
   };
 
   parts.push(part);
   partLookup[part.className] = part;
+  partSlugLookup[part.slug] = part;
 }
 
 parts.sort((a, b) => a.name.localeCompare(b.name));

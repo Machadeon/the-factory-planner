@@ -19,10 +19,14 @@ export default function AssemblyLineComponent(
     props.factory.update();
   }
 
-  const partsMade = props.factory.productionLines.map((pl) => pl.part.slug);
+  const allOutputs = props.factory.recipeOutputs().map((part) => part.slug);
   const partsNeeded = props.assemblyLine.recipe.ingredients
     .map((ing) => ing.part.slug)
-    .filter((part) => partsMade.indexOf(part) < 0);
+    .filter(
+      (partSlug) =>
+        allOutputs.indexOf(partSlug) < 0 &&
+        recipeLookup.hasOwnProperty(partSlug),
+    );
 
   return (
     <RecipeComponent

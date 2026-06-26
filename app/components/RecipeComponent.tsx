@@ -10,8 +10,12 @@ import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
 import { displayNum } from "../utils";
-import Clickable, { defaultClass as clickableClass, defaultHoverClass as clickableHoverClass } from "./Clickable";
+import Clickable, {
+  defaultClass as clickableClass,
+  defaultHoverClass as clickableHoverClass,
+} from "./Clickable";
 import TextCalculatorField from "./TextCalculatorField";
+import Tooltip from "@mui/material/Tooltip";
 
 interface RecipeComponentProps {
   recipe: Recipe;
@@ -47,49 +51,64 @@ export default function RecipeComponent({
     if (factory) factory.addProductionLine(part);
   }
 
-  const rateClassName = rate < 0 ? "font-bold text-amber-500" : "";
+  const rateClassName = rate <= 0 ? "font-bold text-amber-500" : "";
 
   return (
     <div className={className} onClick={onClick}>
-      <Image
-        src={recipe.building.iconLarge}
-        alt={recipe.building.name}
-        width={64}
-        height={64}
-      />
+      <Tooltip enterDelay={500} title={recipe.building.name}>
+        <Image
+          src={recipe.building.iconLarge}
+          alt={recipe.building.name}
+          width={64}
+          height={64}
+        />
+      </Tooltip>
       <span className="w-3xs">{recipe.name}</span>
       <div className="w-2xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.ingredients.flatMap((ing) => [
           <span className="text-right" key={`ing-${ing.part.slug}-quantity`}>
             {ing.quantity}x
           </span>,
-          <Image
-            src={ing.part.iconSmall}
-            alt={ing.part.name}
-            width={32}
-            height={32}
+          <Tooltip
+            enterDelay={500}
+            title={ing.part.name}
             key={`ing-${ing.part.slug}-image`}
-            className="m-1"
-          />,
+          >
+            <Image
+              src={ing.part.iconSmall}
+              alt={ing.part.name}
+              width={32}
+              height={32}
+              className="m-1"
+            />
+          </Tooltip>,
           <div
             className="grow text-right"
             key={`ing-${ing.part.slug}-controls`}
           >
             {partsNeeded && partsNeeded.indexOf(ing.part.slug) >= 0 && (
-              <Clickable
-                onClick={() => addProductionLine(ing.part)}
-                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-              >
-                <AddIcon />
-              </Clickable>
+              <Tooltip enterDelay={500} title="Add production line">
+                <span>
+                  <Clickable
+                    onClick={() => addProductionLine(ing.part)}
+                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+                  >
+                    <AddIcon />
+                  </Clickable>
+                </span>
+              </Tooltip>
             )}
             {partRateEditable && (
-              <Clickable
-                onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
-                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-              >
-                <EditIcon />
-              </Clickable>
+              <Tooltip enterDelay={500} title="Override rate">
+                <span>
+                  <Clickable
+                    onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
+                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+                  >
+                    <EditIcon />
+                  </Clickable>
+                </span>
+              </Tooltip>
             )}
           </div>,
           manualRatePart === `ing-${ing.part.slug}` && partRateEditable ? (
@@ -108,7 +127,10 @@ export default function RecipeComponent({
               /min
             </div>
           ) : (
-            <div className={`text-right ${rateClassName}`} key={`ing-${ing.part.slug}-rate`}>
+            <div
+              className={`text-right ${rateClassName}`}
+              key={`ing-${ing.part.slug}-rate`}
+            >
               {displayNum(ing.quantity * rate)}/min
             </div>
           ),
@@ -120,24 +142,33 @@ export default function RecipeComponent({
           <span className="text-right" key={`prod-${prod.part.slug}-quantity`}>
             {prod.quantity}x
           </span>,
-          <Image
-            src={prod.part.iconSmall}
-            alt={prod.part.name}
-            width={32}
-            height={32}
+          <Tooltip
+            enterDelay={500}
+            title={prod.part.name}
             key={`prod-${prod.part.slug}-image`}
-          />,
+          >
+            <Image
+              src={prod.part.iconSmall}
+              alt={prod.part.name}
+              width={32}
+              height={32}
+            />
+          </Tooltip>,
           <div
             className="grow text-right"
             key={`prod-${prod.part.slug}-controls`}
           >
             {partRateEditable && (
-              <Clickable
-                onClick={() => setManualRatePart(`prod-${prod.part.slug}`)}
-                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-              >
-                <EditIcon />
-              </Clickable>
+              <Tooltip enterDelay={500} title="Override rate">
+                <span>
+                  <Clickable
+                    onClick={() => setManualRatePart(`prod-${prod.part.slug}`)}
+                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+                  >
+                    <EditIcon />
+                  </Clickable>
+                </span>
+              </Tooltip>
             )}
           </div>,
           manualRatePart === `prod-${prod.part.slug}` && partRateEditable ? (
@@ -163,7 +194,10 @@ export default function RecipeComponent({
               /min
             </div>
           ) : (
-            <div className={`text-right ${rateClassName}`} key={`prod-${prod.part.slug}-rate`}>
+            <div
+              className={`text-right ${rateClassName}`}
+              key={`prod-${prod.part.slug}-rate`}
+            >
               {displayNum(prod.quantity * rate)}/min
             </div>
           ),

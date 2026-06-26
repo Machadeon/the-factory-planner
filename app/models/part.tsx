@@ -11,4 +11,5 @@ export default interface Part {
   sinkPoints: number;
   sinkable: boolean;
   color: string;
+  isRawResource: boolean;
 }
