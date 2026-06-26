@@ -3,7 +3,7 @@ import type Recipe from "./recipe";
 
 export default interface AssemblyLine {
   /**
-   * The part which is the main product of this assembly line.
+   * The {@link Part} which is the main product of this assembly line.
    */
   part: Part;
 
@@ -13,7 +13,7 @@ export default interface AssemblyLine {
   rate: number;
 
   /**
-   * The recipe used in this assembly line.
+   * The {@link Recipe} used in this assembly line.
    */
   recipe: Recipe;
 }

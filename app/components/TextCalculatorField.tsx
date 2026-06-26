@@ -18,19 +18,23 @@ export default function TextCalculatorField({
   const [error, setError] = useState<boolean>(false);
 
   function calculate(newValue: string) {
-    const result = evaluateExpression(newValue);
-    if (onCalculate) onCalculate(result);
-    setValue(result.toString());
-    setError(false);
-  }
-
-  function finalize() {
+    var result = evaluateExpression(`${other.value}`);
     try {
-      calculate(value);
+      result = evaluateExpression(newValue);
     } catch {
       console.warn("Invalid expression:", value);
       setError(true);
+      return;
     }
+
+    setValue(result.toString());
+    setError(false);
+
+    if (onCalculate) onCalculate(result);
+  }
+
+  function finalize() {
+    calculate(value);
   }
 
   function reset() {
@@ -45,8 +49,6 @@ export default function TextCalculatorField({
     }
   }
 
-  const inputRef = useRef(null);
-
   function handleFocus(event: FocusEvent<HTMLInputElement>) {
     event.target.select();
   }
@@ -56,7 +58,6 @@ export default function TextCalculatorField({
       {...other}
       value={value}
       error={error}
-      inputRef={inputRef}
       onFocus={handleFocus}
       onKeyDown={onKeyDown}
       onChange={(e) => setValue(e.target.value)}

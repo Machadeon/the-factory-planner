@@ -14,7 +14,7 @@ import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import { displayNum, getColorClassForProductionRate1 } from "../utils";
 import AssemblyLine from "./AssemblyLineComponent";
-import Clickable from "./Clickable";
+import Clickable, {ClickableStyle} from "./Clickable";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
 
@@ -43,13 +43,12 @@ export default function ProductionLineComponent(
     if (props.productionLine.assemblyLines.length === 1) {
       // if something changed and there is only one line, then set the line rate to the product rate
       const assemblyLine = props.productionLine.assemblyLines[0];
-      assemblyLine.rate = props.productionLine.rate / assemblyLine.recipe.productLookup[part.slug];
+      assemblyLine.rate =
+        props.productionLine.rate /
+        assemblyLine.recipe.productLookup[part.slug];
     }
 
-    props.factory.setPartRate(
-      part,
-      props.productionLine.rate,
-    );
+    props.factory.setPartRate(part, props.productionLine.rate);
   }
 
   function updateProductionRate(newValue: number) {
@@ -57,8 +56,14 @@ export default function ProductionLineComponent(
     updateProductionLine();
   }
 
+  function updateOutputRate(newValue: number) {
+    props.productionLine.outputRate = newValue;
+    props.factory.autoCalculateRates();
+  }
+
   const actualProductionRate = props.productionLine.assemblyLines.reduce(
-    (acc, assemblyLine) => acc + assemblyLine.rate * assemblyLine.recipe.productLookup[part.slug],
+    (acc, assemblyLine) =>
+      acc + assemblyLine.rate * assemblyLine.recipe.productLookup[part.slug],
     0,
   );
 
@@ -97,7 +102,8 @@ export default function ProductionLineComponent(
   }
 
   const productionRateDiff = actualProductionRate - props.productionLine.rate;
-  const actualProductionRateTextColorClass = getColorClassForProductionRate1(productionRateDiff);
+  const actualProductionRateTextColorClass =
+    getColorClassForProductionRate1(productionRateDiff);
   var productionRateDiffStr;
   if (actualProductionRateTextColorClass === "text-amber-500") {
     productionRateDiffStr = ` (+${displayNum(productionRateDiff)})`;
@@ -107,36 +113,48 @@ export default function ProductionLineComponent(
     productionRateDiffStr = "";
   }
 
+  var mainStyle: ClickableStyle = "default";
+  if (props.productionLine.assemblyLines.every(al => al.rate < 0)) {
+    mainStyle = "danger";
+  } else if (!props.productionLine.assemblyLines.every(al => al.rate > 0)) {
+    mainStyle = "warning";
+  }
+
   return (
     <div className="flex flex-col gap-y-2 grow">
       <Clickable
         className="flex flex-row items-center gap-x-2 px-4 py-2"
+        style={mainStyle}
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
         <div className="flex flex-row items-center gap-2 w-sm flex-none">
-          <Image
-            src={part.iconSmall}
-            alt={part.name}
-            width={64}
-            height={64}
-          />
+          <Image src={part.iconSmall} alt={part.name} width={64} height={64} />
           <span className="text-xl">{part.name}</span>
         </div>
-        <div className="flex flex-row items-center w-3xs flex-none justify-end">
-          <Clickable onClick={toggleAutoCalculateRate} className="m-1 mr-2">
-            {props.productionLine.autoCalculateRate ? (
-              <EditIcon />
-            ) : (
-              <LinkIcon />
-            )}
-          </Clickable>
+        <div className="flex flex-row items-center w-sm flex-none gap-x-2">
+          <TextCalculatorField
+            variant="outlined"
+            size="small"
+            label="Factory Output Rate"
+            className="w-40"
+            value={props.productionLine.outputRate}
+            onCalculate={updateOutputRate}
+            onClick={(e) => e.stopPropagation()}
+            slotProps={{
+              htmlInput: {
+                sx: {
+                  textAlign: "right",
+                },
+              },
+            }}
+          />
           {props.productionLine.autoCalculateRate ? (
             <TextField
               variant="outlined"
               size="small"
-              label="Target"
-              className="w-24"
+              label="Production Rate"
+              className="w-32"
               disabled
               value={props.productionLine.rate}
               slotProps={{
@@ -151,8 +169,8 @@ export default function ProductionLineComponent(
             <TextCalculatorField
               variant="outlined"
               size="small"
-              label="Target"
-              className="w-24"
+              label="Production Rate"
+              className="w-32"
               value={props.productionLine.rate}
               onCalculate={updateProductionRate}
               onClick={(e) => e.stopPropagation()}
@@ -165,7 +183,14 @@ export default function ProductionLineComponent(
               }}
             />
           )}
-          /min
+          <span>/min</span>
+          <Clickable onClick={toggleAutoCalculateRate} className="p-1">
+            {props.productionLine.autoCalculateRate ? (
+              <EditIcon />
+            ) : (
+              <LinkIcon />
+            )}
+          </Clickable>
         </div>
         <p className="grow">
           Actual:{" "}
@@ -177,34 +202,38 @@ export default function ProductionLineComponent(
             {productionRateDiffStr}
           </span>
         </p>
-        <Clickable onClick={removeSelf}>
+        <Clickable onClick={removeSelf} className="p-1">
           <DeleteIcon />
         </Clickable>
       </Clickable>
       {expanded && (
-        <div className="flex flex-col pl-16 pr-4">
-          {props.productionLine.assemblyLines.map((assemblyLine) => (
-            <div
-              key={`${assemblyLine.recipe.slug}-${assemblyLine.rate}`}
-              className="flex flex-row items-center"
-            >
-              <AssemblyLine
-                assemblyLine={assemblyLine}
-                factory={props.factory}
-              />
-              {recipeList.length !== 1 ? (
-                <Clickable
-                  onClick={() => removeAssemblyLine(assemblyLine.recipe)}
-                >
-                  <DeleteIcon />
-                </Clickable>
-              ) : (
-                <div className="w-[1.5rem]"></div>
-              )}
-            </div>
-          ))}
+        <div className="flex flex-col pl-12">
+          {props.productionLine.assemblyLines.map((assemblyLine) => {
+            return (
+              <div
+                key={`${assemblyLine.recipe.slug}-${assemblyLine.rate}`}
+                className="flex flex-row items-center pe-4"
+              >
+                <AssemblyLine
+                  assemblyLine={assemblyLine}
+                  factory={props.factory}
+                />
+                {recipeList.length !== 1 ? (
+                  <Clickable
+                    onClick={() => removeAssemblyLine(assemblyLine.recipe)}
+                    className="p-1"
+                  >
+                    <DeleteIcon />
+                  </Clickable>
+                ) : (
+                  <div className="w-[1.5rem]"></div>
+                )}
+              </div>
+            );
+          })}
           {(props.productionLine.assemblyLines.length === 0 ||
-            Math.abs(actualProductionRate - props.productionLine.rate) > 0.0001) &&
+            Math.abs(actualProductionRate - props.productionLine.rate) >
+              0.0001) &&
             recipeList.map((recipe) => {
               if (
                 props.productionLine.assemblyLines.find(
@@ -217,7 +246,7 @@ export default function ProductionLineComponent(
               return (
                 <RecipeComponent
                   recipe={recipe}
-                  productionRate={
+                  rate={
                     props.productionLine.rate - actualProductionRate
                   }
                   onClick={() => addAssemblyLine(recipe)}

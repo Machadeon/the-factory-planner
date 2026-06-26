@@ -10,12 +10,12 @@ import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
 import { displayNum } from "../utils";
-import Clickable, { defaultClass as clickableClass } from "./Clickable";
+import Clickable, { defaultClass as clickableClass, defaultHoverClass as clickableHoverClass } from "./Clickable";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface RecipeComponentProps {
   recipe: Recipe;
-  productionRate: number;
+  rate: number;
   factory?: Factory;
   onClick?: MouseEventHandler<HTMLDivElement>;
   partRateEditable?: boolean;
@@ -25,7 +25,7 @@ interface RecipeComponentProps {
 
 export default function RecipeComponent({
   recipe,
-  productionRate,
+  rate,
   factory,
   onClick,
   partRateEditable,
@@ -36,7 +36,7 @@ export default function RecipeComponent({
 
   var className =
     "sp-recipe-component flex flex-row grow items-center gap-x-2 p-2";
-  if (onClick) className += ` ${clickableClass}`;
+  if (onClick) className += ` ${clickableClass}${clickableHoverClass}`;
 
   function setPartRateInternal(recipePart: RecipePart, newValue: number) {
     if (partRateEditable && setPartRate) setPartRate(recipePart, newValue);
@@ -46,6 +46,8 @@ export default function RecipeComponent({
   function addProductionLine(part: Part) {
     if (factory) factory.addProductionLine(part);
   }
+
+  const rateClassName = rate < 0 ? "font-bold text-amber-500" : "";
 
   return (
     <div className={className} onClick={onClick}>
@@ -70,7 +72,7 @@ export default function RecipeComponent({
             className="m-1"
           />,
           <div
-            className="flex flex-row grow justify-end"
+            className="grow text-right"
             key={`ing-${ing.part.slug}-controls`}
           >
             {partsNeeded && partsNeeded.indexOf(ing.part.slug) >= 0 && (
@@ -100,16 +102,14 @@ export default function RecipeComponent({
                 size="small"
                 className="w-24"
                 autoFocus
-                value={ing.quantity * productionRate}
+                value={ing.quantity * rate}
                 onCalculate={(newValue) => setPartRateInternal(ing, newValue)}
               />
               /min
             </div>
           ) : (
-            <div className="text-right" key={`ing-${ing.part.slug}-rate`}>
-              (
-              {displayNum(ing.quantity * productionRate)}
-              /min)
+            <div className={`text-right ${rateClassName}`} key={`ing-${ing.part.slug}-rate`}>
+              {displayNum(ing.quantity * rate)}/min
             </div>
           ),
         ])}
@@ -150,7 +150,7 @@ export default function RecipeComponent({
                 size="small"
                 className="w-24"
                 autoFocus
-                value={prod.quantity * productionRate}
+                value={prod.quantity * rate}
                 slotProps={{
                   htmlInput: {
                     sx: {
@@ -163,10 +163,8 @@ export default function RecipeComponent({
               /min
             </div>
           ) : (
-            <div className="text-right" key={`prod-${prod.part.slug}-rate`}>
-              (
-              {displayNum(prod.quantity * productionRate)}
-              /min)
+            <div className={`text-right ${rateClassName}`} key={`prod-${prod.part.slug}-rate`}>
+              {displayNum(prod.quantity * rate)}/min
             </div>
           ),
         ])}

@@ -1,7 +1,7 @@
 import type Building from "./building";
 import data from "./data.json";
 import type Part from "./part";
-import type Recipe from "./recipe";
+import Recipe from "./recipe";
 import type { RecipePart, RecipePartLookup } from "./recipe";
 
 export const parts: Part[] = [];
@@ -60,7 +60,9 @@ function ingredientToRecipePart(ingredient: {
   };
 }
 
-function ingredientsToRecipePartLookup(ingredients: {item: string; amount: number;}[]): RecipePartLookup {
+function ingredientsToRecipePartLookup(
+  ingredients: { item: string; amount: number }[],
+): RecipePartLookup {
   const lookup: RecipePartLookup = {};
   for (const ingredient of ingredients) {
     const part = partLookup[ingredient.item];
@@ -73,18 +75,18 @@ function ingredientsToRecipePartLookup(ingredients: {item: string; amount: numbe
 for (const recipeData of Object.values(data.recipes)) {
   if (!recipeData.inMachine) continue;
 
-  const recipe: Recipe = {
-    name: recipeData.name,
-    className: recipeData.className,
-    slug: recipeData.slug,
-    ingredients: recipeData.ingredients.map<RecipePart>(ingredientToRecipePart),
-    ingredientLookup: ingredientsToRecipePartLookup(recipeData.ingredients),
-    products: recipeData.products.map<RecipePart>(ingredientToRecipePart),
-    productLookup: ingredientsToRecipePartLookup(recipeData.products),
-    building: buildingLookup[recipeData.producedIn[0]],
-    processingTime: recipeData.time,
-    customPowerUsage: recipeData.isVariablePower,
-  };
+  const recipe = new Recipe(
+    recipeData.name,
+    recipeData.className,
+    recipeData.slug,
+    recipeData.ingredients.map<RecipePart>(ingredientToRecipePart),
+    ingredientsToRecipePartLookup(recipeData.ingredients),
+    recipeData.products.map<RecipePart>(ingredientToRecipePart),
+    ingredientsToRecipePartLookup(recipeData.products),
+    buildingLookup[recipeData.producedIn[0]],
+    recipeData.time,
+    recipeData.isVariablePower,
+  );
 
   if (recipeData.isVariablePower) {
     recipe.minPowerUsage = recipeData.minPower;

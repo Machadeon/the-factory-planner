@@ -19,7 +19,8 @@ export default function PartRateSummary({
   rate,
   factory,
 }: PartRateSummaryProps) {
-  const totalRate = displayNum(rate.productionRate - rate.consumpionRate);
+  const totalRate =
+    (rate && displayNum(rate.productionRate - rate.consumpionRate)) || 0;
   const totalRatePrefix = totalRate < 0 ? "" : "+";
 
   return (
@@ -45,10 +46,10 @@ export default function PartRateSummary({
       <div className="flex flex-row gap-x-1">
         <div className="grow"></div>
         <span className="min-w-16 text-right">
-          +{displayNum(rate.productionRate)}
+          +{displayNum(rate?.productionRate || 0)}
         </span>
         <span className="min-w-16 text-right">
-          - {displayNum(rate.consumpionRate)}
+          - {displayNum(rate?.consumpionRate || 0)}
         </span>
         <span>=</span>
         <span

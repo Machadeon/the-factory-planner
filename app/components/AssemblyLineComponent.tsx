@@ -27,7 +27,7 @@ export default function AssemblyLineComponent(
   return (
     <RecipeComponent
       recipe={props.assemblyLine.recipe}
-      productionRate={props.assemblyLine.rate}
+      rate={props.assemblyLine.rate}
       setPartRate={adjustProductionRate}
       partRateEditable={recipeLookup[props.assemblyLine.part.slug].length > 1}
       partsNeeded={partsNeeded}
