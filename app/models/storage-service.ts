@@ -1,7 +1,9 @@
 import {
+  CURRENT_SCHEMA_VERSION,
   emptyLibrary,
   type FactoryFolder,
   generateId,
+  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
 } from "./factory-storage";
@@ -28,7 +30,16 @@ export function loadLibrary(): StorageLibrary {
   try {
     const raw = localStorage.getItem(KEY_LIBRARY);
     if (!raw) return emptyLibrary();
-    return JSON.parse(raw) as StorageLibrary;
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed?.schemaVersion ||
+      parsed.schemaVersion < CURRENT_SCHEMA_VERSION
+    ) {
+      const migrated = migrateLibrary(parsed);
+      saveLibrary(migrated);
+      return migrated;
+    }
+    return parsed as StorageLibrary;
   } catch {
     return emptyLibrary();
   }

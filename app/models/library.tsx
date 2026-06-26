@@ -52,6 +52,21 @@ for (const partData of Object.values(data.items)) {
 
 parts.sort((a, b) => a.name.localeCompare(b.name));
 
+// somersloop slot counts per building slug.
+const somersloopSlots: Record<string, number> = {
+  constructor: 1,
+  assembler: 2,
+  manufacturer: 4,
+  "quantum-encoder": 4,
+  converter: 2,
+  refinery: 2,
+  foundry: 2,
+  packager: 0,
+  "particle-accelerator": 4,
+  blender: 4,
+  smelter: 1,
+};
+
 for (const buildingData of Object.values(data.buildings)) {
   if (buildingData.metadata.manufacturingSpeed === 0) continue;
 
@@ -63,6 +78,7 @@ for (const buildingData of Object.values(data.buildings)) {
     iconSmall: `/images/items/${buildingData.icon}_64.png`,
     iconLarge: `/images/items/${buildingData.icon}_256.png`,
     basePowerUsage: buildingData.metadata.powerConsumption,
+    maxSomersloops: somersloopSlots[buildingData.slug] ?? 0,
   };
 
   buildings.push(building);

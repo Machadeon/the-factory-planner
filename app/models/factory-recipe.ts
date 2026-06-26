@@ -11,6 +11,11 @@ export default class FactoryRecipe implements RecipeLike {
   readonly icon?: string;
   readonly ingredients: RecipePart[];
   readonly products: RecipePart[];
+  avgPowerPerInstance = 0;
+  minPowerPerInstance = 0;
+  maxPowerPerInstance = 0;
+  shardsPerInstance = 0;
+  sloopsPerInstance = 0;
   private readonly _ingredientLookup: Record<string, RecipePart> = {};
   private readonly _productLookup: Record<string, RecipePart> = {};
 
@@ -38,6 +43,13 @@ export default class FactoryRecipe implements RecipeLike {
     }
     this.ingredients = ingList;
     this.products = prodList;
+
+    const totalPower = factory.getTotalPower();
+    this.avgPowerPerInstance = totalPower.avg;
+    this.minPowerPerInstance = totalPower.min;
+    this.maxPowerPerInstance = totalPower.max;
+    this.shardsPerInstance = factory.getTotalShards();
+    this.sloopsPerInstance = factory.getTotalSloops();
   }
 
   getIngredient(part: Part | string): RecipePart | undefined {

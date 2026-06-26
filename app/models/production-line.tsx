@@ -55,7 +55,10 @@ export default class ProductionLine {
         new AssemblyLine(
           recipes[0],
           productionRate / recipes[0].productLookup[part.slug],
-          false,
+          0,
+          100,
+          0,
+          true,
         ),
       );
     }

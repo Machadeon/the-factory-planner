@@ -9,7 +9,9 @@ export interface SerializedAssemblyLine {
   nestedFactoryId?: string;
   nestedFactoryData?: SerializedFactory;
   rate: number;
-  slooped: boolean;
+  sloopedSlots: number;
+  machineSpeed: number;
+  allowRemainder: boolean;
 }
 
 export interface SerializedProductionLine {
@@ -22,7 +24,7 @@ export interface SerializedProductionLine {
 }
 
 export interface SerializedFactory {
-  schemaVersion: 1;
+  schemaVersion: number;
   id: string;
   name: string;
   folderId: string | null;
@@ -42,17 +44,19 @@ export interface FactoryFolder {
 }
 
 export interface StorageLibrary {
-  schemaVersion: 1;
+  schemaVersion: number;
   folders: FactoryFolder[];
   factories: SerializedFactory[];
 }
+
+export const CURRENT_SCHEMA_VERSION = 2;
 
 export function generateId(): string {
   return crypto.randomUUID();
 }
 
 export function emptyLibrary(): StorageLibrary {
-  return { schemaVersion: 1, folders: [], factories: [] };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION, folders: [], factories: [] };
 }
 
 export function serializeFactory(
@@ -67,7 +71,7 @@ export function serializeFactory(
   library?: StorageLibrary,
 ): SerializedFactory {
   return {
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: meta.id,
     name: meta.name,
     folderId: meta.folderId,
@@ -96,13 +100,17 @@ export function serializeFactory(
               (f) => f.id === nestedId,
             ),
             rate: al.rate,
-            slooped: false,
+            sloopedSlots: 0,
+            machineSpeed: al.machineSpeed,
+            allowRemainder: al.allowRemainder,
           };
         }
         return {
           recipeSlug: al.recipe.slug,
           rate: al.rate,
-          slooped: al.isSlooped(),
+          sloopedSlots: al.sloopedSlots,
+          machineSpeed: al.machineSpeed,
+          allowRemainder: al.allowRemainder,
         };
       }),
     })),
@@ -137,13 +145,59 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
       const recipe = recipeSlugLookup[alData.recipeSlug];
       if (!recipe) continue;
       pl.assemblyLines.push(
-        new AssemblyLine(recipe, alData.rate, alData.slooped),
+        new AssemblyLine(
+          recipe,
+          alData.rate,
+          alData.sloopedSlots,
+          alData.machineSpeed,
+          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          alData.allowRemainder,
+        ),
       );
     }
     factory.productionLines.push(pl);
   }
   factory._updateRates();
   return factory;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+function migrateAssemblyLineRaw(al: any): SerializedAssemblyLine {
+  const result = { ...al };
+  if ("slooped" in result && !("sloopedSlots" in result)) {
+    result.sloopedSlots = result.slooped ? 1 : 0;
+  }
+  delete result.slooped;
+  if (!("machineSpeed" in result)) result.machineSpeed = 100;
+  if (!("allowRemainder" in result)) result.allowRemainder = true;
+  if (result.nestedFactoryData) {
+    result.nestedFactoryData = migrateSerializedFactoryRaw(
+      result.nestedFactoryData,
+    );
+  }
+  return result as SerializedAssemblyLine;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+function migrateSerializedFactoryRaw(f: any): SerializedFactory {
+  return {
+    ...f,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    productionLines: (f.productionLines ?? []).map((pl: any) => ({
+      ...pl,
+      assemblyLines: (pl.assemblyLines ?? []).map(migrateAssemblyLineRaw),
+    })),
+  };
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
+export function migrateLibrary(raw: any): StorageLibrary {
+  return {
+    ...raw,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    folders: raw.folders ?? [],
+    factories: (raw.factories ?? []).map(migrateSerializedFactoryRaw),
+  };
 }
 
 export function deserializeFactory(
@@ -204,7 +258,16 @@ export function deserializeFactory(
           nestedSerialized.name,
           nestedFactory,
         );
-        pl.assemblyLines.push(new AssemblyLine(fr, alData.rate, false));
+        pl.assemblyLines.push(
+          new AssemblyLine(
+            fr,
+            alData.rate,
+            0,
+            alData.machineSpeed,
+            Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+            alData.allowRemainder,
+          ),
+        );
         continue;
       }
 
@@ -222,7 +285,14 @@ export function deserializeFactory(
         continue;
       }
       pl.assemblyLines.push(
-        new AssemblyLine(recipe, alData.rate, alData.slooped),
+        new AssemblyLine(
+          recipe,
+          alData.rate,
+          alData.sloopedSlots,
+          alData.machineSpeed,
+          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          alData.allowRemainder,
+        ),
       );
     }
 

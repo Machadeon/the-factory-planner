@@ -203,6 +203,56 @@ export default function FactoryOverviewComponent({
             showDetail
           />
         ))}
+      {(() => {
+        const totalPower = factory.getTotalPower();
+        const totalShards = Math.round(factory.getTotalShards());
+        const totalSloops = Math.round(factory.getTotalSloops());
+        const variable = totalPower.max - totalPower.min > 0.01;
+        return (
+          <>
+            <HorizontalDivider />
+            <div className="text-lg mb-2">Power & Modules</div>
+            <div className="flex flex-row items-center gap-x-2 mb-1">
+              <Image
+                src="/images/items/power_192.png"
+                alt="Power"
+                width={24}
+                height={24}
+              />
+              {variable ? (
+                <span className="text-sm">
+                  {displayNum(totalPower.avg)} MW avg
+                  <span className="text-gray-400">
+                    {" "}
+                    · {displayNum(totalPower.min)}–{displayNum(totalPower.max)}{" "}
+                    MW
+                  </span>
+                </span>
+              ) : (
+                <span className="text-sm">{displayNum(totalPower.avg)} MW</span>
+              )}
+            </div>
+            <div className="flex flex-row items-center gap-x-2 mb-1">
+              <Image
+                src="/images/items/desc-crystalshard-c_64.png"
+                alt=""
+                width={24}
+                height={24}
+              />
+              <span className="text-sm">{totalShards} Power Shards</span>
+            </div>
+            <div className="flex flex-row items-center gap-x-2 mb-2">
+              <Image
+                src="/images/items/Somersloop.png"
+                alt=""
+                width={24}
+                height={24}
+              />
+              <span className="text-sm">{totalSloops} Somersloops</span>
+            </div>
+          </>
+        );
+      })()}
       {factory.supplierFactories.length > 0 && (
         <>
           <HorizontalDivider />

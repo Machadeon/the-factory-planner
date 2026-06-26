@@ -115,7 +115,14 @@ export default function ProductionLineComponent(
 
   function addAssemblyLine(recipe: Recipe) {
     props.productionLine.assemblyLines.push(
-      new AssemblyLineModel(recipe, getProductionRateForRecipe(recipe), false),
+      new AssemblyLineModel(
+        recipe,
+        getProductionRateForRecipe(recipe),
+        0,
+        100,
+        0,
+        true,
+      ),
     );
     updateProductionLine();
     setShowRecipes(false);
@@ -147,7 +154,7 @@ export default function ProductionLineComponent(
     const productionDeficit = props.productionLine.rate - actualProductionRate;
     const qty = fr.getProduct(part.slug)?.quantity ?? 1;
     props.productionLine.assemblyLines.push(
-      new AssemblyLineModel(fr, productionDeficit / qty, false),
+      new AssemblyLineModel(fr, productionDeficit / qty, 0, 100, 0, true),
     );
     setShowFactoryPicker(false);
     updateProductionLine();
@@ -323,7 +330,7 @@ export default function ProductionLineComponent(
             return (
               <div
                 key={assemblyLine.recipe.slug}
-                className="flex flex-row items-center pe-4"
+                className="flex flex-row items-stretch-x items-center pe-4"
               >
                 <AssemblyLine
                   assemblyLine={assemblyLine}

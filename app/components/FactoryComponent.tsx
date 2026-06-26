@@ -583,15 +583,18 @@ export default function FactoryComponent() {
 
         <div className="flex flex-row grow">
           <div className="flex flex-col grow">
-            {currentFactory.solverError && currentFactory.solverError !== dismissedError && (
-              <Alert
-                severity="warning"
-                className="m-2 text-sm"
-                onClose={() => setDismissedError(currentFactory.solverError ?? null)}
-              >
-                {currentFactory.solverError}
-              </Alert>
-            )}
+            {currentFactory.solverError &&
+              currentFactory.solverError !== dismissedError && (
+                <Alert
+                  severity="warning"
+                  className="m-2 text-sm"
+                  onClose={() =>
+                    setDismissedError(currentFactory.solverError ?? null)
+                  }
+                >
+                  {currentFactory.solverError}
+                </Alert>
+              )}
             {currentFactory.productionLines.length === 0 ? (
               <>
                 <p className="p-4">Add a product to get started</p>

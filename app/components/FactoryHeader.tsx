@@ -1,6 +1,6 @@
 "use client";
 
-import AddBoxIcon from "@mui/icons-material/AddBox";
+import CancelIcon from "@mui/icons-material/Cancel";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
@@ -84,10 +84,10 @@ export default function FactoryHeader({
       </div>
 
       <div className="flex flex-row ml-auto">
-        <Tooltip title="New factory">
+        <Tooltip title="Clear factory">
           <span>
             <Clickable className="p-1" onClick={onNewFactory}>
-              <AddBoxIcon />
+              <CancelIcon />
             </Clickable>
           </span>
         </Tooltip>

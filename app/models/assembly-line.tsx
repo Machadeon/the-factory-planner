@@ -1,5 +1,10 @@
 import type Part from "./part";
+import type Recipe from "./recipe";
 import type { RecipeLike } from "./recipe-like";
+
+function shardsForClock(clock: number): number {
+  return Math.max(0, Math.ceil((clock - 100) / 50));
+}
 
 export default class AssemblyLine {
   /**
@@ -13,14 +18,67 @@ export default class AssemblyLine {
   rate: number;
 
   /**
-   * Whether this recipe uses Somersloops.
+   * Number of Somersloop slots currently filled (0 = no slooping).
    */
-  private slooped: boolean;
+  sloopedSlots: number;
 
-  constructor(recipe: RecipeLike, rate: number, slooped: boolean) {
+  /**
+   * Clock speed percentage for the machine bank (100–250).
+   */
+  machineSpeed: number;
+
+  /**
+   * Power shards inserted per machine (0–3). Each shard raises the max clock by 50%.
+   */
+  powerShards: number;
+
+  /**
+   * Whether a fractional remainder machine is allowed to cover leftover throughput.
+   */
+  allowRemainder: boolean;
+
+  constructor(
+    recipe: RecipeLike,
+    rate: number,
+    sloopedSlots: number,
+    machineSpeed: number,
+    powerShards: number,
+    allowRemainder: boolean,
+  ) {
     this.recipe = recipe;
     this.rate = rate;
-    this.slooped = slooped;
+    this.sloopedSlots = sloopedSlots;
+    this.machineSpeed = machineSpeed;
+    this.powerShards = powerShards;
+    this.allowRemainder = allowRemainder;
+  }
+
+  maxSloopSlots(): number {
+    if (this.recipe.isFactoryRecipe) return 0;
+    return (this.recipe as Recipe).building.maxSomersloops ?? 0;
+  }
+
+  getSloopMultiplier(): number {
+    const max = this.maxSloopSlots();
+    if (max === 0 || this.sloopedSlots === 0) return 1;
+    return 1 + this.sloopedSlots / max;
+  }
+
+  isSlooped(): boolean {
+    return this.sloopedSlots > 0;
+  }
+
+  setSloopedSlots(n: number) {
+    if (this.recipe.isFactoryRecipe) return;
+    const oldMult = this.getSloopMultiplier();
+    const wasZero = this.sloopedSlots === 0;
+    this.sloopedSlots = Math.max(0, Math.min(n, this.maxSloopSlots()));
+    const newMult = this.getSloopMultiplier();
+    this.rate = (this.rate * oldMult) / newMult;
+    if (wasZero && this.sloopedSlots > 0) {
+      this.machineSpeed = this.maxMachineSpeed();
+      this.powerShards = 3;
+    }
   }
 
   getPartConsumptionRate(part: Part | string): number {
@@ -37,9 +95,7 @@ export default class AssemblyLine {
     for (const product of this.recipe.products) {
       if (product.part !== part && product.part.slug !== part) continue;
 
-      const baseRate = this.rate * product.quantity;
-      if (this.slooped) return baseRate * 2;
-      else return baseRate;
+      return this.rate * product.quantity * this.getSloopMultiplier();
     }
 
     return 0;
@@ -57,26 +113,102 @@ export default class AssemblyLine {
     for (const product of this.recipe.products) {
       if (product.part !== part && product.part.slug !== part) continue;
 
-      const baseRate = rate / product.quantity;
-      if (this.slooped) this.rate = baseRate / 2;
-      else this.rate = baseRate;
+      this.rate = rate / product.quantity / this.getSloopMultiplier();
     }
   }
 
-  isSlooped(): boolean {
-    return this.slooped;
+  maxMachineSpeed(): number {
+    return 100 + 50 * this.powerShards;
   }
 
-  setSlooped(slooped: boolean) {
-    if (this.recipe.isFactoryRecipe) return;
-    if (slooped === this.slooped) return;
-
-    if (slooped) {
-      this.slooped = true;
-      this.rate /= 2;
-    } else {
-      this.slooped = false;
-      this.rate *= 2;
+  getMachineCount():
+    | { fullMachines: number; remainderClock: number }
+    | { machineCount: number; uniformClock: number } {
+    if (this.recipe.isFactoryRecipe) {
+      return { fullMachines: 0, remainderClock: 0 };
     }
+    const baseRate = 60 / (this.recipe as Recipe).processingTime;
+    const perMachine = baseRate * (this.machineSpeed / 100);
+
+    if (this.allowRemainder) {
+      const fullMachines = Math.floor(this.rate / perMachine);
+      const leftover = this.rate - fullMachines * perMachine;
+      const remainderClock =
+        leftover > 0.0001 ? (leftover / baseRate) * 100 : 0;
+      return { fullMachines, remainderClock };
+    }
+
+    const machineCount = Math.ceil(this.rate / perMachine);
+    const uniformClock =
+      machineCount > 0
+        ? (this.rate / (machineCount * baseRate)) * 100
+        : this.machineSpeed;
+    return { machineCount, uniformClock };
+  }
+
+  getTotalShards(): number {
+    const count = this.getMachineCount();
+    if ("fullMachines" in count) {
+      return (
+        count.fullMachines * this.powerShards +
+        shardsForClock(count.remainderClock)
+      );
+    }
+    return count.machineCount * this.powerShards;
+  }
+
+  getPowerConsumption(): { avg: number; min: number; max: number } {
+    if (this.recipe.isFactoryRecipe) {
+      const fr = this.recipe as unknown as {
+        avgPowerPerInstance: number;
+        minPowerPerInstance: number;
+        maxPowerPerInstance: number;
+      };
+      return {
+        avg: this.rate * fr.avgPowerPerInstance,
+        min: this.rate * fr.minPowerPerInstance,
+        max: this.rate * fr.maxPowerPerInstance,
+      };
+    }
+    const recipe = this.recipe as Recipe;
+    const maxSloops = this.maxSloopSlots();
+    const sloopFactor =
+      maxSloops > 0 ? (1 + this.sloopedSlots / maxSloops) ** 2 : 1;
+    const count = this.getMachineCount();
+    const calcPower = (basePower: number): number => {
+      if ("fullMachines" in count) {
+        const bankPower =
+          count.fullMachines > 0
+            ? count.fullMachines *
+              basePower *
+              sloopFactor *
+              (this.machineSpeed / 100) ** 1.321928
+            : 0;
+        const remPower =
+          count.remainderClock > 0
+            ? basePower * sloopFactor * (count.remainderClock / 100) ** 1.321928
+            : 0;
+        return bankPower + remPower;
+      }
+      return (
+        count.machineCount *
+        basePower *
+        sloopFactor *
+        (count.uniformClock / 100) ** 1.321928
+      );
+    };
+    // Some recipes specify custom power usage even though their buildings don't support it.
+    // Buildings that support custom/variable power usage all have basePowerUsage === 0
+    if (recipe.customPowerUsage && recipe.building.basePowerUsage === 0) {
+      const minBase = recipe.minPowerUsage ?? 0;
+      const maxBase = recipe.maxPowerUsage ?? 0;
+      return {
+        avg: calcPower((minBase + maxBase) / 2),
+        min: calcPower(minBase),
+        max: calcPower(maxBase),
+      };
+    }
+    const p = calcPower(recipe.building.basePowerUsage);
+    return { avg: p, min: p, max: p };
   }
 }

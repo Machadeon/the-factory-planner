@@ -168,7 +168,11 @@ export default class Factory {
     });
   }
 
-  addProductionLine(part: Part, autoCreated: boolean = false, suppressAutoRecipe = false) {
+  addProductionLine(
+    part: Part,
+    autoCreated: boolean = false,
+    suppressAutoRecipe = false,
+  ) {
     if (part.slug in this._productionLineLookup) {
       console.warn(
         "Cannot add a production line that already exists!",
@@ -370,7 +374,7 @@ export default class Factory {
     const buildVariables = (): Record<string, VariableCoefficients> => {
       const vars: Record<string, VariableCoefficients> = {};
       for (const { assemblyLine, varName } of assemblyLineInfos) {
-        const sloopMult = assemblyLine.isSlooped() ? 2 : 1;
+        const sloopMult = assemblyLine.getSloopMultiplier();
         const coeffs: VariableCoefficients = {};
         for (const ingredient of assemblyLine.recipe.ingredients) {
           coeffs[ingredient.part.slug] =
@@ -479,7 +483,7 @@ export default class Factory {
       }
       this.solverError =
         imbalanced.length > 0
-          ? `Circular recipe dependency: the following intermediate parts cannot be perfectly balanced and will have excess or deficit production: ${imbalanced.join(", ")}.`
+          ? `The following intermediate parts cannot be perfectly balanced and will have excess or deficit production: ${imbalanced.join(", ")}.`
           : null;
       this._applyRates(extractRateMap(result2));
       return;
@@ -493,6 +497,60 @@ export default class Factory {
       .join(", ");
     this.solverError = `No feasible solution: the output target${factoryOutputs.size !== 1 ? "s" : ""} ${outputList} cannot be satisfied with the current recipe configuration. Check that all required parts have production recipes assigned.`;
     this.update();
+  }
+
+  getTotalPower(): { avg: number; min: number; max: number } {
+    let avg = 0;
+    let min = 0;
+    let max = 0;
+    for (const pl of this.productionLines) {
+      for (const al of pl.assemblyLines) {
+        const p = al.getPowerConsumption();
+        avg += p.avg;
+        min += p.min;
+        max += p.max;
+      }
+    }
+    return { avg, min, max };
+  }
+
+  getTotalShards(): number {
+    let total = 0;
+    for (const pl of this.productionLines) {
+      for (const al of pl.assemblyLines) {
+        if (al.recipe.isFactoryRecipe) {
+          total +=
+            al.rate *
+            (al.recipe as unknown as { shardsPerInstance: number })
+              .shardsPerInstance;
+        } else {
+          total += al.getTotalShards();
+        }
+      }
+    }
+    return total;
+  }
+
+  getTotalSloops(): number {
+    let total = 0;
+    for (const pl of this.productionLines) {
+      for (const al of pl.assemblyLines) {
+        if (al.recipe.isFactoryRecipe) {
+          total +=
+            al.rate *
+            (al.recipe as unknown as { sloopsPerInstance: number })
+              .sloopsPerInstance;
+        } else {
+          const count = al.getMachineCount();
+          const machines =
+            "fullMachines" in count
+              ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
+              : count.machineCount;
+          total += al.sloopedSlots * machines;
+        }
+      }
+    }
+    return total;
   }
 
   _applyRates(rateMap: Map<AssemblyLine, number>) {

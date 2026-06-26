@@ -3,10 +3,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
-import { pink } from "@mui/material/colors";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import { alpha, styled } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { type MouseEventHandler, useState } from "react";
@@ -21,18 +17,6 @@ import Clickable, {
 } from "./Clickable";
 import TextCalculatorField from "./TextCalculatorField";
 
-const PinkSwitch = styled(Switch)(({ theme }) => ({
-  "& .MuiSwitch-switchBase.Mui-checked": {
-    color: pink[600],
-    "&:hover": {
-      backgroundColor: alpha(pink[600], theme.palette.action.hoverOpacity),
-    },
-  },
-  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-    backgroundColor: pink[600],
-  },
-}));
-
 interface RecipeComponentProps {
   recipe: Recipe;
   rate: number;
@@ -45,8 +29,7 @@ interface RecipeComponentProps {
     newValue: number,
   ) => void;
   partsNeeded?: string[];
-  slooped?: boolean;
-  onSloopChange?: (shouldSloop: boolean) => void;
+  sloopMultiplier?: number;
 }
 
 export default function RecipeComponent({
@@ -57,8 +40,7 @@ export default function RecipeComponent({
   partRateEditable,
   setPartRate,
   partsNeeded,
-  slooped,
-  onSloopChange,
+  sloopMultiplier,
 }: RecipeComponentProps) {
   const [manualRatePart, setManualRatePart] = useState<string | undefined>();
 
@@ -80,13 +62,11 @@ export default function RecipeComponent({
     if (factory) factory.addProductionLine(part);
   }
 
+  const mult = sloopMultiplier ?? 1;
+  const isSlooped = mult > 1;
   const rateClassName = rate <= 0 ? "font-bold text-amber-500" : "";
   const outputRateClassName =
-    rate <= 0 ? rateClassName : slooped ? "font-bold text-pink-600" : "";
-
-  function toggleSlooping(shouldSloop: boolean) {
-    if (onSloopChange) onSloopChange(shouldSloop);
-  }
+    rate <= 0 ? rateClassName : isSlooped ? "font-bold text-pink-600" : "";
 
   return (
     <div className={className} onClick={onClick}>
@@ -218,7 +198,7 @@ export default function RecipeComponent({
                 size="small"
                 className="w-24"
                 autoFocus
-                value={prod.quantity * rate * (slooped ? 2 : 1)}
+                value={prod.quantity * rate * mult}
                 slotProps={{
                   htmlInput: { className: "text-right" },
                 }}
@@ -233,34 +213,11 @@ export default function RecipeComponent({
               className={`text-right ${outputRateClassName}`}
               key={`prod-${prod.part.slug}-rate`}
             >
-              {displayNum(prod.quantity * rate * (slooped ? 2 : 1))}/min
+              {displayNum(prod.quantity * rate * mult)}/min
             </div>
           ),
         ])}
       </div>
-      {onSloopChange && (
-        <div className="ms-4">
-          <Tooltip enterDelay={500} title="Boost production with Somersloops">
-            <FormControlLabel
-              control={
-                <PinkSwitch
-                  checked={slooped}
-                  onChange={(e) => toggleSlooping(e.target.checked)}
-                />
-              }
-              label={
-                <Image
-                  src="/images/items/research-alien-productionbooster-c_64.png"
-                  alt="somersloop"
-                  width={48}
-                  height={48}
-                />
-              }
-              labelPlacement="start"
-            />
-          </Tooltip>
-        </div>
-      )}
     </div>
   );
 }
