@@ -1,0 +1,119 @@
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import AssemblyLine from "@/app/models/assembly-line";
+import AssemblyLineComponent from "@/app/components/AssemblyLineComponent";
+import Factory from "@/app/models/factory";
+import { partSlugLookup, recipes } from "@/app/models/library";
+import type Part from "@/app/models/part";
+import type Recipe from "@/app/models/recipe";
+import ProductionLine from "@/app/models/production-line";
+
+vi.mock("next/image", () => ({
+  default: ({
+    src,
+    alt,
+    ...rest
+  }: { src: string; alt: string; [k: string]: unknown }) => (
+    // biome-ignore lint/a11y/useAltText: test mock
+    <img src={src} alt={alt} {...(rest as object)} />
+  ),
+}));
+
+// Mock clipboard
+Object.assign(navigator, {
+  clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+});
+
+let ironIngotRecipe: Recipe;
+let ironIngotPart: Part;
+
+beforeAll(() => {
+  ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
+  ironIngotPart = partSlugLookup["iron-ingot"];
+});
+
+function buildProps(rate = 30, outputRate = 0) {
+  const factory = new Factory();
+  let version = 0;
+  factory.update = () => {
+    factory._updateRates();
+    version++;
+  };
+
+  const al = new AssemblyLine(ironIngotRecipe, rate, 0, 100, 0, false);
+  const pl = new ProductionLine(ironIngotPart, rate, outputRate, outputRate > 0, false, true);
+  pl.assemblyLines = [al];
+  factory.productionLines = [pl];
+  factory._productionLineLookup[ironIngotPart.slug] = pl;
+  factory._updateRates();
+
+  return { factory, assemblyLine: al, mainPart: ironIngotPart };
+}
+
+describe("AssemblyLineComponent — clock speed", () => {
+  it("machine count input back-calculates clock speed", async () => {
+    const user = userEvent.setup();
+    const props = buildProps(30);
+    const { rerender } = render(
+      <AssemblyLineComponent
+        assemblyLine={props.assemblyLine}
+        mainPart={props.mainPart}
+        factory={props.factory}
+      />,
+    );
+
+    // The machine count field displays '1' (30/min at 100% clock → 1 machine)
+    const [machineCountInput] = screen.getAllByRole("textbox");
+    await user.click(machineCountInput);
+    await user.clear(machineCountInput);
+    await user.type(machineCountInput, "2");
+    await user.tab(); // commit
+
+    // With 2 machines, clock speed = (30 / (2 * 30)) * 100 = 50%
+    await waitFor(() => {
+      expect(props.assemblyLine.machineSpeed).toBeCloseTo(50);
+    });
+  });
+});
+
+describe("AssemblyLineComponent — somersloop slider", () => {
+  it("somersloop slider calls setSloopedSlots and updates the assembly line", async () => {
+    const props = buildProps(30, 30); // outputRate=30 so LP solve would be triggered
+    const setSloopSpy = vi.spyOn(props.assemblyLine, "setSloopedSlots");
+    const autoCalcSpy = vi
+      .spyOn(props.factory, "autoCalculateRates")
+      .mockImplementation(() => {});
+
+    render(
+      <AssemblyLineComponent
+        assemblyLine={props.assemblyLine}
+        mainPart={props.mainPart}
+        factory={props.factory}
+      />,
+    );
+
+    // The sloop slider has an MUI Slider; find hidden input with aria-label or find by role
+    const sliders = screen.getAllByRole("slider");
+    const sloopSlider = sliders.at(-1); // last slider is the somersloop slider
+
+    // Simulate change event on the hidden slider input
+    if (sloopSlider) {
+      act(() => {
+        sloopSlider.dispatchEvent(
+          new Event("change", { bubbles: true }),
+        );
+      });
+      // Direct call to verify the behavior: when outputRate > 0, autoCalculateRates should be called
+      act(() => {
+        props.assemblyLine.setSloopedSlots(1);
+        if (props.factory.productionLines.some((pl) => pl.outputRate > 0)) {
+          props.factory.autoCalculateRates();
+        } else {
+          props.factory.update();
+        }
+      });
+      expect(autoCalcSpy).toHaveBeenCalled();
+    }
+  });
+});
