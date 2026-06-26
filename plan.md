@@ -367,33 +367,32 @@ Edge cases: cycles in intermediate parts — ELK preferred. Large factories (50+
 
 ---
 
-## Group 5: Refactoring & Housekeeping
+## Group 5: Refactoring & Housekeeping ✓ COMPLETE
 
 **Model: Haiku · Effort: low (CLAUDE.md, component split) / medium (Marie Kondo)**
 
-### 12. Component refactor: one component per file
+### 12. Component refactor: one component per file ✓
 
 **Files:** `app/components/AssemblyLineComponent.tsx` → split
 
-- Extract `NestedFactoryRow`, `ClockDisplay`, `MachineCountDisplay`, `AssemblyLineControls` into their own files under `app/components/`.
-- Update imports in `AssemblyLineComponent.tsx`.
-- Audit other files for multiple exported components and split similarly.
+- ✓ Extract `NestedFactoryRow`, `ClockDisplay`, `MachineCountDisplay`, `AssemblyLineControls` into their own files under `app/components/`.
+- ✓ Update imports in `AssemblyLineComponent.tsx`.
+- ✓ Audit other files for multiple exported components and split similarly (no additional splits needed; `Dividers.tsx` and `TextCalculatorField.tsx` have related exports that should stay together).
 
-### 13. Update CLAUDE.md
+### 13. Update CLAUDE.md ✓
 
-- Add rule: "One component per file. Internal sub-components must be extracted to their own files in `app/components/`."
-- Document `_assemblyLineLookup` and `_productionLineLookup` fast-access maps on `Factory`.
-- Document the intentional typo `consumpionRate` in the `Rate` interface (preserved for backwards compat with serialized data) so future contributors don't "fix" it and break deserialization.
+- ✓ Add rule: "One component per file. Internal sub-components must be extracted to their own files in `app/components/`."
+- ✓ Document `_assemblyLineLookup` and `_productionLineLookup` fast-access maps on `Factory`.
 
-### 14. Marie Kondo refactor
+### 14. Marie Kondo refactor ✓
 
-**Files:** `app/models/factory.tsx`, `app/components/FactoryOverviewComponent.tsx`, `app/components/ProductionLineComponent.tsx`, `app/components/FactoryPickerDialog.tsx`
+**Files:** `app/models/factory.tsx`, `app/components/FactoryOverviewComponent.tsx`, `app/components/PartRateSummary.tsx`
 
-- **Remove `console.clear()`** from `autoCalculateRates()` — wipes the browser console on every LP solve.
-- **Fix typo `consumpionRate` → `consumptionRate`** in the `Rate` interface and all usages. `Rate` is runtime-only (not serialized), so no data migration needed.
-- **Memoize `deserializeFactory` calls** (overlaps with Group 2, task 6).
-- **Remove double `_updateRates()` call** — called in the `Factory` constructor and again at the start of `update()`. The constructor call is redundant if `update()` is always called before rates are read. Verify before removing.
-- **Unused imports** — run `npm run lint` and remove flagged imports.
+- ✓ **Remove `console.clear()`** from `autoCalculateRates()` — wipes the browser console on every LP solve.
+- ✓ **Fix typo `consumpionRate` → `consumptionRate`** in the `Rate` interface and all usages. `Rate` is runtime-only (not serialized), so no data migration needed.
+- ⊘ **Memoize `deserializeFactory` calls** — deferred to Group 2, task 6 (overlaps).
+- ⊘ **Remove double `_updateRates()` call** — verified there is only one call (in constructor); no action needed.
+- ✓ **Unused imports** — ran `npm run lint` and applied fixes via biome.
 
 ---
 
