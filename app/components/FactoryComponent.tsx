@@ -14,7 +14,13 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Factory from "../models/factory";
 import {
   deserializeFactory,
@@ -57,7 +63,7 @@ export default function FactoryComponent() {
 
   const factoryRef = useRef<Factory>(new Factory());
   const factory = factoryRef.current;
-  const [, setVersion] = useState(0);
+  const [version, setVersion] = useState(0);
 
   const [factoryName, setFactoryName] = useState("Unnamed Factory");
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
@@ -188,9 +194,25 @@ export default function FactoryComponent() {
     setAddingProduct(false);
   }
 
-  function removeProductionLine(part: Part) {
-    factory.removeProductionLine(part);
-  }
+  // Stable so memoized ProductionLineComponents aren't re-rendered by a new
+  // callback identity on unrelated parent re-renders. factory is a ref, stable.
+  const removeProductionLine = useCallback(
+    (part: Part) => {
+      factory.removeProductionLine(part);
+    },
+    [factory],
+  );
+
+  // Stable identity backed by a ref holding the latest impl, so we don't have
+  // to memoize the whole handleLoadFactory chain it depends on.
+  const navigateToFactoryRef = useRef<(id: string) => void>(() => {});
+  const handleNavigateToFactory = useCallback(
+    (id: string) => navigateToFactoryRef.current(id),
+    [],
+  );
+
+  // Released the expand/collapse-all override when a single row is toggled.
+  const handleRowToggle = useCallback(() => setForceExpanded(null), []);
 
   // --- Consent gate ---
 
@@ -510,10 +532,10 @@ export default function FactoryComponent() {
     setPendingLoadFactory(null);
   }
 
-  function handleNavigateToFactory(id: string) {
+  navigateToFactoryRef.current = (id: string) => {
     const sf = library.factories.find((f) => f.id === id);
     if (sf) handleLoadFactory(sf);
-  }
+  };
 
   function handleToggleAutosave() {
     const next = !autosaveEnabled;
@@ -681,7 +703,9 @@ export default function FactoryComponent() {
                     <span>
                       <Clickable
                         className="p-1"
-                        onClick={() => setForceExpanded(true)}
+                        onClick={() =>
+                          startTransition(() => setForceExpanded(true))
+                        }
                       >
                         <KeyboardArrowDownIcon fontSize="small" />
                       </Clickable>
@@ -691,7 +715,9 @@ export default function FactoryComponent() {
                     <span>
                       <Clickable
                         className="p-1"
-                        onClick={() => setForceExpanded(false)}
+                        onClick={() =>
+                          startTransition(() => setForceExpanded(false))
+                        }
                       >
                         <KeyboardArrowRightIcon fontSize="small" />
                       </Clickable>
@@ -699,16 +725,17 @@ export default function FactoryComponent() {
                   </Tooltip>
                 </div>
                 {currentFactory.productionLines.map((product) => (
-                  <div key={product.part.slug}>
+                  <div key={product.part.slug} className="sp-production-line">
                     <ProductionLineComponent
                       productionLine={product}
                       factory={currentFactory}
                       library={library}
                       currentFactoryId={currentFactoryId}
-                      onDeleteClicked={() => removeProductionLine(product.part)}
+                      onDelete={removeProductionLine}
                       forceExpanded={forceExpanded}
-                      onToggle={() => setForceExpanded(null)}
+                      onToggle={handleRowToggle}
                       onNavigateToFactory={handleNavigateToFactory}
+                      version={version}
                     />
                     <HorizontalDivider />
                   </div>

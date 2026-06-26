@@ -428,3 +428,5 @@ The following items are work in addition to the plans above.
 ### Improvements
 
 - the warning that says intermediate parts couldn't be balanced should be something else. Perhaps labeling the output or input differently in the factory overview (orange text perhaps?). The only "warning" that should show is if a solution is absolutely not possible given the outputs, recipes, and constraints, and that should be an error.
+- prioritize certain residual products, e.g. Polymer Resin is more allowed than Heavy Oil Residue or Turbo Fuel (see Rocket Fuel Factory). Perhaps inverse of sink points?
+- Why is deserializeFactory being called in a render thread? (Discovered in Task 5)

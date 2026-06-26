@@ -73,6 +73,36 @@ Never mutate `Factory` directly without calling `factory.update()` afterward —
   - **Integration** (`tests/integration/`): component behavior, user interactions, React state (e.g. a button that didn't update the UI correctly)
   - **E2E** (`tests/e2e/`): multi-step flows, localStorage persistence, drawer/dialog lifecycle, or anything that requires a real browser
 
+## MCP Servers & Performance Profiling
+
+Two MCP servers are configured in `.mcp.json`:
+
+### Playwright Test Server
+- `test_run`, `test_debug` — Run and debug tests
+- `browser_*` — Browser automation (click, navigate, type, snapshot, verify, wait_for)
+- `start_tracing`, `stop_tracing` — Record performance traces
+
+### Chrome DevTools Server (primary tool for performance analysis)
+
+**Performance & profiling:**
+- `lighthouse_audit` — Quick Core Web Vitals & best-practices check (LCP, CLS, INP scores + diagnostics)
+- `performance_start_trace` / `performance_stop_trace` / `performance_analyze_insight` — Profile a specific interaction (start trace → perform action → stop trace → get AI insights on bottlenecks)
+
+**Debugging & inspection:**
+- `list_network_requests` / `get_network_request` — Inspect HTTP timing
+- `list_console_messages` — View logs & errors
+- `take_screenshot` — Capture visual state
+- `evaluate_script` — Execute JS to inspect state or DOM
+- `click`, `type_text`, `fill_form` — User interactions
+- `wait_for` — Wait for conditions
+
+**Typical workflows:**
+1. **Quick regression check**: lighthouse_audit
+2. **Slow interaction**: performance_start_trace → perform action → performance_stop_trace → performance_analyze_insight
+3. **Layout thrashing/animation loop** (e.g., drawer bug): trace + analyze for repeated reflows, requestAnimationFrame chains, excessive re-renders
+4. **Network delays**: list_network_requests → get_network_request
+5. **Errors/state**: list_console_messages → evaluate_script
+
 ## Code style
 
 - Biome enforces formatting/linting; run `npm run lint-fix` before committing.

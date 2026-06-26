@@ -5,7 +5,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type Factory from "../models/factory";
 import {
   deserializeFactory,
@@ -41,27 +41,31 @@ export default function FactoryOverviewComponent({
   const intermediateParts = factory.allIntermediateParts();
 
   // For each output part, find consumer factories (those that list currentFactoryId as a supplier)
-  // and how much of that part they consume.
-  const consumersByPartSlug = new Map<
-    string,
-    { id: string; name: string; rate: number }[]
-  >();
-  if (currentFactoryId && library) {
-    for (const sf of library.factories) {
-      if (!sf.supplierIds?.includes(currentFactoryId)) continue;
-      const consumerFactory = deserializeFactory(sf, library);
-      if (!consumerFactory) continue;
-      for (const part of factoryOutputs) {
-        const rate = consumerFactory.rateLookup[part.slug];
-        if (!rate) continue;
-        const net = rate.consumptionRate - rate.productionRate;
-        if (net <= 0.0001) continue;
-        const existing = consumersByPartSlug.get(part.slug) ?? [];
-        existing.push({ id: sf.id, name: sf.name, rate: net });
-        consumersByPartSlug.set(part.slug, existing);
+  // and how much of that part they consume. Deserializing consumer factories is
+  // expensive, so memoize: it only depends on the library, this factory's id,
+  // and the set of output part slugs (recomputed when any of those change).
+  const outputSlugKey = factoryOutputs.map((p) => p.slug).join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: factoryOutputs is intentionally tracked via its slug signature (outputSlugKey) rather than its unstable array identity.
+  const consumersByPartSlug = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; rate: number }[]>();
+    if (currentFactoryId && library) {
+      for (const sf of library.factories) {
+        if (!sf.supplierIds?.includes(currentFactoryId)) continue;
+        const consumerFactory = deserializeFactory(sf, library);
+        if (!consumerFactory) continue;
+        for (const part of factoryOutputs) {
+          const rate = consumerFactory.rateLookup[part.slug];
+          if (!rate) continue;
+          const net = rate.consumptionRate - rate.productionRate;
+          if (net <= 0.0001) continue;
+          const existing = map.get(part.slug) ?? [];
+          existing.push({ id: sf.id, name: sf.name, rate: net });
+          map.set(part.slug, existing);
+        }
       }
     }
-  }
+    return map;
+  }, [library, currentFactoryId, outputSlugKey]);
   const hasConsumers = consumersByPartSlug.size > 0;
 
   return (

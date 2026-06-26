@@ -151,15 +151,20 @@ export default class Factory {
   }
 
   recipeOutputs(): Part[] {
-    return parts.filter((part) => {
-      for (const assemblyLine of this._assemblyLineLookup[part.slug] || []) {
-        if (assemblyLine.recipe.getProduct(part)) {
-          return true;
+    // Iterate the assembly lines' products directly (O(assemblyLines)) rather
+    // than filtering the full parts list (O(parts)) on every call. This runs
+    // per AssemblyLineComponent render, so it must stay cheap.
+    const seen = new Map<string, Part>();
+    for (const productionLine of this.productionLines) {
+      for (const assemblyLine of productionLine.assemblyLines) {
+        for (const recipePart of assemblyLine.recipe.products) {
+          if (!seen.has(recipePart.part.slug)) {
+            seen.set(recipePart.part.slug, recipePart.part);
+          }
         }
       }
-
-      return false;
-    });
+    }
+    return [...seen.values()];
   }
 
   allIntermediateParts(): Part[] {

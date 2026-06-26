@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
 import { recipeLookup } from "../models/library";
@@ -14,12 +15,13 @@ interface AssemblyLineComponentProps {
   assemblyLine: AssemblyLine;
   mainPart: Part;
   factory: Factory;
+  // Bumps on factory mutation so React.memo re-renders despite the in-place
+  // (referentially stable) factory object.
+  version?: number;
   onNavigateToFactory?: (id: string) => void;
 }
 
-export default function AssemblyLineComponent(
-  props: AssemblyLineComponentProps,
-) {
+function AssemblyLineComponent(props: AssemblyLineComponentProps) {
   if (props.assemblyLine.recipe.isFactoryRecipe) {
     return (
       <NestedFactoryRow
@@ -62,6 +64,7 @@ export default function AssemblyLineComponent(
         partRateEditable={recipeLookup[props.mainPart.slug].length > 1}
         partsNeeded={partsNeeded}
         factory={props.factory}
+        version={props.version}
       />
       <AssemblyLineControls
         assemblyLine={props.assemblyLine}
@@ -70,3 +73,5 @@ export default function AssemblyLineComponent(
     </div>
   );
 }
+
+export default memo(AssemblyLineComponent);

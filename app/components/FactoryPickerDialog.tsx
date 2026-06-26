@@ -7,6 +7,7 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Image from "next/image";
+import { useMemo } from "react";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import { deserializeFactory } from "../models/factory-storage";
@@ -28,13 +29,19 @@ export default function FactoryPickerDialog({
   onPick,
   onClose,
 }: FactoryPickerDialogProps) {
-  const candidates = library.factories.flatMap((sf) => {
-    if (sf.id === currentFactoryId) return [];
-    const factory = deserializeFactory(sf, library);
-    if (!factory) return [];
-    if (!factory.allOutputs().some((p) => p.slug === targetPartSlug)) return [];
-    return [{ sf, factory }];
-  });
+  // Deserializing the whole library is expensive; skip it when the dialog is
+  // closed and memoize otherwise (inputs are all stable refs/primitives).
+  const candidates = useMemo(() => {
+    if (!open) return [];
+    return library.factories.flatMap((sf) => {
+      if (sf.id === currentFactoryId) return [];
+      const factory = deserializeFactory(sf, library);
+      if (!factory) return [];
+      if (!factory.allOutputs().some((p) => p.slug === targetPartSlug))
+        return [];
+      return [{ sf, factory }];
+    });
+  }, [open, library, currentFactoryId, targetPartSlug]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
