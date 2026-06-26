@@ -349,7 +349,17 @@ export default class Factory {
     //     b: if multiple production lines are maximized, maximize sum of all targets
     //     c: if no production lines are maximized, minimize each input and intermediate part
 
+    // CURRENT ISSUES:
+    // - Rubber/Plastic loop picks the first recipe to maximize, because sum of outputs is always the same
+
+    // IMPROVEMENTS:
+    // - allow user to prioritize which part is maximized
+    // - Rubber/Plastic loop improvements:
+    //   - ensure both output rates are equal
+    //   - inform user about unique aspects of loop
+
     this.solverError = null;
+    let objectiveRate = 0;
 
     type AssemblyLineInfo = {
       assemblyLine: AssemblyLine;
@@ -498,12 +508,12 @@ export default class Factory {
       model.opType = "max";
 
       for (const coefficients of Object.values(variables)) {
-        var objectiveRate = 0;
+        objectiveRate = 0;
         for (const slug of maximizeSlugs) {
           objectiveRate += coefficients[slug] ?? 0;
         }
         if (objectiveRate !== 0) {
-          coefficients["_obj"] = objectiveRate;
+          coefficients._obj = objectiveRate;
         }
       }
     } else {
@@ -652,6 +662,9 @@ export default class Factory {
         },
         0,
       );
+      if (productionLine.maximizeOutput) {
+        productionLine.outputRate = productionLine.rate;
+      }
     }
 
     this.update();

@@ -542,8 +542,8 @@ describe("serialization — constraints + maximizeOutput", () => {
 
     const restored = deserializeFactory(serialized);
     expect(restored).not.toBeNull();
-    expect(restored!.constraints).toEqual([{ partSlug: "iron-ore", max: 60 }]);
-    expect(restored!.productionLines[0].maximizeOutput).toBe(true);
+    expect(restored?.constraints).toEqual([{ partSlug: "iron-ore", max: 60 }]);
+    expect(restored?.productionLines[0].maximizeOutput).toBe(true);
   });
 
   it("deserialize defaults constraints to [] and maximizeOutput to false", () => {
@@ -566,7 +566,7 @@ describe("serialization — constraints + maximizeOutput", () => {
 
     const restored = deserializeFactory(serialized);
     expect(restored).not.toBeNull();
-    expect(restored!.constraints).toEqual([]);
-    expect(restored!.productionLines[0].maximizeOutput).toBe(false);
+    expect(restored?.constraints).toEqual([]);
+    expect(restored?.productionLines[0].maximizeOutput).toBe(false);
   });
 });
