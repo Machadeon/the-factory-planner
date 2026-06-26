@@ -98,3 +98,8 @@ Raw resources (ore, water, oil, etc.) are listed in `rawResources` and flagged o
 - `data.json` is excluded from Biome checks.
 - No comments unless the why is non-obvious. Existing JSDoc on model classes is intentional.
 - Prefer reading `getPartProductionRate()` / `getPartConsumptionRate()` over accessing `AssemblyLine.rate` directly.
+- **One component per file**: Each exported component gets its own file in `app/components/`. Internal sub-components must be extracted to their own files; do not define multiple exported components in a single file.
+
+## Optimization & lookup maps
+
+- `Factory._assemblyLineLookup` and `Factory._productionLineLookup` are built/rebuilt on every `factory.update()`. These are fast-access maps (`{ [partSlug]: [ AssemblyLine | ProductionLine ] }`) used internally for LP constraint building and for UI features like the producer/consumer display in `FactoryOverviewComponent`.

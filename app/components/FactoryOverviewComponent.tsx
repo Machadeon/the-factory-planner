@@ -3,7 +3,6 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useState } from "react";
@@ -35,7 +34,7 @@ export default function FactoryOverviewComponent({
   const [showIntermediateProducts, setShowIntermediateProducts] =
     useState<boolean>(false);
 
-  function schedule(obj: object, fn: () => void) {
+  function _schedule(obj: object, fn: () => void) {
     setTimeout(fn.bind(obj), 1);
   }
 
@@ -57,7 +56,7 @@ export default function FactoryOverviewComponent({
       for (const part of factoryOutputs) {
         const rate = consumerFactory.rateLookup[part.slug];
         if (!rate) continue;
-        const net = rate.consumpionRate - rate.productionRate;
+        const net = rate.consumptionRate - rate.productionRate;
         if (net <= 0.0001) continue;
         const existing = consumersByPartSlug.get(part.slug) ?? [];
         existing.push({ id: sf.id, name: sf.name, rate: net });
@@ -90,7 +89,7 @@ export default function FactoryOverviewComponent({
             const totalConsumed = consumers.reduce((s, c) => s + c.rate, 0);
             const output = factory.rateLookup[part.slug];
             const produced = output
-              ? output.productionRate - output.consumpionRate
+              ? output.productionRate - output.consumptionRate
               : 0;
             const unused = produced - totalConsumed;
             const pct =
@@ -262,7 +261,7 @@ export default function FactoryOverviewComponent({
           {factory.supplierFactories.map((fr) => {
             const suppliedParts = fr.products.filter((rp) => {
               const demand = factory.rateLookup[rp.part.slug];
-              return demand && demand.consumpionRate > demand.productionRate;
+              return demand && demand.consumptionRate > demand.productionRate;
             });
             return (
               <div key={fr.slug} className="mb-3">
@@ -306,7 +305,7 @@ export default function FactoryOverviewComponent({
                   suppliedParts.map((rp) => {
                     const demand = factory.rateLookup[rp.part.slug];
                     const demanded =
-                      demand.consumpionRate - demand.productionRate;
+                      demand.consumptionRate - demand.productionRate;
                     return (
                       <div
                         key={rp.part.slug}

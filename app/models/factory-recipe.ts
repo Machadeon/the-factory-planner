@@ -29,8 +29,7 @@ export default class FactoryRecipe implements RecipeLike {
     for (const [partSlug, rate] of Object.entries(factory.rateLookup)) {
       const part = partSlugLookup[partSlug];
       if (!part) continue;
-      // note: consumpionRate typo is intentional — matches existing Rate interface
-      const netOut = rate.productionRate - rate.consumpionRate;
+      const netOut = rate.productionRate - rate.consumptionRate;
       if (netOut > 0.0001) {
         const rp: RecipePart = { part, quantity: netOut };
         prodList.push(rp);

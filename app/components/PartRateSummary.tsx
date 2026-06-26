@@ -32,7 +32,7 @@ export default function PartRateSummary({
   showDetail,
 }: PartRateSummaryProps) {
   const [supplyPickerOpen, setSupplyPickerOpen] = useState(false);
-  const netRate = rate ? rate.productionRate - rate.consumpionRate : 0;
+  const netRate = rate ? rate.productionRate - rate.consumptionRate : 0;
   const netRateDisplay = displayNum(Math.abs(netRate));
   const sign = netRate >= 0 ? "+" : "-";
 
@@ -88,7 +88,7 @@ export default function PartRateSummary({
       {showDetail && (
         <div className="flex flex-row gap-x-2 pl-7 text-xs text-gray-400">
           <span>+{displayNum(rate?.productionRate || 0)}</span>
-          <span>−{displayNum(rate?.consumpionRate || 0)}</span>
+          <span>−{displayNum(rate?.consumptionRate || 0)}</span>
         </div>
       )}
       {library && (

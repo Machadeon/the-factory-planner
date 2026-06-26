@@ -12,7 +12,7 @@ import type Part from "./part";
 import ProductionLine from "./production-line";
 
 export interface Rate {
-  consumpionRate: number;
+  consumptionRate: number;
   productionRate: number;
 }
 
@@ -67,11 +67,11 @@ export default class Factory {
           this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
 
           const rate = this.rateLookup[recipePart.part.slug] || {
-            consumpionRate: 0,
+            consumptionRate: 0,
             productionRate: 0,
           };
 
-          rate.consumpionRate += assemblyLine.getPartConsumptionRate(
+          rate.consumptionRate += assemblyLine.getPartConsumptionRate(
             recipePart.part,
           );
           this.rateLookup[recipePart.part.slug] = rate;
@@ -81,7 +81,7 @@ export default class Factory {
           this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
 
           const rate = this.rateLookup[recipePart.part.slug] || {
-            consumpionRate: 0,
+            consumptionRate: 0,
             productionRate: 0,
           };
 
@@ -118,7 +118,7 @@ export default class Factory {
     return parts.filter((part) => {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
-      return rate.productionRate - rate.consumpionRate >= 0.0001;
+      return rate.productionRate - rate.consumptionRate >= 0.0001;
     });
   }
 
@@ -126,7 +126,7 @@ export default class Factory {
     return parts.filter((part) => {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
-      const ownDeficit = rate.consumpionRate - rate.productionRate;
+      const ownDeficit = rate.consumptionRate - rate.productionRate;
       if (ownDeficit <= 0.0001) return false;
       const supplied = this.supplierFactories.reduce((sum, fr) => {
         const p = fr.getProduct(part.slug);
@@ -164,7 +164,7 @@ export default class Factory {
     return parts.filter((part) => {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
-      return Math.abs(rate.productionRate - rate.consumpionRate) < 0.0001;
+      return Math.abs(rate.productionRate - rate.consumptionRate) < 0.0001;
     });
   }
 
@@ -312,7 +312,6 @@ export default class Factory {
 
   autoCalculateRates() {
     this.solverError = null;
-    console.clear();
 
     // applicable factory attributes:
     // - list of recipes (either game recipes or factories. What matters is a recipe has input parts, output parts, and a set ratio between all parts involved)
