@@ -24,6 +24,9 @@ test.describe("Expand and Collapse Production Lines", () => {
     // Select the standard Wire recipe (Constructor)
     await page.getByText("Wire1x5/min2x10/min").click();
 
+    // Production lines are collapsed by default; expand all first
+    await page.getByLabel("Expand all").click();
+
     // expect: both production lines expanded
     await expect(
       page.getByRole("img", { name: "Iron Plate" }).first(),

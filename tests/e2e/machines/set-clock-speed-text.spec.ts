@@ -12,6 +12,9 @@ test("Set clock speed by typing in the percentage field", async ({ page }) => {
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to access machine controls
+  await page.getByTestId("ChevronRightIcon").click();
+
   // Clock speed % textbox is the second unlabeled textbox in the controls
   // DOM order: factory name, output rate, production rate (disabled), machine count, clock speed %
   const clockSpeedField = page.getByRole("textbox").nth(4);

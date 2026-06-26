@@ -20,6 +20,9 @@ test("Sidebar shows correct outputs and inputs after adding a recipe", async ({
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to make inner rates visible
+  await page.getByTestId("ChevronRightIcon").click();
+
   await expect(page.getByText("Outputs (1)")).toBeVisible();
   await expect(page.getByText("10/min").first()).toBeVisible();
   await expect(page.getByText("Inputs (1)")).toBeVisible();

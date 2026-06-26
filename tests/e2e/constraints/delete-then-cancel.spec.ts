@@ -49,6 +49,13 @@ test.describe("Constraints Dialog", () => {
     // 7. Expect sidebar still shows "Constraints (1)" with Iron Ingot "max 60/min"
     await expect(page.getByText("Constraints (1)")).toBeVisible();
     await expect(page.getByText("max 60/min")).toBeVisible();
-    await expect(page.getByLabel("Iron Ingot")).toBeVisible();
+    // Iron Ingot icon appears in the sidebar constraints section
+    await expect(
+      page
+        .getByText("Constraints (1)")
+        .locator("..")
+        .locator("+ div")
+        .getByRole("img", { name: "Iron Ingot" }),
+    ).toBeVisible();
   });
 });

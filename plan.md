@@ -325,14 +325,7 @@ Edge cases: multiple `maximizeOutput` lines → LP optimizes the sum, not each i
 
 ### 9. Auto-production-line filler
 
-**Files:** `app/models/factory.tsx`, new `app/components/AutoFillDialog.tsx`
-
-- Add `autoFillProductionLines(config: AutoFillConfig)` to `Factory`. Config: `resourceLimits`, `targetPartSlugs`, `scoringWeights` (defaults to `sinkPoints`).
-- LP variables expand to all recipes in `recipeLookup`. Raw resource slugs get `≤ resourceLimits[slug]` constraints. Objective: maximize weighted sum of target part rates.
-- After solving, instantiate `ProductionLine` + `AssemblyLine` objects from non-zero variables and replace `factory.productionLines`.
-- UI: "Auto-fill" button in `FactoryComponent` opens `AutoFillDialog` with per-resource inputs (`TextCalculatorField`) and a score-override table. Use native `<dialog>` (same Invoker Commands pattern as task 7) rather than MUI Dialog.
-
-Edge cases: exclude the recycled rubber/plastic circular loop (already detected in the current solver). Add a loading state — the full-recipe LP may be slow for 200+ variables in the pure-JS solver; consider a Web Worker.
+See [plan:auto-recipe.md](plan:auto-recipe.md).
 
 ---
 
@@ -425,6 +418,8 @@ The following items are work in addition to the plans above.
 ### Features
 
 - add the ability to set default constraints for a folder
+- update page URL to enable bookmarks for specific factories and forward/back functionality
+- support custom game modes such as randomized resource nodes, recipe cost, power usage, etc.
 
 ### Improvements
 

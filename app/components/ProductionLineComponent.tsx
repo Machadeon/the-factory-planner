@@ -77,10 +77,7 @@ export default function ProductionLineComponent(
     [props.candidateFactories, part.slug, props.productionLine.assemblyLines],
   );
 
-  const [expanded, setExpanded] = useState<boolean>(
-    props.productionLine.assemblyLines.length !== 1 ||
-      !props.productionLine.autoCreated,
-  );
+  const [expanded, setExpanded] = useState<boolean>(false);
 
   const recipeIsSet = props.productionLine.assemblyLines.length > 0;
   const isExpanded =

@@ -14,6 +14,9 @@ test("Change the Factory Output Rate for a production line", async ({
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to access controls and make rates visible
+  await page.getByTestId("ChevronRightIcon").click();
+
   await expect(
     page.getByRole("textbox", { name: "Factory Output Rate" }),
   ).toHaveValue("10");

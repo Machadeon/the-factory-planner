@@ -12,6 +12,9 @@ test("Copy clock speed value using the copy button", async ({ page }) => {
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to access machine controls
+  await page.getByTestId("ChevronRightIcon").click();
+
   // Copy button tooltip is `Copy "100.00000%"` — MUI IconButton
   const copyButton = page.getByRole("button", { name: /Copy/ }).first();
   await expect(copyButton).toBeVisible();

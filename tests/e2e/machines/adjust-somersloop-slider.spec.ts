@@ -12,6 +12,9 @@ test("Adjust Somersloop slots via the slider", async ({ page }) => {
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to access machine controls
+  await page.getByTestId("ChevronRightIcon").click();
+
   const sloopSlider = page.getByRole("slider").last();
   await expect(sloopSlider).toHaveValue("0");
   await expect(page.getByText("0 Somersloops")).toBeVisible();

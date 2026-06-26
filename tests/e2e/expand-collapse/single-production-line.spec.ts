@@ -17,6 +17,9 @@ test.describe("Expand and Collapse Production Lines", () => {
     await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
     await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+    // Production lines are collapsed by default; expand it first
+    await page.getByTestId("ChevronRightIcon").click();
+
     // expect: production line expanded, assembly line and machine controls visible
     await expect(
       page.getByRole("img", { name: "Constructor" }).first(),

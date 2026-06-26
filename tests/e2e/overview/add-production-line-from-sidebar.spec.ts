@@ -14,6 +14,9 @@ test("Add production line from the inputs section of the sidebar", async ({
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to make inner rates visible
+  await page.getByTestId("ChevronRightIcon").click();
+
   await expect(page.getByText("Inputs (1)")).toBeVisible();
   await expect(page.getByText("15/min").first()).toBeVisible();
 

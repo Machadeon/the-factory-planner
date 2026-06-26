@@ -14,6 +14,9 @@ test("Set machine count by typing in the machine count field", async ({
   await page.getByRole("option", { name: "Iron Plate Iron Plate" }).click();
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
+  // Production lines are collapsed by default; expand to access machine controls
+  await page.getByTestId("ChevronRightIcon").click();
+
   await page.getByRole("textbox", { name: "Factory Output Rate" }).fill("60");
   await page.keyboard.press("Tab");
 
