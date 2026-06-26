@@ -415,3 +415,16 @@ Edge cases: cycles in intermediate parts — ELK preferred. Large factories (50+
 4. **Group 1 (UI/UX Polish)** — quick wins; integration tests can be written alongside.
 5. **Group 3 (LP Solver)** — constraints and maximize-output unlock auto-fill; LP unit tests already designed.
 6. **Group 4 (New Modes)** — highest complexity, builds on everything above.
+
+---
+
+## New Backlog
+
+The following items are work in addition to the plans above.
+
+### Features
+
+
+### Improvements
+
+- the warning that says intermediate parts couldn't be balanced should be something else. Perhaps labeling the output or input differently in the factory overview (orange text perhaps?). The only "warning" that should show is if a solution is absolutely not possible given the outputs, recipes, and constraints, and that should be an error.

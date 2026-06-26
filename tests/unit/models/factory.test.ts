@@ -1,26 +1,29 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
 import { partSlugLookup, recipes } from "@/app/models/library";
 import type Part from "@/app/models/part";
-import type Recipe from "@/app/models/recipe";
 import ProductionLine from "@/app/models/production-line";
+import type Recipe from "@/app/models/recipe";
 
 let ironIngotRecipe: Recipe;
 let ironPlateRecipe: Recipe;
 let ironRodRecipe: Recipe;
 let ironIngotPart: Part;
-let ironOrePart: Part;
+let _ironOrePart: Part;
 let ironPlatePart: Part;
 let ironRodPart: Part;
 
 beforeAll(() => {
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironPlateRecipe = recipes.find((r) => r.slug === "recipe-ironplate-c")!;
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironRodRecipe = recipes.find((r) => r.slug === "recipe-ironrod-c")!;
   ironIngotPart = partSlugLookup["iron-ingot"];
-  ironOrePart = partSlugLookup["iron-ore"];
+  _ironOrePart = partSlugLookup["iron-ore"];
   ironPlatePart = partSlugLookup["iron-plate"];
   ironRodPart = partSlugLookup["iron-rod"];
 });
@@ -40,7 +43,14 @@ function addManualProductionLine(
   rate: number,
   outputRate = 0,
 ): ProductionLine {
-  const pl = new ProductionLine(part, 0, outputRate, outputRate > 0, false, true);
+  const pl = new ProductionLine(
+    part,
+    0,
+    outputRate,
+    outputRate > 0,
+    false,
+    true,
+  );
   pl.assemblyLines = [new AssemblyLine(recipe, rate, 0, 100, 0, false)];
   factory.productionLines.push(pl);
   factory._productionLineLookup[part.slug] = pl;
@@ -105,7 +115,12 @@ describe("allOutputs()", () => {
 
   it("uses 0.0001 threshold (net of 0.00005 is excluded)", () => {
     const factory = makeFactory();
-    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 0.000050001);
+    addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      0.000050001,
+    );
     // net production = 0.000050001, below 0.0001 threshold
     const outputs = factory.allOutputs();
     expect(outputs.some((p) => p.slug === "iron-ingot")).toBe(false);
@@ -128,8 +143,17 @@ describe("allInputs()", () => {
 
     // Create a supplier factory that produces 30 iron ingots/min
     const supplierFactory = makeFactory();
-    addManualProductionLine(supplierFactory, ironIngotPart, ironIngotRecipe, 30);
-    const supplierRecipe = new FactoryRecipe("supplier-id", "Iron Factory", supplierFactory);
+    addManualProductionLine(
+      supplierFactory,
+      ironIngotPart,
+      ironIngotRecipe,
+      30,
+    );
+    const supplierRecipe = new FactoryRecipe(
+      "supplier-id",
+      "Iron Factory",
+      supplierFactory,
+    );
     factory.supplierFactories = [supplierRecipe];
 
     // With supplier providing 30/min and demand being exactly 30, no deficit
@@ -240,10 +264,91 @@ describe("autoCalculateRates()", () => {
     expect(factory.solverError).not.toBeNull();
   });
 
+  it("slooping Diluted Packaged Fuel with Unpackage Fuel + Packaged Water sets solverError", () => {
+    const factory = makeFactory();
+
+    const fuelPart = partSlugLookup.fuel;
+    const packagedFuelPart = partSlugLookup["packaged-fuel"];
+    const packagedWaterPart = partSlugLookup["packaged-water"];
+    if (!fuelPart || !packagedFuelPart || !packagedWaterPart) return;
+
+    const unpackageFuelRecipe = recipes.find(
+      (r) => r.slug === "recipe-unpackagefuel-c",
+    );
+    const dilutedPackagedFuelRecipe = recipes.find(
+      (r) => r.slug === "recipe-alternate-dilutedpackagedfuel-c",
+    );
+    const packagedWaterRecipe = recipes.find(
+      (r) => r.slug === "recipe-packagedwater-c",
+    );
+    if (
+      !unpackageFuelRecipe ||
+      !dilutedPackagedFuelRecipe ||
+      !packagedWaterRecipe
+    )
+      return;
+
+    // The first production line added via the factory gets outputRate=10 (no prior demand).
+    // Subsequent lines have outputRate=0 because they satisfy existing demand.
+    // This mirrors what happens in the UI and is what causes autoCalculateRates() to be
+    // called when slooping is enabled (it's gated on any pl.outputRate > 0).
+    addManualProductionLine(factory, fuelPart, unpackageFuelRecipe, 1, 10);
+    const packagedFuelPl = addManualProductionLine(
+      factory,
+      packagedFuelPart,
+      dilutedPackagedFuelRecipe,
+      1,
+    );
+    addManualProductionLine(factory, packagedWaterPart, packagedWaterRecipe, 1);
+
+    packagedFuelPl.assemblyLines[0].setSloopedSlots(1);
+    factory._updateRates();
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).not.toBeNull();
+  });
+
+  it("does not stack-overflow when recipe cycle exists (Fuel ↔ Packaged Fuel)", () => {
+    // Regression: autoSetPartRate → setPartRate → autoSetPartRate → ... infinite loop
+    // when two production lines form a cycle via their recipe ingredients.
+    const factory = makeFactory();
+    const liquidFuelPart = partSlugLookup.fuel;
+    const packagedFuelPart = partSlugLookup["packaged-fuel"];
+    if (!liquidFuelPart || !packagedFuelPart) return;
+
+    // "Unpackage Fuel": consumes packaged-fuel, produces liquid-fuel + fluid-canister
+    const unpackageFuelRecipe = recipes.find(
+      (r) => r.slug === "recipe-unpackagefuel-c",
+    );
+    // "Packaged Fuel": consumes liquid-fuel + fluid-canister, produces packaged-fuel
+    const packagedFuelRecipe = recipes.find((r) => r.slug === "recipe-fuel-c");
+    if (!unpackageFuelRecipe || !packagedFuelRecipe) return;
+
+    const liquidFuelPl = addManualProductionLine(
+      factory,
+      liquidFuelPart,
+      unpackageFuelRecipe,
+      10,
+    );
+    liquidFuelPl.autoCalculateRate = true;
+
+    const packagedFuelPl = addManualProductionLine(
+      factory,
+      packagedFuelPart,
+      packagedFuelRecipe,
+      10,
+    );
+    packagedFuelPl.autoCalculateRate = true;
+
+    // Should not throw RangeError: Maximum call stack size exceeded
+    expect(() => factory.autoSetPartRate(liquidFuelPart)).not.toThrow();
+    expect(() => factory.autoSetPartRate(packagedFuelPart)).not.toThrow();
+  });
+
   it("detects recycled rubber/plastic loop and skips autoSetPartRate", () => {
     const factory = makeFactory();
-    const rubberPart = partSlugLookup["rubber"];
-    const plasticPart = partSlugLookup["plastic"];
+    const rubberPart = partSlugLookup.rubber;
+    const plasticPart = partSlugLookup.plastic;
     if (!rubberPart || !plasticPart) return; // skip if game data differs
 
     const recycledPlasticRecipe = recipes.find(
@@ -255,13 +360,18 @@ describe("autoCalculateRates()", () => {
     if (!recycledPlasticRecipe || !recycledRubberRecipe) return; // skip if not found
 
     addManualProductionLine(factory, plasticPart, recycledPlasticRecipe, 1);
-    const rubberPl = addManualProductionLine(factory, rubberPart, recycledRubberRecipe, 1);
+    const rubberPl = addManualProductionLine(
+      factory,
+      rubberPart,
+      recycledRubberRecipe,
+      1,
+    );
     // autoCalculateRate must be true for autoSetPartRate to proceed past its guard
     rubberPl.autoCalculateRate = true;
 
     expect(factory._hasRecycledRubberPlasticLoop()).toBe(true);
 
-    const consoleSpy = vi.spyOn(console, "log");
+    const consoleSpy = vi.spyOn(console, "debug");
     factory.autoSetPartRate(rubberPart);
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("recycled rubber"),

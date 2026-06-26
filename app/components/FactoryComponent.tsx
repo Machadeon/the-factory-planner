@@ -75,13 +75,19 @@ export default function FactoryComponent() {
     factories: [],
   });
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [unsavedPromptOpen, setUnsavedPromptOpen] = useState(false);
   const [pendingLoadFactory, setPendingLoadFactory] =
     useState<SerializedFactory | null>(null);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [pendingClearFolderId, setPendingClearFolderId] = useState<
+    string | null
+  >(null);
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
+  const prevSolverErrorRef = useRef<string | null | undefined>(undefined);
 
   factory.update = () => {
     factory._updateRates();
@@ -197,13 +203,26 @@ export default function FactoryComponent() {
     }
   }
 
+  function handleOpenLibrary() {
+    if (libraryOpen) return;
+    previousFocusRef.current = document.activeElement as HTMLElement;
+    const lib = loadLibrary();
+    setLibrary(lib);
+    setLibraryOpen(true);
+  }
+
+  function handleCloseLibrary() {
+    setLibraryOpen(false);
+    requestAnimationFrame(() => {
+      previousFocusRef.current?.focus();
+    });
+  }
+
   function executePendingAction(action: PendingAction) {
     if (action === "save") {
       doSave();
     } else if (action === "openLibrary") {
-      const lib = loadLibrary();
-      setLibrary(lib);
-      setLibraryOpen(true);
+      handleOpenLibrary();
     }
   }
 
@@ -391,7 +410,7 @@ export default function FactoryComponent() {
     };
     saveLibrary(updatedLib);
     setLibrary(updatedLib);
-    setLibraryOpen(true);
+    handleOpenLibrary();
   }
 
   // --- Load factory from library ---
@@ -447,9 +466,14 @@ export default function FactoryComponent() {
 
   function handleNewFactory(folderId: string | null) {
     if (isDirty) {
-      // save current before creating new
-      if (hasConsent()) doSave();
+      setPendingClearFolderId(folderId);
+      setClearConfirmOpen(true);
+      return;
     }
+    performClearFactory(folderId);
+  }
+
+  function performClearFactory(folderId: string | null) {
     factoryRef.current = new Factory();
     setFactoryName("Unnamed Factory");
     setCurrentFactoryId(null);
@@ -461,6 +485,24 @@ export default function FactoryComponent() {
     setLibraryOpen(false);
     setAutosaveEnabled(false);
     autosaveEnabledRef.current = false;
+  }
+
+  function handleClearSaveAndContinue() {
+    if (hasConsent()) doSave();
+    setClearConfirmOpen(false);
+    performClearFactory(pendingClearFolderId);
+    setPendingClearFolderId(null);
+  }
+
+  function handleClearDiscardAndContinue() {
+    setClearConfirmOpen(false);
+    performClearFactory(pendingClearFolderId);
+    setPendingClearFolderId(null);
+  }
+
+  function handleClearCancel() {
+    setClearConfirmOpen(false);
+    setPendingClearFolderId(null);
   }
 
   function handleUnsavedCancel() {
@@ -492,6 +534,16 @@ export default function FactoryComponent() {
 
   const currentFactory = factoryRef.current;
 
+  if (prevSolverErrorRef.current !== currentFactory.solverError) {
+    if (
+      prevSolverErrorRef.current !== undefined &&
+      currentFactory.solverError !== null
+    ) {
+      setDismissedError(null);
+    }
+    prevSolverErrorRef.current = currentFactory.solverError;
+  }
+
   return (
     <>
       <StorageConsentDialog
@@ -502,7 +554,7 @@ export default function FactoryComponent() {
 
       <FactoryLibraryDrawer
         open={libraryOpen}
-        onClose={() => setLibraryOpen(false)}
+        onClose={handleCloseLibrary}
         library={library}
         currentFactoryId={currentFactoryId}
         onLibraryChange={setLibrary}
@@ -561,6 +613,28 @@ export default function FactoryComponent() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setJsonDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={clearConfirmOpen}
+        onClose={handleClearCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Clear factory?</DialogTitle>
+        <DialogContent>
+          You have unsaved changes in the current factory. What would you like
+          to do?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearCancel}>Cancel</Button>
+          <Button onClick={handleClearDiscardAndContinue}>
+            Discard &amp; clear
+          </Button>
+          <Button onClick={handleClearSaveAndContinue} variant="contained">
+            Save &amp; clear
+          </Button>
         </DialogActions>
       </Dialog>
 

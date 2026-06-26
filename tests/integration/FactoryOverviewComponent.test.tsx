@@ -1,22 +1,26 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import AssemblyLine from "@/app/models/assembly-line";
-import { emptyLibrary } from "@/app/models/factory-storage";
-import Factory from "@/app/models/factory";
 import FactoryOverviewComponent from "@/app/components/FactoryOverviewComponent";
+import AssemblyLine from "@/app/models/assembly-line";
+import Factory from "@/app/models/factory";
+import { emptyLibrary } from "@/app/models/factory-storage";
 import { partSlugLookup, recipes } from "@/app/models/library";
 import type Part from "@/app/models/part";
-import type Recipe from "@/app/models/recipe";
 import ProductionLine from "@/app/models/production-line";
+import type Recipe from "@/app/models/recipe";
 
 vi.mock("next/image", () => ({
   default: ({
     src,
     alt,
     ...rest
-  }: { src: string; alt: string; [k: string]: unknown }) => (
-    // biome-ignore lint/a11y/useAltText: test mock
+  }: {
+    src: string;
+    alt: string;
+    [k: string]: unknown;
+  }) => (
+    // biome-ignore lint/performance/noImgElement: test mock
     <img src={src} alt={alt} {...(rest as object)} />
   ),
 }));
@@ -24,14 +28,16 @@ vi.mock("next/image", () => ({
 let ironIngotRecipe: Recipe;
 let ironPlateRecipe: Recipe;
 let ironIngotPart: Part;
-let ironOrePart: Part;
+let _ironOrePart: Part;
 let ironPlatePart: Part;
 
 beforeAll(() => {
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironPlateRecipe = recipes.find((r) => r.slug === "recipe-ironplate-c")!;
   ironIngotPart = partSlugLookup["iron-ingot"];
-  ironOrePart = partSlugLookup["iron-ore"];
+  _ironOrePart = partSlugLookup["iron-ore"];
   ironPlatePart = partSlugLookup["iron-plate"];
 });
 
@@ -43,13 +49,17 @@ function buildFactory(): Factory {
 
   // Iron Ingot line: 30 ore/min → 30 ingot/min
   const ingotPl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-  ingotPl.assemblyLines = [new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false)];
+  ingotPl.assemblyLines = [
+    new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
+  ];
   factory.productionLines.push(ingotPl);
   factory._productionLineLookup[ironIngotPart.slug] = ingotPl;
 
   // Iron Plate line: 30 ingot/min → 20 plate/min (consumes all ingots → iron ingot is intermediate)
   const platePl = new ProductionLine(ironPlatePart, 0, 20, true, false, true);
-  platePl.assemblyLines = [new AssemblyLine(ironPlateRecipe, 10, 0, 100, 0, false)];
+  platePl.assemblyLines = [
+    new AssemblyLine(ironPlateRecipe, 10, 0, 100, 0, false),
+  ];
   factory.productionLines.push(platePl);
   factory._productionLineLookup[ironPlatePart.slug] = platePl;
 
@@ -109,8 +119,9 @@ describe("FactoryOverviewComponent", () => {
     expect(row).not.toBeNull();
 
     // The Clickable div is the next sibling div with cursor-pointer class
-    const toggleDiv = row!.querySelector<HTMLElement>(".cursor-pointer");
+    const toggleDiv = row?.querySelector<HTMLElement>(".cursor-pointer");
     expect(toggleDiv).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeNull
     await user.click(toggleDiv!);
 
     // After toggling, Iron Ingot (the intermediate) should appear

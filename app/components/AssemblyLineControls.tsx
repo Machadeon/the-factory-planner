@@ -82,6 +82,7 @@ export default function AssemblyLineControls({
             width={48}
             height={48}
             className="shrink-0"
+            style={{ width: "auto", height: "auto" }}
           />
         </Tooltip>
         <Slider
@@ -227,6 +228,7 @@ export default function AssemblyLineControls({
             width={48}
             height={48}
             className="shrink-0"
+            style={{ width: "auto", height: "auto" }}
           />
         </Tooltip>
         <Slider

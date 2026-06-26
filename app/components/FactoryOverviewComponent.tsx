@@ -18,7 +18,6 @@ import PartRateSummary from "./PartRateSummary";
 
 interface FactoryOverviewComponentProps {
   factory: Factory;
-  onRebuild: () => void;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
   onNavigateToFactory?: (id: string) => void;
@@ -26,7 +25,6 @@ interface FactoryOverviewComponentProps {
 
 export default function FactoryOverviewComponent({
   factory,
-  onRebuild,
   library,
   currentFactoryId,
   onNavigateToFactory,

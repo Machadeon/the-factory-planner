@@ -15,6 +15,7 @@ export default function Home() {
             width={300}
             height={20}
             preload
+            style={{ width: "auto", height: "auto" }}
           />
           <span className="font-semibold text-6xl align-bottom pl-2 text-amber-500">
             Planner

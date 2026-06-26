@@ -1,21 +1,25 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import AssemblyLine from "@/app/models/assembly-line";
 import AssemblyLineComponent from "@/app/components/AssemblyLineComponent";
+import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import { partSlugLookup, recipes } from "@/app/models/library";
 import type Part from "@/app/models/part";
-import type Recipe from "@/app/models/recipe";
 import ProductionLine from "@/app/models/production-line";
+import type Recipe from "@/app/models/recipe";
 
 vi.mock("next/image", () => ({
   default: ({
     src,
     alt,
     ...rest
-  }: { src: string; alt: string; [k: string]: unknown }) => (
-    // biome-ignore lint/a11y/useAltText: test mock
+  }: {
+    src: string;
+    alt: string;
+    [k: string]: unknown;
+  }) => (
+    // biome-ignore lint/performance/noImgElement: test mock
     <img src={src} alt={alt} {...(rest as object)} />
   ),
 }));
@@ -29,20 +33,28 @@ let ironIngotRecipe: Recipe;
 let ironIngotPart: Part;
 
 beforeAll(() => {
+  // biome-ignore lint/style/noNonNullAssertion: recipe should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
   ironIngotPart = partSlugLookup["iron-ingot"];
 });
 
 function buildProps(rate = 30, outputRate = 0) {
   const factory = new Factory();
-  let version = 0;
+  let _version = 0;
   factory.update = () => {
     factory._updateRates();
-    version++;
+    _version++;
   };
 
   const al = new AssemblyLine(ironIngotRecipe, rate, 0, 100, 0, false);
-  const pl = new ProductionLine(ironIngotPart, rate, outputRate, outputRate > 0, false, true);
+  const pl = new ProductionLine(
+    ironIngotPart,
+    rate,
+    outputRate,
+    outputRate > 0,
+    false,
+    true,
+  );
   pl.assemblyLines = [al];
   factory.productionLines = [pl];
   factory._productionLineLookup[ironIngotPart.slug] = pl;
@@ -55,7 +67,7 @@ describe("AssemblyLineComponent — clock speed", () => {
   it("machine count input back-calculates clock speed", async () => {
     const user = userEvent.setup();
     const props = buildProps(30);
-    const { rerender } = render(
+    render(
       <AssemblyLineComponent
         assemblyLine={props.assemblyLine}
         mainPart={props.mainPart}
@@ -80,7 +92,7 @@ describe("AssemblyLineComponent — clock speed", () => {
 describe("AssemblyLineComponent — somersloop slider", () => {
   it("somersloop slider calls setSloopedSlots and updates the assembly line", async () => {
     const props = buildProps(30, 30); // outputRate=30 so LP solve would be triggered
-    const setSloopSpy = vi.spyOn(props.assemblyLine, "setSloopedSlots");
+    const _setSloopSpy = vi.spyOn(props.assemblyLine, "setSloopedSlots");
     const autoCalcSpy = vi
       .spyOn(props.factory, "autoCalculateRates")
       .mockImplementation(() => {});
@@ -100,9 +112,7 @@ describe("AssemblyLineComponent — somersloop slider", () => {
     // Simulate change event on the hidden slider input
     if (sloopSlider) {
       act(() => {
-        sloopSlider.dispatchEvent(
-          new Event("change", { bubbles: true }),
-        );
+        sloopSlider.dispatchEvent(new Event("change", { bubbles: true }));
       });
       // Direct call to verify the behavior: when outputRate > 0, autoCalculateRates should be called
       act(() => {

@@ -9,8 +9,12 @@ vi.mock("next/image", () => ({
     src,
     alt,
     ...rest
-  }: { src: string; alt: string; [k: string]: unknown }) => (
-    // biome-ignore lint/a11y/useAltText: test mock
+  }: {
+    src: string;
+    alt: string;
+    [k: string]: unknown;
+  }) => (
+    // biome-ignore lint/performance/noImgElement: test mock
     <img src={src} alt={alt} {...(rest as object)} />
   ),
 }));
@@ -72,6 +76,7 @@ describe("FactoryComponent", () => {
       (el) => el.textContent?.trim() === "Iron Plate",
     );
     expect(option).toBeTruthy();
+    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeTruthy
     await user.click(option!);
 
     // A production line for Iron Plate should appear (it shows up in both the
@@ -95,6 +100,7 @@ describe("FactoryComponent", () => {
       (el) => el.textContent?.trim() === "Iron Rod",
     );
     expect(ironRodOption).toBeTruthy();
+    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeTruthy
     await user.click(ironRodOption!);
 
     // Iron Rod should appear as a production line
@@ -112,9 +118,8 @@ describe("FactoryComponent", () => {
       (el) => el.querySelectorAll("svg").length >= 2,
     );
     if (toolbar) {
-      const [expandDiv, collapseDiv] = toolbar.querySelectorAll<HTMLElement>(
-        ".cursor-pointer",
-      );
+      const [expandDiv, collapseDiv] =
+        toolbar.querySelectorAll<HTMLElement>(".cursor-pointer");
       // Collapse
       if (collapseDiv) await user.click(collapseDiv);
       // Expand
@@ -123,5 +128,63 @@ describe("FactoryComponent", () => {
 
     // After expand, Iron Rod production line is still visible
     expect(screen.getAllByText("Iron Rod").length).toBeGreaterThan(0);
+  });
+
+  // Regression test for: bugs/inconsistent-warning-visibility.md
+  // The solver warning was not re-appearing after dismissal when a recalculation
+  // produced the same error text as the previously-dismissed alert.
+  //
+  // A production line added with no recipe is immediately infeasible when the LP
+  // runs (no variables can satisfy the output target). We use the output rate field
+  // to drive two different solver errors and then cycle back to the first one —
+  // that final cycle is the regression scenario.
+  it("solver warning reappears after dismiss when solverError returns to a previously-dismissed value", async () => {
+    const user = userEvent.setup();
+    render(<FactoryComponent />);
+
+    // Add Iron Plate (no recipe). The first production line gets outputRate=10 by
+    // default, but autoCalculateRates is only invoked when outputRate is changed
+    // explicitly via the field.
+    const addButton = await screen.findByText(/Add Product/i);
+    await user.click(addButton);
+    const combo = screen.getByRole("combobox");
+    await user.type(combo, "Iron Plate");
+    const options = await screen.findAllByRole("option");
+    const option = options.find(
+      (el) => el.textContent?.trim() === "Iron Plate",
+    );
+    expect(option).toBeTruthy();
+    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeTruthy
+    await user.click(option!);
+
+    const outputRateField = await screen.findByRole("textbox", {
+      name: /Factory Output Rate/i,
+    });
+
+    async function setOutputRate(value: string) {
+      await user.click(outputRateField);
+      await user.keyboard("{Control>}a{/Control}");
+      await user.type(outputRateField, value);
+      await user.keyboard("{Tab}");
+    }
+
+    const warningAlert = () => screen.queryByRole("alert");
+
+    // Set rate to 30 — no recipe means the LP is infeasible → alert appears
+    await setOutputRate("30");
+    await waitFor(() => expect(warningAlert()).not.toBeNull());
+
+    // Dismiss the alert
+    await user.click(screen.getByRole("button", { name: /close/i }));
+    await waitFor(() => expect(warningAlert()).toBeNull());
+
+    // Change to 20 — different error text (different rate in message) → alert reappears
+    await setOutputRate("20");
+    await waitFor(() => expect(warningAlert()).not.toBeNull());
+
+    // Change back to 30 — error text matches the originally-dismissed alert.
+    // Regression: previously the dismissed state persisted and the alert stayed hidden.
+    await setOutputRate("30");
+    await waitFor(() => expect(warningAlert()).not.toBeNull());
   });
 });

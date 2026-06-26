@@ -12,6 +12,7 @@ let ironIngotPart: Part;
 let ironOrePart: Part;
 
 beforeAll(() => {
+  // biome-ignore lint/style/noNonNullAssertion: recipe should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
   ironIngotPart = partSlugLookup["iron-ingot"];
   ironOrePart = partSlugLookup["iron-ore"];
@@ -151,7 +152,7 @@ describe("getPowerConsumption()", () => {
     // rate=45: machineCount=2, uniformClock=(45/(2*30))*100=75
     const al = new AssemblyLine(ironIngotRecipe, 45, 0, 100, 0, false);
     const { avg } = al.getPowerConsumption();
-    const expected = 2 * 4 * Math.pow(0.75, 1.321928);
+    const expected = 2 * 4 * 0.75 ** 1.321928;
     expect(avg).toBeCloseTo(expected, 3);
   });
 

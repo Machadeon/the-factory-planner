@@ -4,17 +4,18 @@ import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
 import { partSlugLookup, recipes } from "@/app/models/library";
 import type Part from "@/app/models/part";
-import type Recipe from "@/app/models/recipe";
 import ProductionLine from "@/app/models/production-line";
+import type Recipe from "@/app/models/recipe";
 
 let ironIngotRecipe: Recipe;
 let ironIngotPart: Part;
-let ironOrePart: Part;
+let _ironOrePart: Part;
 
 beforeAll(() => {
+  // biome-ignore lint/style/noNonNullAssertion: recipe should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
   ironIngotPart = partSlugLookup["iron-ingot"];
-  ironOrePart = partSlugLookup["iron-ore"];
+  _ironOrePart = partSlugLookup["iron-ore"];
 });
 
 function buildIronIngotFactory(rate: number): Factory {
@@ -42,7 +43,7 @@ describe("FactoryRecipe", () => {
     // Net output: iron-ingot (produced 30, consumed 0)
     const ingotProduct = fr.getProduct("iron-ingot");
     expect(ingotProduct).toBeDefined();
-    expect(ingotProduct!.quantity).toBeCloseTo(30);
+    expect(ingotProduct?.quantity).toBeCloseTo(30);
   });
 
   it("net inputs become ingredients", () => {
@@ -52,7 +53,7 @@ describe("FactoryRecipe", () => {
     // Net input: iron-ore (produced 0, consumed 30)
     const oreIngredient = fr.getIngredient("iron-ore");
     expect(oreIngredient).toBeDefined();
-    expect(oreIngredient!.quantity).toBeCloseTo(30);
+    expect(oreIngredient?.quantity).toBeCloseTo(30);
   });
 
   it("zero-net parts are not in products or ingredients", () => {
@@ -60,13 +61,18 @@ describe("FactoryRecipe", () => {
     const factory = new Factory();
     factory.update = () => {};
     const pl1 = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-    pl1.assemblyLines = [new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false)];
+    pl1.assemblyLines = [
+      new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
+    ];
     // This is a degenerate case; just verify zero-net parts are excluded
     factory.productionLines = [pl1];
     factory._productionLineLookup[ironIngotPart.slug] = pl1;
     factory._updateRates();
     // Override rateLookup to simulate balanced iron-ingot (produced=consumed)
-    factory.rateLookup["iron-ingot"] = { productionRate: 30, consumptionRate: 30 };
+    factory.rateLookup["iron-ingot"] = {
+      productionRate: 30,
+      consumptionRate: 30,
+    };
 
     const fr = new FactoryRecipe("test-id", "Iron Factory", factory);
     expect(fr.getProduct("iron-ingot")).toBeUndefined();

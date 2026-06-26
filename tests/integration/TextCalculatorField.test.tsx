@@ -8,8 +8,12 @@ vi.mock("next/image", () => ({
     src,
     alt,
     ...rest
-  }: { src: string; alt: string; [k: string]: unknown }) => (
-    // biome-ignore lint/a11y/useAltText: test mock
+  }: {
+    src: string;
+    alt: string;
+    [k: string]: unknown;
+  }) => (
+    // biome-ignore lint/performance/noImgElement: test mock
     <img src={src} alt={alt} {...(rest as object)} />
   ),
 }));
@@ -18,7 +22,13 @@ describe("TextCalculatorField", () => {
   it("evaluates an expression on blur and calls onCalculate", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField variant="outlined" value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -33,7 +43,13 @@ describe("TextCalculatorField", () => {
   it("shows error state on Enter and does not fire onCalculate for invalid input", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField variant="outlined" value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -49,7 +65,13 @@ describe("TextCalculatorField", () => {
   it("resets to the original value and calls onCalculate on Escape", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField variant="outlined" value={42} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={42}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -63,7 +85,13 @@ describe("TextCalculatorField", () => {
   it("evaluates on Enter without removing focus", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField variant="outlined" value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -77,7 +105,7 @@ describe("TextCalculatorField", () => {
   });
 
   it("syncs display value when the external value prop changes while unfocused", async () => {
-    const user = userEvent.setup();
+    const _user = userEvent.setup();
     const { rerender } = render(
       <TextCalculatorField variant="outlined" value={10} />,
     );

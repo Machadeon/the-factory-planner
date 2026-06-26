@@ -26,6 +26,7 @@ export default class Factory {
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
+  _autoSetPartRateInProgress: Set<string>;
 
   /**
    * An index of all assembly lines that consume or produce the given part
@@ -43,6 +44,7 @@ export default class Factory {
     this.rateLookup = {};
     this._productionLineLookup = {};
     this._assemblyLineLookup = {};
+    this._autoSetPartRateInProgress = new Set();
 
     this._updateRates();
   }
@@ -286,6 +288,11 @@ export default class Factory {
    * @param part The part whose production rate needs to be set based on other production lines
    */
   autoSetPartRate(part: Part) {
+    if (this._autoSetPartRateInProgress.has(part.slug)) {
+      // Cycle detected: this part is already being processed up the call stack
+      return;
+    }
+
     const productionLine = this._productionLineLookup[part.slug];
     if (!productionLine?.autoCalculateRate) {
       // do not auto set rate for a production line without the flag set, or one that doesn't exist yet
@@ -296,17 +303,22 @@ export default class Factory {
       (part.slug === "rubber" || part.slug === "plastic") &&
       this._hasRecycledRubberPlasticLoop()
     ) {
-      console.log(
+      console.debug(
         "Handling recycled rubber and plastic loop is not implemented in this loop",
       );
       return;
     }
 
-    const productionRate = this.getPartDemand(part);
-    if (productionLine.autoCreated && productionRate < 0.00001) {
-      this.removeProductionLine(part);
-    } else {
-      this.setPartRate(part, productionRate, true);
+    this._autoSetPartRateInProgress.add(part.slug);
+    try {
+      const productionRate = this.getPartDemand(part);
+      if (productionLine.autoCreated && productionRate < 0.00001) {
+        this.removeProductionLine(part);
+      } else {
+        this.setPartRate(part, productionRate, true);
+      }
+    } finally {
+      this._autoSetPartRateInProgress.delete(part.slug);
     }
   }
 
@@ -429,11 +441,13 @@ export default class Factory {
       constraints: buildBaseConstraints(),
       variables: buildVariables(),
     };
-    console.log("Phase 1 model:", model1);
-    console.time("solver-v2-phase1");
+    console.debug("Phase 1 model:", model1);
+    const start1 = performance.now();
     const raw1 = solver.Solve(model1);
-    console.timeEnd("solver-v2-phase1");
-    console.log("Phase 1 result:", raw1);
+    console.debug(
+      `solver-v2-phase1: ${(performance.now() - start1).toFixed(2)}ms`,
+    );
+    console.debug("Phase 1 result:", raw1);
 
     // @ts-expect-error
     const result1: SolveResult = raw1.midpoint ?? raw1;
@@ -458,11 +472,13 @@ export default class Factory {
       constraints: buildBaseConstraints(),
       variables: variables2,
     };
-    console.log("Phase 2 model:", model2);
-    console.time("solver-v2-phase2");
+    console.debug("Phase 2 model:", model2);
+    const start2 = performance.now();
     const raw2 = solver.Solve(model2);
-    console.timeEnd("solver-v2-phase2");
-    console.log("Phase 2 result:", raw2);
+    console.debug(
+      `solver-v2-phase2: ${(performance.now() - start2).toFixed(2)}ms`,
+    );
+    console.debug("Phase 2 result:", raw2);
 
     // @ts-expect-error
     const result2: SolveResult = raw2.midpoint ?? raw2;

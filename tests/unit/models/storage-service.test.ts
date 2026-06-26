@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CURRENT_SCHEMA_VERSION,
-  type FactoryFolder,
   emptyLibrary,
   type SerializedFactory,
-  type StorageLibrary,
 } from "@/app/models/factory-storage";
 import {
   addFactory,
@@ -16,7 +14,11 @@ import {
   updateFactory,
 } from "@/app/models/storage-service";
 
-function makeFactory(id: string, name: string, folderId: string | null = null): SerializedFactory {
+function makeFactory(
+  id: string,
+  name: string,
+  folderId: string | null = null,
+): SerializedFactory {
   const now = new Date().toISOString();
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -112,7 +114,7 @@ describe("addFolder()", () => {
   });
 
   it("supports nested folders via parentId", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder: parent } = addFolder(lib, "Parent", null);
     const { lib: lib3, folder: child } = addFolder(lib2, "Child", parent.id);
     expect(child.parentId).toBe(parent.id);
@@ -122,14 +124,16 @@ describe("addFolder()", () => {
 
 describe("renameFolder()", () => {
   it("updates the folder name", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder } = addFolder(lib, "Old Name", null);
     const result = renameFolder(lib2, folder.id, "New Name");
-    expect(result.folders.find((f) => f.id === folder.id)?.name).toBe("New Name");
+    expect(result.folders.find((f) => f.id === folder.id)?.name).toBe(
+      "New Name",
+    );
   });
 
   it("does not affect other folders", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder: f1 } = addFolder(lib, "A", null);
     const { lib: lib3, folder: f2 } = addFolder(lib2, "B", null);
     const result = renameFolder(lib3, f1.id, "A-renamed");
@@ -139,7 +143,7 @@ describe("renameFolder()", () => {
 
 describe("removeFolder()", () => {
   it("removes the folder and its children recursively", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder: parent } = addFolder(lib, "Parent", null);
     const { lib: lib3, folder: child } = addFolder(lib2, "Child", parent.id);
     lib3; // assigned but we need to use lib3 for next call
@@ -150,7 +154,7 @@ describe("removeFolder()", () => {
   });
 
   it("removes factories inside deleted folders", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder } = addFolder(lib, "Folder", null);
     lib2; // assigned but using lib3
     const lib3 = addFactory(lib2, makeFactory("1", "In Folder", folder.id));
@@ -160,7 +164,7 @@ describe("removeFolder()", () => {
   });
 
   it("preserves factories outside deleted folders", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder } = addFolder(lib, "Folder", null);
     let lib3 = addFactory(lib2, makeFactory("1", "In Folder", folder.id));
     lib3 = addFactory(lib3, makeFactory("2", "Root Level", null));
@@ -178,13 +182,15 @@ describe("moveFactory()", () => {
     const { lib: lib2, folder } = addFolder(lib, "Folder", null);
 
     const result = moveFactory(lib2, "1", folder.id);
-    expect(result.factories.find((f) => f.id === "1")?.folderId).toBe(folder.id);
+    expect(result.factories.find((f) => f.id === "1")?.folderId).toBe(
+      folder.id,
+    );
   });
 
   it("moves factory to root (folderId=null)", () => {
-    let lib = emptyLibrary();
+    const lib = emptyLibrary();
     const { lib: lib2, folder } = addFolder(lib, "Folder", null);
-    let lib3 = addFactory(lib2, makeFactory("1", "Alpha", folder.id));
+    const lib3 = addFactory(lib2, makeFactory("1", "Alpha", folder.id));
 
     const result = moveFactory(lib3, "1", null);
     expect(result.factories.find((f) => f.id === "1")?.folderId).toBeNull();

@@ -183,6 +183,7 @@ function migrateSerializedFactoryRaw(f: any): SerializedFactory {
   return {
     ...f,
     schemaVersion: CURRENT_SCHEMA_VERSION,
+    // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
     productionLines: (f.productionLines ?? []).map((pl: any) => ({
       ...pl,
       assemblyLines: (pl.assemblyLines ?? []).map(migrateAssemblyLineRaw),
