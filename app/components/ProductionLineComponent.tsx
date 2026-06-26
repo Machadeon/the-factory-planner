@@ -31,6 +31,8 @@ import Clickable, {
 } from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 import RecipeComponent from "./RecipeComponent";
+import RecipeRejectDialog, { type RejectChoice } from "./RecipeRejectDialog";
+import SuggestedActions from "./SuggestedActions";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface ProductionLineComponentProps {
@@ -50,6 +52,9 @@ export default function ProductionLineComponent(
 ) {
   const [showFactoryPicker, setShowFactoryPicker] = useState<boolean>(false);
   const [showSupplyPicker, setShowSupplyPicker] = useState<boolean>(false);
+  const [rejectTarget, setRejectTarget] = useState<
+    null | { kind: "line" } | { kind: "assembly"; recipe: RecipeLike }
+  >(null);
   const part = props.productionLine.part;
   const recipeList = recipeLookup[part.slug];
   const actualProductionRate = props.productionLine.assemblyLines.reduce(
@@ -161,6 +166,62 @@ export default function ProductionLineComponent(
     props.onDeleteClicked();
   }
 
+  function lineRecipeSlugs(): string[] {
+    return props.productionLine.assemblyLines
+      .filter((al) => !al.recipe.isFactoryRecipe)
+      .map((al) => al.recipe.slug);
+  }
+
+  function acceptLine(e: MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    props.productionLine.autoCreated = false;
+    for (const al of props.productionLine.assemblyLines) al.autoCreated = false;
+    props.factory.update();
+  }
+
+  function rejectLine(e: MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    if (props.factory.shouldPromptReject()) {
+      setRejectTarget({ kind: "line" });
+    } else {
+      props.factory.applyRejectSilent(lineRecipeSlugs());
+      props.onDeleteClicked();
+    }
+  }
+
+  function acceptAssembly(recipe: RecipeLike) {
+    const al = props.productionLine.assemblyLines.find(
+      (a) => a.recipe.slug === recipe.slug,
+    );
+    if (al) al.autoCreated = false;
+    props.factory.update();
+  }
+
+  function rejectAssembly(recipe: RecipeLike) {
+    const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
+    if (props.factory.shouldPromptReject()) {
+      setRejectTarget({ kind: "assembly", recipe });
+    } else {
+      props.factory.applyRejectSilent(slugs);
+      removeAssemblyLine(recipe);
+    }
+  }
+
+  function onRejectChoice(choice: RejectChoice) {
+    if (!rejectTarget) return;
+    if (rejectTarget.kind === "line") {
+      props.factory.applyRejectChoice(lineRecipeSlugs(), choice);
+      setRejectTarget(null);
+      props.onDeleteClicked();
+    } else {
+      const recipe = rejectTarget.recipe;
+      const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
+      props.factory.applyRejectChoice(slugs, choice);
+      setRejectTarget(null);
+      removeAssemblyLine(recipe);
+    }
+  }
+
   function toggleAutoCalculateRate(e: MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
     props.productionLine.autoCalculateRate =
@@ -248,6 +309,9 @@ export default function ProductionLineComponent(
         <div className="flex flex-row items-center gap-2 w-sm flex-none">
           <Image src={part.iconSmall} alt={part.name} width={64} height={64} />
           <span className="text-xl">{part.name}</span>
+          {props.productionLine.autoCreated && (
+            <SuggestedActions onAccept={acceptLine} onReject={rejectLine} />
+          )}
         </div>
         <div className="flex flex-row items-center w-sm flex-none gap-x-2">
           {props.productionLine.maximizeOutput ? (
@@ -382,6 +446,12 @@ export default function ProductionLineComponent(
                 factory={props.factory}
                 onNavigateToFactory={props.onNavigateToFactory}
               />
+              {assemblyLine.autoCreated && (
+                <SuggestedActions
+                  onAccept={() => acceptAssembly(assemblyLine.recipe)}
+                  onReject={() => rejectAssembly(assemblyLine.recipe)}
+                />
+              )}
               {recipeList.length !== 1 ||
               assemblyLine.recipe.isFactoryRecipe ||
               props.productionLine.assemblyLines.length > 1 ? (
@@ -444,6 +514,16 @@ export default function ProductionLineComponent(
             </Clickable>
           </div>
         )}
+        <RecipeRejectDialog
+          open={rejectTarget !== null}
+          recipeName={
+            rejectTarget?.kind === "assembly"
+              ? rejectTarget.recipe.name
+              : part.name
+          }
+          onResolve={onRejectChoice}
+          onClose={() => setRejectTarget(null)}
+        />
         <FactoryPickerDialog
           open={showFactoryPicker}
           library={props.library}

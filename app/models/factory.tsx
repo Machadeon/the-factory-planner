@@ -26,6 +26,59 @@ export type PartConstraint = {
   equal?: number;
 };
 
+export type ScoringObjective =
+  | "sinkPoints"
+  | "power"
+  | "buildings"
+  | "inputValue";
+
+export type RejectPrompt = "ask" | "always" | "never";
+
+/**
+ * User-configurable settings for the auto-fill recipes feature. The
+ * recipe-selection algorithm that consumes these lives separately; this config
+ * is the UI-facing state (see plan:auto-recipe-ui.md).
+ */
+export interface AutoFillConfig {
+  /** Re-run auto-fill on every edit (vs only when the user clicks Run). */
+  eager: boolean;
+  /** Optimization goal driving the LP objective. */
+  objective: ScoringObjective;
+  /** Part slugs preferred as already-available inputs. */
+  availableParts: string[];
+  /** Source factory ids whose outputs are treated as available. */
+  availableFactoryIds: string[];
+  /** Game phase ceiling for recipe unlocks. */
+  phase: number;
+  /** Master toggle: standard (non-alternate) recipes selectable. */
+  defaultRecipesEnabled: boolean;
+  /** Master toggle: alternate recipes selectable. */
+  alternateRecipesEnabled: boolean;
+  /** Per-recipe allow(true)/deny(false) overrides over the master toggles. */
+  recipeOverrides: Record<string, boolean>;
+  /** Overwrite all production lines vs only fill gaps. */
+  overwrite: boolean;
+  /** Whether rejecting a suggestion also removes the recipe from auto-fill. */
+  rejectPrompt: RejectPrompt;
+}
+
+export const MAX_GAME_PHASE = 5;
+
+export function defaultAutoFillConfig(): AutoFillConfig {
+  return {
+    eager: false,
+    objective: "sinkPoints",
+    availableParts: [],
+    availableFactoryIds: [],
+    phase: MAX_GAME_PHASE,
+    defaultRecipesEnabled: true,
+    alternateRecipesEnabled: true,
+    recipeOverrides: {},
+    overwrite: false,
+    rejectPrompt: "ask",
+  };
+}
+
 export interface FactoryOutput {
   part: Part;
   rate: Rate;
@@ -40,6 +93,7 @@ export default class Factory {
   update: () => void;
   solverError: string | null;
   constraints: PartConstraint[];
+  autoFill: AutoFillConfig;
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
@@ -61,6 +115,7 @@ export default class Factory {
     this.supplierFactories = oldFactory?.supplierFactories || [];
     this.solverError = oldFactory?.solverError ?? null;
     this.constraints = oldFactory?.constraints ?? [];
+    this.autoFill = oldFactory?.autoFill ?? defaultAutoFillConfig();
 
     this.rateLookup = {};
     this._productionLineLookup = {};
@@ -127,6 +182,74 @@ export default class Factory {
           this.rateLookup[recipePart.part.slug] = rate;
         }
       }
+    }
+  }
+
+  /**
+   * Outputs available from a source factory, paired with their net rate.
+   *
+   * Signature intentionally takes the source factory so a later version can
+   * return outputs net of what other factories already pull from it. v1 returns
+   * this factory's own net production.
+   */
+  availableOutputsFrom(source: Factory): { part: Part; rate: number }[] {
+    return source
+      .getOutputInfo()
+      .map((o) => ({
+        part: o.part,
+        rate: o.rate.productionRate - o.rate.consumptionRate,
+      }))
+      .filter((o) => o.rate > 0.0001);
+  }
+
+  /**
+   * Auto-fill production lines to satisfy requested outputs from available
+   * inputs, choosing recipes per {@link autoFill}. The LP-based recipe-selection
+   * algorithm is implemented separately (see plan:auto-recipe-ui.md); this is
+   * the entry point the UI invokes.
+   */
+  autoFillProductionLines() {
+    // TODO: implement LP-based recipe selection. No-op for now so the UI wiring
+    // (Run button, eager mode) is in place ahead of the algorithm.
+  }
+
+  /** True when rejecting a suggestion should prompt the user. */
+  shouldPromptReject(): boolean {
+    return this.autoFill.rejectPrompt === "ask";
+  }
+
+  /**
+   * Apply the user's choice from the reject-suggestion prompt. Updates
+   * rejectPrompt and/or adds a deny override; does not remove any lines (the
+   * caller performs the removal).
+   */
+  applyRejectChoice(
+    recipeSlugs: string[],
+    choice: "never" | "no" | "yes" | "always",
+  ) {
+    if (choice === "never") {
+      this.autoFill.rejectPrompt = "never";
+    } else if (choice === "always") {
+      this.autoFill.rejectPrompt = "always";
+      this._denyRecipes(recipeSlugs);
+    } else if (choice === "yes") {
+      this._denyRecipes(recipeSlugs);
+    }
+  }
+
+  /**
+   * Apply the remembered reject behavior when no prompt is shown ("always" adds
+   * a deny override, "never" does nothing).
+   */
+  applyRejectSilent(recipeSlugs: string[]) {
+    if (this.autoFill.rejectPrompt === "always") {
+      this._denyRecipes(recipeSlugs);
+    }
+  }
+
+  _denyRecipes(recipeSlugs: string[]) {
+    for (const slug of recipeSlugs) {
+      if (slug) this.autoFill.recipeOverrides[slug] = false;
     }
   }
 

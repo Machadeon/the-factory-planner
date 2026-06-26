@@ -1,29 +1,48 @@
 "use client";
 
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EditIcon from "@mui/icons-material/Edit";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import type Factory from "../models/factory";
+import type { ScoringObjective } from "../models/factory";
 import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
 import { partSlugLookup } from "../models/library";
 import { displayNum } from "../utils";
+import AutoFillDialog from "./AutoFillDialog";
 import Clickable from "./Clickable";
 import ConstraintsDialog from "./ConstraintsDialog";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
+
+const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
+  sinkPoints: "Max sink points",
+  power: "Min power",
+  buildings: "Min buildings",
+  inputValue: "Min input value",
+};
 
 interface FactoryOverviewComponentProps {
   factory: Factory;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
   onNavigateToFactory?: (id: string) => void;
+  onRebuild?: () => void;
 }
 
 export default function FactoryOverviewComponent({
@@ -40,6 +59,53 @@ export default function FactoryOverviewComponent({
   const [showSuppliers, setShowSuppliers] = useState(true);
   const [showConstraints, setShowConstraints] = useState(true);
   const [showConstraintsDialog, setShowConstraintsDialog] = useState(false);
+  const [showAutoFill, setShowAutoFill] = useState(true);
+  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
+
+  const suggestedLineCount = factory.productionLines.filter(
+    (pl) => pl.autoCreated,
+  ).length;
+  const suggestedRecipeCount = factory.productionLines.reduce(
+    (acc, pl) =>
+      acc +
+      (pl.autoCreated
+        ? 0
+        : pl.assemblyLines.filter((al) => al.autoCreated).length),
+    0,
+  );
+  const suggestionCount = suggestedLineCount + suggestedRecipeCount;
+
+  function acceptAllSuggestions() {
+    for (const pl of factory.productionLines) {
+      pl.autoCreated = false;
+      for (const al of pl.assemblyLines) al.autoCreated = false;
+    }
+    factory.update();
+  }
+
+  function rejectAllSuggestions() {
+    const slugs: string[] = [];
+    factory.productionLines = factory.productionLines.filter((pl) => {
+      if (pl.autoCreated) {
+        for (const al of pl.assemblyLines) {
+          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
+        }
+        return false;
+      }
+      pl.assemblyLines = pl.assemblyLines.filter((al) => {
+        if (al.autoCreated) {
+          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
+          return false;
+        }
+        return true;
+      });
+      return true;
+    });
+    factory.applyRejectSilent(slugs);
+    setShowRejectAllConfirm(false);
+    factory.update();
+  }
 
   function _schedule(obj: object, fn: () => void) {
     setTimeout(fn.bind(obj), 1);
@@ -390,6 +456,102 @@ export default function FactoryOverviewComponent({
         factory={factory}
         onApply={() => {}}
       />
+      <HorizontalDivider />
+      <div className="flex flex-row items-center mb-2">
+        <span className="text-lg grow">Auto-fill</span>
+        <Clickable
+          onClick={() => setShowAutoFill(!showAutoFill)}
+          className="inline"
+        >
+          {showAutoFill ? <VisibilityOffIcon /> : <VisibilityIcon />}
+        </Clickable>
+      </div>
+      <div style={{ contentVisibility: showAutoFill ? "visible" : "hidden" }}>
+        <p className="text-sm text-gray-400 mb-1">
+          {OBJECTIVE_LABELS[factory.autoFill.objective]}
+          {factory.autoFill.eager ? " · eager" : ""} ·{" "}
+          {factory.autoFill.overwrite ? "overwrite" : "fill gaps"} · phase{" "}
+          {factory.autoFill.phase}
+        </p>
+        {suggestionCount > 0 && (
+          <p className="text-sm text-gray-400 mb-1">
+            {suggestionCount} suggested{" "}
+            {suggestionCount === 1 ? "recipe" : "recipes"}
+          </p>
+        )}
+        <div className="flex flex-row items-center gap-x-2">
+          <Clickable
+            onClick={() => setShowAutoFillDialog(true)}
+            className="flex flex-row items-center p-1"
+          >
+            <AutoFixHighIcon fontSize="small" />
+            <span className="text-sm ml-1">Configure auto-fill</span>
+          </Clickable>
+          <Clickable
+            onClick={() => {
+              factory.autoFillProductionLines();
+              factory.update();
+            }}
+            className="flex flex-row items-center p-1"
+          >
+            <PlayArrowIcon fontSize="small" />
+            <span className="text-sm ml-1">Run auto-fill</span>
+          </Clickable>
+        </div>
+        {suggestionCount > 0 && (
+          <div className="flex flex-col gap-2 mt-3">
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<DoneAllIcon />}
+              onClick={acceptAllSuggestions}
+            >
+              Accept all
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="warning"
+              startIcon={<ClearAllIcon />}
+              onClick={() => setShowRejectAllConfirm(true)}
+            >
+              Reject all
+            </Button>
+          </div>
+        )}
+      </div>
+      <AutoFillDialog
+        open={showAutoFillDialog}
+        onClose={() => setShowAutoFillDialog(false)}
+        factory={factory}
+        onApply={() => {}}
+        library={library}
+        currentFactoryId={currentFactoryId}
+      />
+      <Dialog
+        open={showRejectAllConfirm}
+        onClose={() => setShowRejectAllConfirm(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Reject all suggestions?</DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-gray-400">
+            This removes all auto-suggested production lines and recipes. This
+            cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowRejectAllConfirm(false)}>Cancel</Button>
+          <Button
+            onClick={rejectAllSuggestions}
+            variant="contained"
+            color="warning"
+          >
+            Reject all
+          </Button>
+        </DialogActions>
+      </Dialog>
       {factory.supplierFactories.length > 0 && (
         <>
           <HorizontalDivider />

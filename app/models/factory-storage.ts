@@ -1,5 +1,9 @@
 import AssemblyLine from "./assembly-line";
-import Factory, { type PartConstraint } from "./factory";
+import Factory, {
+  type AutoFillConfig,
+  defaultAutoFillConfig,
+  type PartConstraint,
+} from "./factory";
 import FactoryRecipe from "./factory-recipe";
 import { partSlugLookup, recipes } from "./library";
 import ProductionLine from "./production-line";
@@ -12,6 +16,7 @@ export interface SerializedAssemblyLine {
   sloopedSlots: number;
   machineSpeed: number;
   allowRemainder: boolean;
+  autoCreated?: boolean;
 }
 
 export interface SerializedProductionLine {
@@ -34,6 +39,7 @@ export interface SerializedFactory {
   productionLines: SerializedProductionLine[];
   supplierIds?: string[];
   constraints?: PartConstraint[];
+  autoFill?: AutoFillConfig;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,6 +95,7 @@ export function serializeFactory(
     updatedAt: meta.updatedAt,
     constraints:
       factory.constraints.length > 0 ? factory.constraints : undefined,
+    autoFill: factory.autoFill,
     productionLines: factory.productionLines.map((pl) => ({
       partSlug: pl.part.slug,
       rate: pl.rate,
@@ -108,6 +115,7 @@ export function serializeFactory(
             sloopedSlots: 0,
             machineSpeed: al.machineSpeed,
             allowRemainder: al.allowRemainder,
+            autoCreated: al.autoCreated || undefined,
           };
         }
         return {
@@ -116,6 +124,7 @@ export function serializeFactory(
           sloopedSlots: al.sloopedSlots,
           machineSpeed: al.machineSpeed,
           allowRemainder: al.allowRemainder,
+          autoCreated: al.autoCreated || undefined,
         };
       }),
     })),
@@ -135,6 +144,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
+  factory.autoFill = data.autoFill ?? defaultAutoFillConfig();
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -159,6 +169,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           alData.machineSpeed,
           Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
           alData.allowRemainder,
+          alData.autoCreated ?? false,
         ),
       );
     }
@@ -221,6 +232,7 @@ export function deserializeFactory(
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
+  factory.autoFill = data.autoFill ?? defaultAutoFillConfig();
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
@@ -302,6 +314,7 @@ export function deserializeFactory(
           alData.machineSpeed,
           Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
           alData.allowRemainder,
+          alData.autoCreated ?? false,
         ),
       );
     }

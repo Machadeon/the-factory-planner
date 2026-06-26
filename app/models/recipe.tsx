@@ -22,6 +22,8 @@ export default class Recipe {
   building: Building;
   processingTime: number;
   customPowerUsage: boolean;
+  /** Whether this is an alternate recipe (vs a standard/default recipe). */
+  alternate: boolean;
   minPowerUsage?: number;
   maxPowerUsage?: number;
 
@@ -39,6 +41,7 @@ export default class Recipe {
     building: Building,
     processingTime: number,
     customPowerUsage: boolean,
+    alternate = false,
   ) {
     this.name = name;
     this.className = className;
@@ -50,6 +53,7 @@ export default class Recipe {
     this.building = building;
     this.processingTime = processingTime;
     this.customPowerUsage = customPowerUsage;
+    this.alternate = alternate;
 
     this._ingredientLookup = {};
     for (const ingredient of ingredients) {

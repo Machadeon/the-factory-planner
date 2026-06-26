@@ -37,6 +37,13 @@ export default class AssemblyLine {
    */
   allowRemainder: boolean;
 
+  /**
+   * Whether this recipe choice was auto-suggested by the auto-filler. Tracked
+   * independently of the production line's autoCreated flag so a suggested
+   * recipe on an otherwise-permanent line can be accepted/rejected on its own.
+   */
+  autoCreated: boolean;
+
   constructor(
     recipe: RecipeLike,
     rate: number,
@@ -44,6 +51,7 @@ export default class AssemblyLine {
     machineSpeed: number,
     powerShards: number,
     allowRemainder: boolean,
+    autoCreated = false,
   ) {
     this.recipe = recipe;
     this.rate = rate;
@@ -51,6 +59,7 @@ export default class AssemblyLine {
     this.machineSpeed = machineSpeed;
     this.powerShards = powerShards;
     this.allowRemainder = allowRemainder;
+    this.autoCreated = autoCreated;
   }
 
   maxSloopSlots(): number {

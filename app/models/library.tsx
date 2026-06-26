@@ -161,6 +161,7 @@ for (const recipeData of Object.values(data.recipes)) {
     buildingLookup[recipeData.producedIn[0]],
     recipeData.time,
     recipeData.isVariablePower,
+    recipeData.alternate,
   );
 
   if (recipeData.isVariablePower) {

@@ -55,6 +55,8 @@ constrain specific parts. This is already possible via the Constraints feature.
 A user may wish to prefer to use parts already available from other factories. They may also list available parts
 explicitly.
 
+Supply factories only provide the number of parts available, taking into account other factories that pull from it.
+
 ### Sink Point Gains
 
 Many parts have a point value called sink points. Recipes whose inputs and outputs all have sink points can be given a
