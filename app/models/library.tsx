@@ -28,6 +28,21 @@ export const rawResources = [
   "uranium",
 ];
 
+export const defaultResourceLimits: Record<string, number> = {
+  "iron-ore": 92100,
+  limestone: 69900,
+  coal: 42300,
+  "copper-ore": 36900,
+  "caterium-ore": 15000,
+  "raw-quartz": 13500,
+  "crude-oil": 12600,
+  bauxite: 12300,
+  "nitrogen-gas": 12000,
+  sulfur: 10800,
+  sam: 10200,
+  uranium: 2100,
+};
+
 for (const partData of Object.values(data.items)) {
   const part: Part = {
     name: partData.name,

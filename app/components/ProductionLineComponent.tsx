@@ -6,6 +6,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
@@ -177,6 +178,12 @@ export default function ProductionLineComponent(
     }
   }
 
+  function toggleMaximizeOutput(e: MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    props.productionLine.maximizeOutput = !props.productionLine.maximizeOutput;
+    props.factory.autoCalculateRates();
+  }
+
   function splitRecipes() {
     const currentRecipeCount = props.productionLine.assemblyLines.length;
     const ratio = currentRecipeCount / (currentRecipeCount + 1);
@@ -241,18 +248,32 @@ export default function ProductionLineComponent(
           <span className="text-xl">{part.name}</span>
         </div>
         <div className="flex flex-row items-center w-sm flex-none gap-x-2">
-          <TextCalculatorField
-            variant="outlined"
-            size="small"
-            label="Factory Output Rate"
-            className="w-40"
-            value={props.productionLine.outputRate}
-            onCalculate={updateOutputRate}
-            onClick={(e) => e.stopPropagation()}
-            slotProps={{
-              htmlInput: { className: "text-right" },
-            }}
-          />
+          {props.productionLine.maximizeOutput ? (
+            <TextField
+              variant="outlined"
+              size="small"
+              label="Factory Output Rate"
+              className="w-40"
+              disabled
+              value={displayNum(props.productionLine.outputRate)}
+              slotProps={{
+                htmlInput: { className: "text-right" },
+              }}
+            />
+          ) : (
+            <TextCalculatorField
+              variant="outlined"
+              size="small"
+              label="Factory Output Rate"
+              className="w-40"
+              value={props.productionLine.outputRate}
+              onCalculate={updateOutputRate}
+              onClick={(e) => e.stopPropagation()}
+              slotProps={{
+                htmlInput: { className: "text-right" },
+              }}
+            />
+          )}
           {props.productionLine.autoCalculateRate ? (
             <TextField
               variant="outlined"
@@ -305,6 +326,25 @@ export default function ProductionLineComponent(
               </span>
             </Tooltip>
           )}
+          <Tooltip
+            title={
+              props.productionLine.maximizeOutput
+                ? "Stop maximizing output"
+                : "Maximize output (limited by constraints)"
+            }
+          >
+            <span>
+              <Clickable onClick={toggleMaximizeOutput} className="p-1">
+                <TrendingUpIcon
+                  sx={{
+                    color: props.productionLine.maximizeOutput
+                      ? "primary.main"
+                      : "action.active",
+                  }}
+                />
+              </Clickable>
+            </span>
+          </Tooltip>
         </div>
         <p className="grow">
           Actual:{" "}

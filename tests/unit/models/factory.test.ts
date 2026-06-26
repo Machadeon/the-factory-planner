@@ -2,7 +2,15 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import {
+  deserializeFactory,
+  serializeFactory,
+} from "@/app/models/factory-storage";
+import {
+  defaultResourceLimits,
+  partSlugLookup,
+  recipes,
+} from "@/app/models/library";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
@@ -377,5 +385,188 @@ describe("autoCalculateRates()", () => {
       expect.stringContaining("recycled rubber"),
     );
     consoleSpy.mockRestore();
+  });
+});
+
+describe("autoCalculateRates() — constraints (Item 7)", () => {
+  it("user constraint caps raw-input consumption", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      30,
+    );
+    pl.autoCalculateRate = true;
+    // iron-ingot recipe: 1 ore → 1 ingot per completion
+    // outputRate=30 needs 30 ore/min — cap at 30 → exactly feasible
+    factory.constraints = [{ partSlug: "iron-ore", max: 30 }];
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(pl.rate).toBeCloseTo(30);
+  });
+
+  it("constraint tighter than target causes solverError", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      40,
+    );
+    pl.autoCalculateRate = true;
+    // outputRate=40 requires 40 ore/min, but cap is 30 → infeasible
+    factory.constraints = [{ partSlug: "iron-ore", max: 30 }];
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).not.toBeNull();
+  });
+});
+
+describe("autoCalculateRates() — maximize output (Item 8)", () => {
+  it("maximizeOutput finds rate bounded by user constraint", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      0,
+    );
+    pl.maximizeOutput = true;
+    factory.constraints = [{ partSlug: "iron-ore", max: 60 }];
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(pl.rate).toBeCloseTo(60);
+    expect(pl.outputRate).toBeCloseTo(60);
+  });
+
+  it("maximizeOutput writes solved rate back to outputRate", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      0,
+    );
+    pl.maximizeOutput = true;
+    factory.constraints = [{ partSlug: "iron-ore", max: 20 }];
+    factory.autoCalculateRates();
+
+    expect(pl.outputRate).toBeCloseTo(pl.rate);
+  });
+
+  it("maximizeOutput bounded by DEFAULT_RESOURCE_LIMITS when no user constraint", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      0,
+    );
+    pl.maximizeOutput = true;
+    // No user constraint — default limit applies
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(pl.rate).toBeCloseTo(defaultResourceLimits["iron-ore"]);
+  });
+
+  it("two maximize lines sharing raw input respect combined limit", () => {
+    const factory = makeFactory();
+    const ironIngotPl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      0,
+    );
+    const ironPlatePl = addManualProductionLine(
+      factory,
+      ironPlatePart,
+      ironPlateRecipe,
+      1,
+      0,
+    );
+    const ironRodPl = addManualProductionLine(
+      factory,
+      ironRodPart,
+      ironRodRecipe,
+      1,
+      0,
+    );
+    ironPlatePl.maximizeOutput = true;
+    ironRodPl.maximizeOutput = true;
+
+    // Iron ore capped at 30/min; iron-ingot is intermediate
+    factory.constraints = [{ partSlug: "iron-ore", max: 30 }];
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    // All ore should be consumed (LP maximizes until hitting constraint)
+    expect(ironIngotPl.rate).toBeCloseTo(30);
+    // Maximize lines write back outputRate
+    expect(ironRodPl.outputRate).toBeGreaterThan(0);
+  });
+});
+
+describe("serialization — constraints + maximizeOutput", () => {
+  it("round-trips constraints and maximizeOutput through serialize/deserialize", () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      30,
+      30,
+    );
+    pl.maximizeOutput = true;
+    factory.constraints = [{ partSlug: "iron-ore", max: 60 }];
+
+    const serialized = serializeFactory(factory, {
+      id: "test-id",
+      name: "Test",
+      folderId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    expect(serialized.constraints).toEqual([{ partSlug: "iron-ore", max: 60 }]);
+    expect(serialized.productionLines[0].maximizeOutput).toBe(true);
+
+    const restored = deserializeFactory(serialized);
+    expect(restored).not.toBeNull();
+    expect(restored!.constraints).toEqual([{ partSlug: "iron-ore", max: 60 }]);
+    expect(restored!.productionLines[0].maximizeOutput).toBe(true);
+  });
+
+  it("deserialize defaults constraints to [] and maximizeOutput to false", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 30, 30);
+
+    const serialized = serializeFactory(factory, {
+      id: "test-id2",
+      name: "Test2",
+      folderId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Strip optional fields to simulate old save data
+    delete (serialized as { constraints?: unknown }).constraints;
+    for (const pl of serialized.productionLines) {
+      delete (pl as { maximizeOutput?: unknown }).maximizeOutput;
+    }
+
+    const restored = deserializeFactory(serialized);
+    expect(restored).not.toBeNull();
+    expect(restored!.constraints).toEqual([]);
+    expect(restored!.productionLines[0].maximizeOutput).toBe(false);
   });
 });

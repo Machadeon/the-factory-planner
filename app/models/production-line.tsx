@@ -29,6 +29,11 @@ export default class ProductionLine {
   autoCreated: boolean;
 
   /**
+   * When true, the LP solver maximizes this part's output instead of targeting a fixed outputRate.
+   */
+  maximizeOutput: boolean;
+
+  /**
    * The individual {@link AssemblyLine}s that make up this production line. The output of all assembly lines sum to the
    * output of this production line.
    */
@@ -47,6 +52,7 @@ export default class ProductionLine {
     this.outputRate = factoryOutputRate;
     this.autoCalculateRate = autoCalculateRate;
     this.autoCreated = autoCreated;
+    this.maximizeOutput = false;
     this.assemblyLines = [];
 
     const recipes = recipeLookup[part.slug];

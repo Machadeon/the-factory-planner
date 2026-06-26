@@ -13,10 +13,14 @@ import { calculate as evaluateExpression } from "../utils";
 
 export interface TextCalculatorFieldProps extends OutlinedTextFieldProps {
   onCalculate?: (newValue: number) => void;
+  onClear?: () => void;
+  allowClear?: boolean;
 }
 
 export default function TextCalculatorField({
   onCalculate,
+  onClear,
+  allowClear,
   ...other
 }: TextCalculatorFieldProps) {
   const [value, setValue] = useState<string>(`${other.value}`);
@@ -39,6 +43,13 @@ export default function TextCalculatorField({
   }
 
   function calculate(newValue: string) {
+    if (allowClear && newValue.trim() === "") {
+      setValue("");
+      setError(false);
+      onClear?.();
+      return;
+    }
+
     let result: number;
     try {
       result = parseValue(newValue);

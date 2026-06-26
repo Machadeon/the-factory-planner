@@ -1,5 +1,5 @@
 import AssemblyLine from "./assembly-line";
-import Factory from "./factory";
+import Factory, { type PartConstraint } from "./factory";
 import FactoryRecipe from "./factory-recipe";
 import { partSlugLookup, recipes } from "./library";
 import ProductionLine from "./production-line";
@@ -20,6 +20,7 @@ export interface SerializedProductionLine {
   outputRate: number;
   autoCalculateRate: boolean;
   autoCreated: boolean;
+  maximizeOutput?: boolean;
   assemblyLines: SerializedAssemblyLine[];
 }
 
@@ -32,6 +33,7 @@ export interface SerializedFactory {
   autoAddProductLines: boolean;
   productionLines: SerializedProductionLine[];
   supplierIds?: string[];
+  constraints?: PartConstraint[];
   createdAt: string;
   updatedAt: string;
 }
@@ -49,7 +51,7 @@ export interface StorageLibrary {
   factories: SerializedFactory[];
 }
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export function generateId(): string {
   return crypto.randomUUID();
@@ -85,12 +87,15 @@ export function serializeFactory(
         : undefined,
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
+    constraints:
+      factory.constraints.length > 0 ? factory.constraints : undefined,
     productionLines: factory.productionLines.map((pl) => ({
       partSlug: pl.part.slug,
       rate: pl.rate,
       outputRate: pl.outputRate,
       autoCalculateRate: pl.autoCalculateRate,
       autoCreated: pl.autoCreated,
+      maximizeOutput: pl.maximizeOutput || undefined,
       assemblyLines: pl.assemblyLines.map((al) => {
         if (al.recipe.isFactoryRecipe) {
           const nestedId = al.recipe.slug.slice("factory:".length);
@@ -129,6 +134,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   const factory = new Factory();
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
+  factory.constraints = data.constraints ?? [];
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -139,6 +145,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
       plData.autoCalculateRate,
       plData.autoCreated,
     );
+    pl.maximizeOutput = plData.maximizeOutput ?? false;
     pl.assemblyLines = [];
     for (const alData of plData.assemblyLines) {
       if (alData.nestedFactoryId || !alData.recipeSlug) continue;
@@ -213,6 +220,7 @@ export function deserializeFactory(
   const factory = new Factory();
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
+  factory.constraints = data.constraints ?? [];
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
@@ -230,6 +238,7 @@ export function deserializeFactory(
       plData.autoCalculateRate,
       plData.autoCreated,
     );
+    pl.maximizeOutput = plData.maximizeOutput ?? false;
     pl.assemblyLines = [];
 
     for (const alData of plData.assemblyLines) {

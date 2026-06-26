@@ -1,6 +1,7 @@
 "use client";
 
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Tooltip from "@mui/material/Tooltip";
@@ -11,8 +12,10 @@ import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
+import { partSlugLookup } from "../models/library";
 import { displayNum } from "../utils";
 import Clickable from "./Clickable";
+import ConstraintsDialog from "./ConstraintsDialog";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
 
@@ -35,6 +38,8 @@ export default function FactoryOverviewComponent({
   const [showConsumers, setShowConsumers] = useState(true);
   const [showPower, setShowPower] = useState(true);
   const [showSuppliers, setShowSuppliers] = useState(true);
+  const [showConstraints, setShowConstraints] = useState(true);
+  const [showConstraintsDialog, setShowConstraintsDialog] = useState(false);
 
   function _schedule(obj: object, fn: () => void) {
     setTimeout(fn.bind(obj), 1);
@@ -305,6 +310,65 @@ export default function FactoryOverviewComponent({
           </>
         );
       })()}
+      <HorizontalDivider />
+      <div className="flex flex-row items-center mb-2">
+        <span className="text-lg grow">
+          Constraints ({factory.constraints.length})
+        </span>
+        <Clickable
+          onClick={() => setShowConstraints(!showConstraints)}
+          className="inline"
+        >
+          {showConstraints ? <VisibilityOffIcon /> : <VisibilityIcon />}
+        </Clickable>
+      </div>
+      <div
+        style={{ contentVisibility: showConstraints ? "visible" : "hidden" }}
+      >
+        {factory.constraints.length === 0 ? (
+          <p className="text-sm text-gray-400 mb-2">No constraints set.</p>
+        ) : (
+          factory.constraints.map((constraint) => {
+            const part = partSlugLookup[constraint.partSlug];
+            if (!part) return null;
+            const parts: string[] = [];
+            if (constraint.min !== undefined)
+              parts.push(`min ${displayNum(constraint.min)}/min`);
+            if (constraint.max !== undefined)
+              parts.push(`max ${displayNum(constraint.max)}/min`);
+            return (
+              <div
+                key={constraint.partSlug}
+                className="flex flex-row items-center gap-x-2 mb-1"
+              >
+                <Image
+                  src={part.iconSmall}
+                  alt={part.name}
+                  width={24}
+                  height={24}
+                />
+                <span className="text-sm grow">{part.name}</span>
+                <span className="text-sm text-gray-400">
+                  {parts.join(", ")}
+                </span>
+              </div>
+            );
+          })
+        )}
+        <Clickable
+          onClick={() => setShowConstraintsDialog(true)}
+          className="flex flex-row items-center p-1"
+        >
+          <EditIcon fontSize="small" />
+          <span className="text-sm ml-1">Edit constraints</span>
+        </Clickable>
+      </div>
+      <ConstraintsDialog
+        open={showConstraintsDialog}
+        onClose={() => setShowConstraintsDialog(false)}
+        factory={factory}
+        onApply={() => {}}
+      />
       {factory.supplierFactories.length > 0 && (
         <>
           <HorizontalDivider />
