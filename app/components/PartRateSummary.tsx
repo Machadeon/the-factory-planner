@@ -21,6 +21,7 @@ interface PartRateSummaryProps {
   library?: StorageLibrary;
   currentFactoryId?: string | null;
   showDetail?: boolean;
+  hideActions?: boolean;
 }
 
 export default function PartRateSummary({
@@ -30,11 +31,26 @@ export default function PartRateSummary({
   library,
   currentFactoryId,
   showDetail,
+  hideActions,
 }: PartRateSummaryProps) {
   const [supplyPickerOpen, setSupplyPickerOpen] = useState(false);
-  const netRate = rate ? rate.productionRate - rate.consumptionRate : 0;
-  const netRateDisplay = displayNum(Math.abs(netRate));
-  const sign = netRate >= 0 ? "+" : "-";
+  const netRate = rate.productionRate - rate.consumptionRate;
+  const netRateDisplay = displayNum(
+    Math.abs(netRate) < 0.0001 ? rate.productionRate : Math.abs(netRate),
+  );
+
+  // Get producers and consumers for this part
+  const assemblyLines = factory._assemblyLineLookup[part.slug] || [];
+  const producers = assemblyLines.filter(
+    (line) =>
+      line.rate > 0.0001 &&
+      line.recipe.products.some((p) => p.part.slug === part.slug),
+  );
+  const consumers = assemblyLines.filter(
+    (line) =>
+      line.rate > 0.0001 &&
+      line.recipe.ingredients.some((p) => p.part.slug === part.slug),
+  );
 
   function handleAddSupplier(id: string, name: string, f: Factory) {
     factory.addSupplier(new FactoryRecipe(id, name, f));
@@ -52,13 +68,10 @@ export default function PartRateSummary({
           className="inline flex-none"
         />
         <span className="grow text-sm">{part.name}</span>
-        <span
-          className={`text-sm text-right min-w-16 ${getColorClassForProductionRate2(netRate)}`}
-        >
-          {sign}
+        <span className="text-sm text-right min-w-16">
           {netRateDisplay}/min
         </span>
-        {netRate < 0 && (
+        {netRate < 0 && !hideActions && !showDetail && (
           <>
             <Tooltip title="Add production line">
               <span>
@@ -86,9 +99,43 @@ export default function PartRateSummary({
         )}
       </div>
       {showDetail && (
-        <div className="flex flex-row gap-x-2 pl-7 text-xs text-gray-400">
-          <span>+{displayNum(rate?.productionRate || 0)}</span>
-          <span>−{displayNum(rate?.consumptionRate || 0)}</span>
+        <div className="flex flex-col gap-y-1 pl-7 text-xs text-gray-700 dark:text-gray-300">
+          <div>Produced by:</div>
+          <ul>
+            {producers.map((line) => {
+              const recipePart = line.recipe.products.find(
+                (p) => p.part.slug === part.slug,
+              );
+              const productRate =
+                recipePart && line.rate > 0
+                  ? recipePart.quantity * line.rate
+                  : 0;
+              return (
+                <li key={line.recipe.slug} className="pl-2">
+                  {line.recipe.name} @ {displayNum(productRate)}/min
+                </li>
+              );
+            })}
+          </ul>
+          <div>
+            <div>Consumed by:</div>
+            <ul>
+              {consumers.map((line) => {
+                const recipePart = line.recipe.ingredients.find(
+                  (p) => p.part.slug === part.slug,
+                );
+                const consumeRate =
+                  recipePart && line.rate > 0
+                    ? recipePart.quantity * line.rate
+                    : 0;
+                return (
+                  <li key={line.recipe.slug} className="pl-2">
+                    {line.recipe.name} @ {displayNum(consumeRate)}/min
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       )}
       {library && (

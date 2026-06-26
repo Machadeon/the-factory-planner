@@ -21,6 +21,7 @@ test("Add production line from the inputs section of the sidebar", async ({
   await page
     .getByText("Inputs (1)")
     .locator("..")
+    .locator("+ div")
     .getByLabel("Add production line")
     .click();
 

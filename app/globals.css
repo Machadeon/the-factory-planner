@@ -25,20 +25,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/*
- * Each production line is a large, self-contained block. content-visibility
- * lets the browser skip layout/paint for rows that are off-screen (most of them
- * once "Expand all" is used on a big factory), and the containment scopes a
- * row's reflow to itself so expanding/collapsing one row can't trigger a
- * document-wide layout pass. contain-intrinsic-size keeps a placeholder height
- * so the scrollbar doesn't jump; `auto` remembers each row's real size once
- * rendered. Baseline since 2025-09; unsupported browsers simply ignore it.
- */
-.sp-production-line {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 96px;
-}
-
 .sp-recipe-ingredient-edit-btn {
   display: none;
 }

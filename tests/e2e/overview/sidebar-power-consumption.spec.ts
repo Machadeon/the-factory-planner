@@ -20,6 +20,7 @@ test("Sidebar shows power consumption after adding a recipe", async ({
   const powerText = page
     .getByText("Power & Modules")
     .locator("..")
+    .locator("+ div")
     .getByText(/\d+(\.\d+)? MW/);
   await expect(powerText).toBeVisible();
   const firstPower = Number(

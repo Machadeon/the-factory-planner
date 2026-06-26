@@ -4,6 +4,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SaveIcon from "@mui/icons-material/Save";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
@@ -25,6 +27,9 @@ interface Props {
   onImport: (file: File) => void;
   onNewFactory: () => void;
   onViewJson: () => void;
+  onExpandAll?: () => void;
+  onCollapseAll?: () => void;
+  productionLineCount?: number;
 }
 
 export default function FactoryHeader({
@@ -41,9 +46,11 @@ export default function FactoryHeader({
   onImport,
   onNewFactory,
   onViewJson,
+  onExpandAll,
+  onCollapseAll,
+  productionLineCount,
 }: Props) {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const libraryButtonRef = useRef<HTMLDivElement>(null);
 
   function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -59,11 +66,7 @@ export default function FactoryHeader({
     <div className="flex flex-row items-center gap-2 px-4 py-2 border-b border-[rgba(128,128,128,0.2)]">
       <Tooltip title="Open factory library">
         <span>
-          <Clickable
-            ref={libraryButtonRef}
-            className="p-1"
-            onClick={handleOpenLibrary}
-          >
+          <Clickable className="p-1" onClick={handleOpenLibrary}>
             <FolderOpenIcon sx={{ fontSize: "2.25rem" }} />
           </Clickable>
         </span>
@@ -93,6 +96,36 @@ export default function FactoryHeader({
       </div>
 
       <div className="flex flex-row ml-auto">
+        {onExpandAll && onCollapseAll && (
+          <>
+            <Tooltip
+              title={productionLineCount ? "Expand all" : "No production lines"}
+            >
+              <span>
+                <Clickable
+                  className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
+                  onClick={productionLineCount ? onExpandAll : () => {}}
+                >
+                  <KeyboardArrowDownIcon fontSize="small" />
+                </Clickable>
+              </span>
+            </Tooltip>
+            <Tooltip
+              title={
+                productionLineCount ? "Collapse all" : "No production lines"
+              }
+            >
+              <span>
+                <Clickable
+                  className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
+                  onClick={productionLineCount ? onCollapseAll : () => {}}
+                >
+                  <KeyboardArrowRightIcon fontSize="small" />
+                </Clickable>
+              </span>
+            </Tooltip>
+          </>
+        )}
         <Tooltip title="Clear factory">
           <span>
             <Clickable className="p-1" onClick={onNewFactory}>

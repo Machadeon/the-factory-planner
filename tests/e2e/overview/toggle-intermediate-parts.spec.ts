@@ -35,12 +35,19 @@ test("Toggle intermediate parts visibility in the sidebar", async ({
   // Iron Plate is now both produced and consumed → intermediate
   await expect(page.getByText(/Intermediate Parts \([1-9]/)).toBeVisible();
 
+  // Scope to the Intermediate Parts section header to avoid ambiguity with other sidebar toggles
+  const intermediateHeader = page
+    .getByText(/Intermediate Parts \([1-9]/)
+    .locator("..");
+
   // Toggle visibility ON — VisibilityIcon data-testid
-  await page.getByTestId("VisibilityIcon").click();
+  await intermediateHeader.getByTestId("VisibilityIcon").click();
   // Intermediate parts detail rows are now visible (production + consumption rates shown)
-  await expect(page.getByTestId("VisibilityOffIcon")).toBeVisible();
+  await expect(
+    intermediateHeader.getByTestId("VisibilityOffIcon"),
+  ).toBeVisible();
 
   // Toggle visibility OFF
-  await page.getByTestId("VisibilityOffIcon").click();
-  await expect(page.getByTestId("VisibilityIcon")).toBeVisible();
+  await intermediateHeader.getByTestId("VisibilityOffIcon").click();
+  await expect(intermediateHeader.getByTestId("VisibilityIcon")).toBeVisible();
 });

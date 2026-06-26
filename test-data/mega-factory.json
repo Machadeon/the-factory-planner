@@ -1117,9 +1117,7 @@
             "folderId": "52cad9ad-3304-418e-ba78-d33b857a7c9c",
             "icon": "/images/items/desc-modularframe-c_256.png",
             "autoAddProductLines": false,
-            "supplierIds": [
-              "b841d10e-0470-429c-9c0c-2785733fab41"
-            ],
+            "supplierIds": ["b841d10e-0470-429c-9c0c-2785733fab41"],
             "createdAt": "2026-06-16T04:06:53.415Z",
             "updatedAt": "2026-06-18T06:11:04.848Z",
             "productionLines": [

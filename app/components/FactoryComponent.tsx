@@ -2,8 +2,6 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import {
   Alert,
   Button,
@@ -14,13 +12,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import Factory from "../models/factory";
 import {
   deserializeFactory,
@@ -63,7 +55,7 @@ export default function FactoryComponent() {
 
   const factoryRef = useRef<Factory>(new Factory());
   const factory = factoryRef.current;
-  const [version, setVersion] = useState(0);
+  const [, setVersion] = useState(0);
 
   const [factoryName, setFactoryName] = useState("Unnamed Factory");
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
@@ -194,25 +186,9 @@ export default function FactoryComponent() {
     setAddingProduct(false);
   }
 
-  // Stable so memoized ProductionLineComponents aren't re-rendered by a new
-  // callback identity on unrelated parent re-renders. factory is a ref, stable.
-  const removeProductionLine = useCallback(
-    (part: Part) => {
-      factory.removeProductionLine(part);
-    },
-    [factory],
-  );
-
-  // Stable identity backed by a ref holding the latest impl, so we don't have
-  // to memoize the whole handleLoadFactory chain it depends on.
-  const navigateToFactoryRef = useRef<(id: string) => void>(() => {});
-  const handleNavigateToFactory = useCallback(
-    (id: string) => navigateToFactoryRef.current(id),
-    [],
-  );
-
-  // Released the expand/collapse-all override when a single row is toggled.
-  const handleRowToggle = useCallback(() => setForceExpanded(null), []);
+  function removeProductionLine(part: Part) {
+    factory.removeProductionLine(part);
+  }
 
   // --- Consent gate ---
 
@@ -532,10 +508,10 @@ export default function FactoryComponent() {
     setPendingLoadFactory(null);
   }
 
-  navigateToFactoryRef.current = (id: string) => {
+  function handleNavigateToFactory(id: string) {
     const sf = library.factories.find((f) => f.id === id);
     if (sf) handleLoadFactory(sf);
-  };
+  }
 
   function handleToggleAutosave() {
     const next = !autosaveEnabled;
@@ -675,6 +651,9 @@ export default function FactoryComponent() {
           onImport={handleImport}
           onNewFactory={() => handleNewFactory(null)}
           onViewJson={() => setJsonDialogOpen(true)}
+          onExpandAll={() => setForceExpanded(true)}
+          onCollapseAll={() => setForceExpanded(false)}
+          productionLineCount={currentFactory.productionLines.length}
         />
 
         <div className="flex flex-row grow">
@@ -697,50 +676,21 @@ export default function FactoryComponent() {
                 <HorizontalDivider />
               </>
             ) : (
-              <>
-                <div className="flex flex-row items-center gap-1 px-3 py-1 border-b border-[rgba(128,128,128,0.2)]">
-                  <Tooltip title="Expand all">
-                    <span>
-                      <Clickable
-                        className="p-1"
-                        onClick={() =>
-                          startTransition(() => setForceExpanded(true))
-                        }
-                      >
-                        <KeyboardArrowDownIcon fontSize="small" />
-                      </Clickable>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Collapse all">
-                    <span>
-                      <Clickable
-                        className="p-1"
-                        onClick={() =>
-                          startTransition(() => setForceExpanded(false))
-                        }
-                      >
-                        <KeyboardArrowRightIcon fontSize="small" />
-                      </Clickable>
-                    </span>
-                  </Tooltip>
+              currentFactory.productionLines.map((product) => (
+                <div key={product.part.slug}>
+                  <ProductionLineComponent
+                    productionLine={product}
+                    factory={currentFactory}
+                    library={library}
+                    currentFactoryId={currentFactoryId}
+                    onDeleteClicked={() => removeProductionLine(product.part)}
+                    forceExpanded={forceExpanded}
+                    onToggle={() => setForceExpanded(null)}
+                    onNavigateToFactory={handleNavigateToFactory}
+                  />
+                  <HorizontalDivider />
                 </div>
-                {currentFactory.productionLines.map((product) => (
-                  <div key={product.part.slug} className="sp-production-line">
-                    <ProductionLineComponent
-                      productionLine={product}
-                      factory={currentFactory}
-                      library={library}
-                      currentFactoryId={currentFactoryId}
-                      onDelete={removeProductionLine}
-                      forceExpanded={forceExpanded}
-                      onToggle={handleRowToggle}
-                      onNavigateToFactory={handleNavigateToFactory}
-                      version={version}
-                    />
-                    <HorizontalDivider />
-                  </div>
-                ))}
-              </>
+              ))
             )}
             {addingProduct ? (
               <PartSelector

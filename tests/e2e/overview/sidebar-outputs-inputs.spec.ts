@@ -28,6 +28,7 @@ test("Sidebar shows correct outputs and inputs after adding a recipe", async ({
     page
       .getByText("Power & Modules")
       .locator("..")
+      .locator("+ div")
       .getByText(/\d+(\.\d+)? MW/),
   ).toBeVisible();
 });
