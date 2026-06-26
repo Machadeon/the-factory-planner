@@ -26,6 +26,12 @@ export type PartConstraint = {
   equal?: number;
 };
 
+export interface FactoryOutput {
+  part: Part;
+  rate: Rate;
+  isPrimary: boolean;
+}
+
 export default class Factory {
   productionLines: ProductionLine[];
   icon?: string;
@@ -38,6 +44,9 @@ export default class Factory {
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
   _autoSetPartRateInProgress: Set<string>;
+  _partsConsumed: Set<Part>;
+  _partsProduced: Set<Part>;
+  _mainOutputParts: Set<Part>;
 
   /**
    * An index of all assembly lines that consume or produce the given part
@@ -58,6 +67,10 @@ export default class Factory {
     this._assemblyLineLookup = {};
     this._autoSetPartRateInProgress = new Set();
 
+    this._partsConsumed = new Set();
+    this._partsProduced = new Set();
+    this._mainOutputParts = new Set();
+
     this._updateRates();
   }
 
@@ -72,12 +85,20 @@ export default class Factory {
   _updateRates() {
     this.rateLookup = {};
     this._assemblyLineLookup = {};
+    this._partsConsumed = new Set();
+    this._partsProduced = new Set();
+    this._mainOutputParts = new Set();
 
     for (const productionLine of this.productionLines) {
       this._productionLineLookup[productionLine.part.slug] = productionLine;
 
+      if (productionLine.outputRate > 0 || productionLine.maximizeOutput) {
+        this._mainOutputParts.add(productionLine.part);
+      }
+
       for (const assemblyLine of productionLine.assemblyLines) {
         for (const recipePart of assemblyLine.recipe.ingredients) {
+          this._partsConsumed.add(recipePart.part);
           this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
 
           const rate = this.rateLookup[recipePart.part.slug] || {
@@ -92,6 +113,7 @@ export default class Factory {
         }
 
         for (const recipePart of assemblyLine.recipe.products) {
+          this._partsProduced.add(recipePart.part);
           this._addAssemblyLineLookup(recipePart.part.slug, assemblyLine);
 
           const rate = this.rateLookup[recipePart.part.slug] || {
@@ -125,28 +147,38 @@ export default class Factory {
   }
 
   allParts(): Part[] {
-    return parts.filter((part) => Object.hasOwn(this.rateLookup, part.slug));
+    return [...this._partsConsumed.union(this._partsProduced)];
   }
 
   allOutputs(): Part[] {
-    return parts.filter((part) => {
-      const rate = this.rateLookup[part.slug];
-      if (!rate) return false;
-      return rate.productionRate - rate.consumptionRate >= 0.0001;
-    });
+    return Object.entries(this.rateLookup)
+      .filter(([_, rate]) => {
+        return rate.productionRate - rate.consumptionRate >= 0.0001;
+      })
+      .map(([partSlug, _]) => partSlugLookup[partSlug]);
   }
 
   allInputs(): Part[] {
-    return parts.filter((part) => {
-      const rate = this.rateLookup[part.slug];
-      if (!rate) return false;
-      const ownDeficit = rate.consumptionRate - rate.productionRate;
-      if (ownDeficit <= 0.0001) return false;
-      const supplied = this.supplierFactories.reduce((sum, fr) => {
-        const p = fr.getProduct(part.slug);
-        return sum + (p?.quantity ?? 0);
-      }, 0);
-      return ownDeficit - supplied > 0.0001;
+    return Object.entries(this.rateLookup)
+      .filter(([partSlug, rate]) => {
+        const ownDeficit = rate.consumptionRate - rate.productionRate;
+        if (ownDeficit <= 0.0001) return false;
+        const supplied = this.supplierFactories.reduce((sum, fr) => {
+          const p = fr.getProduct(partSlug);
+          return sum + (p?.quantity ?? 0);
+        }, 0);
+        return ownDeficit - supplied > 0.0001;
+      })
+      .map(([partSlug, _]) => partSlugLookup[partSlug]);
+  }
+
+  getOutputInfo(): FactoryOutput[] {
+    return this.allOutputs().map((part) => {
+      return {
+        part: part,
+        rate: this.rateLookup[part.slug],
+        isPrimary: this._mainOutputParts.has(part),
+      };
     });
   }
 
@@ -557,24 +589,6 @@ export default class Factory {
         );
       }
 
-      // // note imbalanced intermediate parts
-      // const imbalanced: string[] = [];
-      // for (const slug of intermediateSlugs) {
-      //   const surplus = (solution[`_surplus_${slug}`] as number) ?? 0;
-      //   const deficit = (solution[`_deficit_${slug}`] as number) ?? 0;
-      //   if (surplus > 0.001 || deficit > 0.001) {
-      //     const name = partSlugLookup[slug]?.name ?? slug;
-      //     const net = surplus - deficit;
-      //     imbalanced.push(
-      //       `${name} (${net > 0 ? "+" : ""}${net.toFixed(1)}/min)`,
-      //     );
-      //   }
-      // }
-      // this.solverError =
-      //   imbalanced.length > 0
-      //     ? `The following intermediate parts cannot be perfectly balanced and will have excess or deficit production: ${imbalanced.join(", ")}.`
-      //     : null;
-
       this.solverError = null;
       this._applyRates(map);
 
@@ -625,6 +639,39 @@ export default class Factory {
 
         if (errors.length > 0) {
           this.solverError = `No feasible solution! One or more constraints could not be satisified: ${errors.join("; ")}.`;
+          if (this.solverError !== existingSolverError) this.update();
+          return;
+        }
+
+        for (const partSlug of intermediateSlugs) {
+          if (maximizeSlugs.has(partSlug)) continue;
+
+          rate = this.rateLookup[partSlug];
+          part = partSlugLookup[partSlug];
+          const netRate = rate.productionRate - rate.consumptionRate;
+
+          if (Math.abs(netRate) > 0.0001) {
+            errors.push(part.name);
+          }
+        }
+
+        // check for net outputs that do not have a production line
+        for (const [partSlug, rate] of Object.entries(this.rateLookup)) {
+          if (rawInputSlugs.has(partSlug)) continue;
+          const part = partSlugLookup[partSlug];
+          if (errors.indexOf(part.name) >= 0) continue;
+
+          const netRate = rate.productionRate - rate.consumptionRate;
+          if (
+            !this._productionLineLookup[partSlug] &&
+            Math.abs(netRate) > 0.0001
+          ) {
+            errors.push(part.name);
+          }
+        }
+
+        if (errors.length > 0) {
+          this.solverError = `Unable to balance intermediate/secondary parts: ${errors.join(", ")}.`;
           if (this.solverError !== existingSolverError) this.update();
         }
       });

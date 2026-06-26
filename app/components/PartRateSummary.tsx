@@ -22,6 +22,7 @@ interface PartRateSummaryProps {
   currentFactoryId?: string | null;
   showDetail?: boolean;
   hideActions?: boolean;
+  highlight?: boolean;
 }
 
 export default function PartRateSummary({
@@ -32,6 +33,7 @@ export default function PartRateSummary({
   currentFactoryId,
   showDetail,
   hideActions,
+  highlight,
 }: PartRateSummaryProps) {
   const [supplyPickerOpen, setSupplyPickerOpen] = useState(false);
   const netRate = rate.productionRate - rate.consumptionRate;
@@ -59,7 +61,9 @@ export default function PartRateSummary({
 
   return (
     <div>
-      <div className="items-center flex flex-row gap-x-1 py-0.5">
+      <div
+        className={`items-center flex flex-row gap-x-1 py-0.5 ${highlight ? "text-amber-500" : ""}`}
+      >
         <Image
           src={part.iconSmall}
           alt={part.name}
@@ -100,7 +104,7 @@ export default function PartRateSummary({
           </>
         )}
       </div>
-      {showDetail && (
+      {showDetail && netRateDisplay !== "0" && (
         <div className="flex flex-col gap-y-1 pl-7 text-xs text-gray-700 dark:text-gray-300">
           <div>Produced by:</div>
           <ul>

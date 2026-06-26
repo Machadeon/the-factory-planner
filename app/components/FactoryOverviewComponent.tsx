@@ -45,15 +45,22 @@ export default function FactoryOverviewComponent({
     setTimeout(fn.bind(obj), 1);
   }
 
-  const factoryOutputs = factory.allOutputs();
-  const factoryInputs = factory.allInputs();
+  const factoryOutputs = factory.getOutputInfo().sort((a, b) => {
+    const primaryDiff = (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0);
+    return primaryDiff !== 0
+      ? primaryDiff
+      : a.part.name.localeCompare(b.part.name);
+  });
+  const factoryInputs = factory
+    .allInputs()
+    .sort((a, b) => a.name.localeCompare(b.name));
   const intermediateParts = factory.allIntermediateParts();
 
   // For each output part, find consumer factories (those that list currentFactoryId as a supplier)
   // and how much of that part they consume. Deserializing consumer factories is
   // expensive, so memoize: it only depends on the library, this factory's id,
   // and the set of output part slugs (recomputed when any of those change).
-  const outputSlugKey = factoryOutputs.map((p) => p.slug).join(",");
+  const outputSlugKey = factoryOutputs.map((o) => o.part.slug).join(",");
   // biome-ignore lint/correctness/useExhaustiveDependencies: factoryOutputs is intentionally tracked via its slug signature (outputSlugKey) rather than its unstable array identity.
   const consumersByPartSlug = useMemo(() => {
     const map = new Map<string, { id: string; name: string; rate: number }[]>();
@@ -62,14 +69,14 @@ export default function FactoryOverviewComponent({
         if (!sf.supplierIds?.includes(currentFactoryId)) continue;
         const consumerFactory = deserializeFactory(sf, library);
         if (!consumerFactory) continue;
-        for (const part of factoryOutputs) {
-          const rate = consumerFactory.rateLookup[part.slug];
+        for (const output of factoryOutputs) {
+          const rate = consumerFactory.rateLookup[output.part.slug];
           if (!rate) continue;
           const net = rate.consumptionRate - rate.productionRate;
           if (net <= 0.0001) continue;
-          const existing = map.get(part.slug) ?? [];
+          const existing = map.get(output.part.slug) ?? [];
           existing.push({ id: sf.id, name: sf.name, rate: net });
-          map.set(part.slug, existing);
+          map.set(output.part.slug, existing);
         }
       }
     }
@@ -89,15 +96,23 @@ export default function FactoryOverviewComponent({
         </Clickable>
       </div>
       <div style={{ contentVisibility: showOutputs ? "visible" : "hidden" }}>
-        {factoryOutputs.map((part) => (
-          <PartRateSummary
-            key={part.slug}
-            part={part}
-            rate={factory.rateLookup[part.slug]}
-            factory={factory}
-            library={library}
-            currentFactoryId={currentFactoryId}
-          />
+        {factoryOutputs.map((output, idx) => (
+          <div key={output.part.slug}>
+            {!output.isPrimary &&
+              (idx === 0 || factoryOutputs[idx - 1].isPrimary) && (
+                <div className="text-sm text-gray-400 py-2 mt-2">
+                  Byproducts
+                </div>
+              )}
+            <PartRateSummary
+              part={output.part}
+              rate={output.rate}
+              factory={factory}
+              library={library}
+              currentFactoryId={currentFactoryId}
+              highlight={!output.isPrimary}
+            />
+          </div>
         ))}
       </div>
       {hasConsumers && (
@@ -115,14 +130,12 @@ export default function FactoryOverviewComponent({
           <div
             style={{ contentVisibility: showConsumers ? "visible" : "hidden" }}
           >
-            {factoryOutputs.map((part) => {
-              const consumers = consumersByPartSlug.get(part.slug);
+            {factoryOutputs.map((output) => {
+              const consumers = consumersByPartSlug.get(output.part.slug);
               if (!consumers || consumers.length === 0) return null;
               const totalConsumed = consumers.reduce((s, c) => s + c.rate, 0);
-              const output = factory.rateLookup[part.slug];
-              const produced = output
-                ? output.productionRate - output.consumptionRate
-                : 0;
+              const produced =
+                output.rate.productionRate - output.rate.consumptionRate;
               const unused = produced - totalConsumed;
               const pct =
                 produced > 0
@@ -130,16 +143,16 @@ export default function FactoryOverviewComponent({
                   : 0;
               const overAllocated = totalConsumed > produced + 0.05;
               return (
-                <div key={part.slug} className="mb-3">
+                <div key={output.part.slug} className="mb-3">
                   <div className="flex flex-row items-center gap-x-1 mb-1">
                     <Image
-                      src={part.iconSmall}
-                      alt={part.name}
+                      src={output.part.iconSmall}
+                      alt={output.part.name}
                       width={24}
                       height={24}
                     />
                     <span className="grow font-medium text-sm">
-                      {part.name}
+                      {output.part.name}
                     </span>
                   </div>
                   <div className="w-full h-2 rounded bg-gray-700 mb-1 overflow-hidden">
@@ -234,17 +247,19 @@ export default function FactoryOverviewComponent({
       <div
         style={{ contentVisibility: showIntermediates ? "visible" : "hidden" }}
       >
-        {intermediateParts.map((part) => (
-          <PartRateSummary
-            key={part.slug}
-            part={part}
-            rate={factory.rateLookup[part.slug]}
-            factory={factory}
-            library={library}
-            currentFactoryId={currentFactoryId}
-            showDetail
-          />
-        ))}
+        {intermediateParts
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((part) => (
+            <PartRateSummary
+              key={part.slug}
+              part={part}
+              rate={factory.rateLookup[part.slug]}
+              factory={factory}
+              library={library}
+              currentFactoryId={currentFactoryId}
+              showDetail
+            />
+          ))}
       </div>
       {(() => {
         const totalPower = factory.getTotalPower();
@@ -328,32 +343,38 @@ export default function FactoryOverviewComponent({
         {factory.constraints.length === 0 ? (
           <p className="text-sm text-gray-400 mb-2">No constraints set.</p>
         ) : (
-          factory.constraints.map((constraint) => {
-            const part = partSlugLookup[constraint.partSlug];
-            if (!part) return null;
-            const parts: string[] = [];
-            if (constraint.min !== undefined)
-              parts.push(`min ${displayNum(constraint.min)}/min`);
-            if (constraint.max !== undefined)
-              parts.push(`max ${displayNum(constraint.max)}/min`);
-            return (
-              <div
-                key={constraint.partSlug}
-                className="flex flex-row items-center gap-x-2 mb-1"
-              >
-                <Image
-                  src={part.iconSmall}
-                  alt={part.name}
-                  width={24}
-                  height={24}
-                />
-                <span className="text-sm grow">{part.name}</span>
-                <span className="text-sm text-gray-400">
-                  {parts.join(", ")}
-                </span>
-              </div>
-            );
-          })
+          factory.constraints
+            .sort((a, b) =>
+              partSlugLookup[a.partSlug].name.localeCompare(
+                partSlugLookup[b.partSlug].name,
+              ),
+            )
+            .map((constraint) => {
+              const part = partSlugLookup[constraint.partSlug];
+              if (!part) return null;
+              const parts: string[] = [];
+              if (constraint.min !== undefined)
+                parts.push(`min ${displayNum(constraint.min)}/min`);
+              if (constraint.max !== undefined)
+                parts.push(`max ${displayNum(constraint.max)}/min`);
+              return (
+                <div
+                  key={constraint.partSlug}
+                  className="flex flex-row items-center gap-x-2 mb-1"
+                >
+                  <Image
+                    src={part.iconSmall}
+                    alt={part.name}
+                    width={24}
+                    height={24}
+                  />
+                  <span className="text-sm grow">{part.name}</span>
+                  <span className="text-sm text-gray-400">
+                    {parts.join(", ")}
+                  </span>
+                </div>
+              );
+            })
         )}
         <Clickable
           onClick={() => setShowConstraintsDialog(true)}

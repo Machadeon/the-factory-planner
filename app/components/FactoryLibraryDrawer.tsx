@@ -399,8 +399,12 @@ export default function FactoryLibraryDrawer({
           )}
         </Clickable>
         <Collapse in={isExpanded} unmountOnExit>
-          {childFolders.map((f) => renderFolderRow(f, depth + 1))}
-          {childFactories.map((f) => renderFactoryRow(f, depth + 1))}
+          {childFolders
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((f) => renderFolderRow(f, depth + 1))}
+          {childFactories
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((f) => renderFactoryRow(f, depth + 1))}
           {childFolders.length === 0 && childFactories.length === 0 && (
             <p className="text-xs px-4 py-1 opacity-50">Empty folder</p>
           )}
@@ -463,8 +467,12 @@ export default function FactoryLibraryDrawer({
           </p>
         ) : (
           <div className="flex flex-col">
-            {rootFolders.map((f) => renderFolderRow(f))}
-            {rootFactories.map((f) => renderFactoryRow(f))}
+            {rootFolders
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((f) => renderFolderRow(f))}
+            {rootFactories
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((f) => renderFactoryRow(f))}
           </div>
         )}
       </div>
