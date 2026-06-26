@@ -9,7 +9,9 @@ export default function ThemeRegistry({
 }: {
   children: React.ReactNode;
 }) {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)", {
+    defaultMatches: true,
+  });
 
   const theme = createTheme({
     palette: {

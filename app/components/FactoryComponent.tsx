@@ -2,9 +2,11 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
-import type Factory from "../models/factory";
-import { partLookup } from "../models/library";
+import Factory from "../models/factory";
+import { partLookup, parts, recipeLookup } from "../models/library";
+import type Part from "../models/part";
 import type ProductLine from "../models/product-line";
+import Clickable from "./Clickable";
 import ProductLineComponent from "./ProductLineComponent";
 
 function Divider() {
@@ -13,50 +15,70 @@ function Divider() {
   );
 }
 
-interface FactoryComponentProps {
-  factory?: Factory;
-}
+function getRandomPart(existingParts: string[]): Part {
+  if (existingParts.length === 0) return partLookup["Desc_IronPlate_C"];
 
-export default function FactoryComponent({ factory }: FactoryComponentProps) {
-  if (factory === undefined) {
-    factory = { products: [] };
+  var part: Part | undefined;
+  while (
+    !part ||
+    !recipeLookup[part.slug] ||
+    existingParts.indexOf(part.className) >= 0
+  ) {
+    part = parts[Math.floor(Math.random() * parts.length)];
   }
 
-  const [productLines, setProductLines] = useState<ProductLine[]>(
-    factory.products,
-  );
+  return partLookup[part.className];
+}
+
+export default function FactoryComponent() {
+  const [factory, setFactory] = useState<Factory>(new Factory());
+  factory.setState = () => {
+    const newFactory = new Factory();
+    newFactory.icon = factory.icon;
+    newFactory.products = factory.products;
+    setFactory(newFactory);
+  };
 
   function addProductLine() {
     // TODO: display all products that don't have a product line, and add the one the user selects
+    const isFactoryOutput = factory.products.length === 0;
+
+    const newPart = getRandomPart(
+      factory.products.map((pl) => pl.part.className),
+    );
+
     const newProduct: ProductLine = {
-      part: partLookup["Desc_IronPlate_C"],
-      factoryOutput: productLines.length === 0,
+      part: newPart,
+      isFactoryOutput: isFactoryOutput,
       productionRate: 10,
       assemblyLines: [],
     };
 
-    setProductLines([...productLines, newProduct]);
+    const newFactory = new Factory();
+    newFactory.icon = factory.icon || newProduct.part.iconLarge;
+    newFactory.products = [...factory.products, newProduct];
+    setFactory(newFactory);
   }
 
   return (
     <div className="flex min-w-full flex-col">
-      {productLines.length === 0 ? (
+      {factory.products.length === 0 ? (
         <p>Add a product to get started</p>
       ) : (
-        productLines.map((product) => (
+        factory.products.map((product) => (
           <div key={product.part.slug}>
-            <ProductLineComponent product={product} factory={factory} />
+            <ProductLineComponent productLine={product} factory={factory} />
             <Divider />
           </div>
         ))
       )}
-      <div
-        className="flex min-w-full items-center cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 p-4 rounded-sm active:bg-zinc-200 dark:active:bg-zinc-700"
+      <Clickable
+        className="flex min-w-full items-center p-4"
         onClick={addProductLine}
       >
         <AddIcon />
         Add Product
-      </div>
+      </Clickable>
     </div>
   );
 }
