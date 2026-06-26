@@ -17,10 +17,18 @@ export default function TextCalculatorField({
   const [value, setValue] = useState<string>(`${other.value}`);
   const [error, setError] = useState<boolean>(false);
 
-  function calculate(newValue: string) {
-    var result = evaluateExpression(`${other.value}`);
+  function parseValue(value: string): number {
     try {
-      result = evaluateExpression(newValue);
+      return parseFloat(value);
+    } catch {
+      return evaluateExpression(value);
+    }
+  }
+
+  function calculate(newValue: string) {
+    var result = parseValue(`${other.value}`);
+    try {
+      result = parseValue(newValue);
     } catch {
       console.warn("Invalid expression:", value);
       setError(true);
