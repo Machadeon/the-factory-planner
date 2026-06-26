@@ -1,7 +1,7 @@
 "use client";
 
 import AddIcon from "@mui/icons-material/Add";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Factory from "../models/factory";
 import type Part from "../models/part";
 import Clickable from "./Clickable";
@@ -13,10 +13,18 @@ import ProductionLineComponent from "./ProductionLineComponent";
 export default function FactoryComponent() {
   const [addingProduct, setAddingProduct] = useState<boolean>(false);
 
-  const [factory, setFactory] = useState<Factory>(new Factory());
+  const factoryRef = useRef<Factory>(new Factory());
+  const factory = factoryRef.current;
+  const [, setVersion] = useState(0);
   factory.update = () => {
-    setFactory(new Factory(factory));
+    factory._updateRates();
+    setVersion((v) => v + 1);
   };
+
+  function rebuildFactory() {
+    factoryRef.current = new Factory(factoryRef.current);
+    setVersion((v) => v + 1);
+  }
 
   function addProductionLine(part: Part) {
     factory.addProductionLine(part);
@@ -63,7 +71,7 @@ export default function FactoryComponent() {
         )}
       </div>
       <VerticalDivider />
-      <FactoryOverviewComponent factory={factory} />
+      <FactoryOverviewComponent factory={factory} onRebuild={rebuildFactory} />
     </div>
   );
 }

@@ -11,10 +11,12 @@ import PartRateSummary from "./PartRateSummary";
 
 interface FactoryOverviewComponentProps {
   factory: Factory;
+  onRebuild: () => void;
 }
 
 export default function FactoryOverviewComponent({
   factory,
+  onRebuild,
 }: FactoryOverviewComponentProps) {
   const [showIntermediateProducts, setShowIntermediateProducts] =
     useState<boolean>(false);
@@ -33,7 +35,7 @@ export default function FactoryOverviewComponent({
       <div className="flex flex-col gap-y-2">
         <Button
           variant="contained"
-          onClick={() => schedule(factory, factory.update)}
+          onClick={onRebuild}
         >
           Update
         </Button>

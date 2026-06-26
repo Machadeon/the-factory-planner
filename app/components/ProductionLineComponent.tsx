@@ -252,7 +252,7 @@ export default function ProductionLineComponent(
           {props.productionLine.assemblyLines.map((assemblyLine) => {
             return (
               <div
-                key={`${assemblyLine.recipe.slug}-${assemblyLine.rate}`}
+                key={assemblyLine.recipe.slug}
                 className="flex flex-row items-center pe-4"
               >
                 <AssemblyLine

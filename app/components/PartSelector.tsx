@@ -34,6 +34,7 @@ export default function PartSelector({
   return (
     <Autocomplete
       {...other}
+      openOnFocus
       options={partsOptions}
       renderInput={(params) => <TextField {...params} label="Part" autoFocus />}
       renderOption={(params, option) => (

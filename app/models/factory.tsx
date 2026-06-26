@@ -53,6 +53,7 @@ export default class Factory {
 
   _updateRates() {
     this.rateLookup = {};
+    this._assemblyLineLookup = {};
 
     for (const productionLine of this.productionLines) {
       this._productionLineLookup[productionLine.part.slug] = productionLine;
@@ -222,10 +223,20 @@ export default class Factory {
 
   setPartRate(part: Part, productionRate: number, isAutoSet: boolean = false) {
     const productionLine = this._productionLineLookup[part.slug];
-    const rateMultiplier = productionRate / productionLine.rate;
 
-    for (const assemblyLine of productionLine.assemblyLines) {
-      assemblyLine.rate *= rateMultiplier;
+    if (productionLine.rate === 0) {
+      // Multiplicative scaling from 0 produces NaN (0 * Infinity); distribute evenly instead
+      const n = productionLine.assemblyLines.length;
+      for (const assemblyLine of productionLine.assemblyLines) {
+        const product = assemblyLine.recipe.getProduct(part);
+        assemblyLine.rate =
+          product && n > 0 ? productionRate / n / product.quantity : 0;
+      }
+    } else {
+      const rateMultiplier = productionRate / productionLine.rate;
+      for (const assemblyLine of productionLine.assemblyLines) {
+        assemblyLine.rate *= rateMultiplier;
+      }
     }
 
     productionLine.rate = productionRate;
@@ -330,12 +341,14 @@ export default class Factory {
 
     const variables: Record<string, VariableCoefficients> = {};
     for (const recipe of allRecipes) {
+      const assemblyLine = assemblyLineLookup.get(recipe.slug);
+      const sloopMultiplier = assemblyLine?.isSlooped() ? 2 : 1;
       variables[recipe.slug] = {};
       for (const ingredient of recipe.ingredients) {
         variables[recipe.slug][ingredient.part.slug] = -ingredient.quantity;
       }
       for (const product of recipe.products) {
-        variables[recipe.slug][product.part.slug] = product.quantity;
+        variables[recipe.slug][product.part.slug] = product.quantity * sloopMultiplier;
       }
     }
 
