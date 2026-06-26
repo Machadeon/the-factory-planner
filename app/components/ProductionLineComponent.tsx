@@ -10,6 +10,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { type MouseEvent, useEffect, useState } from "react";
+import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
 import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
@@ -19,12 +20,13 @@ import AssemblyLine from "./AssemblyLineComponent";
 import Clickable, { type ClickableStyle } from "./Clickable";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
-import AssemblyLineModel from "../models/assembly-line";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
   factory: Factory;
   onDeleteClicked: () => void;
+  forceExpanded?: boolean | null;
+  onToggle?: () => void;
 }
 
 export default function ProductionLineComponent(
@@ -33,8 +35,7 @@ export default function ProductionLineComponent(
   const part = props.productionLine.part;
   const recipeList = recipeLookup[part.slug];
   const actualProductionRate = props.productionLine.assemblyLines.reduce(
-    (acc, assemblyLine) =>
-      acc + assemblyLine.getPartProductionRate(part),
+    (acc, assemblyLine) => acc + assemblyLine.getPartProductionRate(part),
     0,
   );
 
@@ -50,6 +51,9 @@ export default function ProductionLineComponent(
     props.productionLine.assemblyLines.length !== 1 ||
       !props.productionLine.autoCreated,
   );
+
+  const isExpanded =
+    props.forceExpanded != null ? props.forceExpanded : expanded;
   const [showRecipes, setShowRecipes] = useState<boolean>(false);
 
   function getProductionRateForRecipe(recipe: Recipe): number {
@@ -78,11 +82,9 @@ export default function ProductionLineComponent(
   }
 
   function addAssemblyLine(recipe: Recipe) {
-    props.productionLine.assemblyLines.push(new AssemblyLineModel(
-      recipe,
-      getProductionRateForRecipe(recipe),
-      false,
-    ));
+    props.productionLine.assemblyLines.push(
+      new AssemblyLineModel(recipe, getProductionRateForRecipe(recipe), false),
+    );
     updateProductionLine();
     setShowRecipes(false);
   }
@@ -147,14 +149,23 @@ export default function ProductionLineComponent(
     }
   }, [needMoreProduction]);
 
+  useEffect(() => {
+    if (props.forceExpanded != null) {
+      setExpanded(props.forceExpanded);
+    }
+  }, [props.forceExpanded]);
+
   return (
     <div className="flex flex-col gap-y-2 grow">
       <Clickable
         className="flex flex-row items-center gap-x-2 px-4 py-2"
         style={mainStyle}
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => {
+          setExpanded(!isExpanded);
+          props.onToggle?.();
+        }}
       >
-        {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+        {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
         <div className="flex flex-row items-center gap-2 w-sm flex-none">
           <Image src={part.iconSmall} alt={part.name} width={64} height={64} />
           <span className="text-xl">{part.name}</span>
@@ -169,11 +180,7 @@ export default function ProductionLineComponent(
             onCalculate={updateOutputRate}
             onClick={(e) => e.stopPropagation()}
             slotProps={{
-              htmlInput: {
-                sx: {
-                  textAlign: "right",
-                },
-              },
+              htmlInput: { className: "text-right" },
             }}
           />
           {props.productionLine.autoCalculateRate ? (
@@ -247,7 +254,7 @@ export default function ProductionLineComponent(
           </span>
         </Tooltip>
       </Clickable>
-      {expanded && (
+      {isExpanded && (
         <div className="flex flex-col pl-12">
           {props.productionLine.assemblyLines.map((assemblyLine) => {
             return (

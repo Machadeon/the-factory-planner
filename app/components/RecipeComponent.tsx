@@ -3,6 +3,10 @@
 import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
+import { pink } from "@mui/material/colors";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import { alpha, styled } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { type MouseEventHandler, useState } from "react";
@@ -16,10 +20,6 @@ import Clickable, {
   defaultHoverClass as clickableHoverClass,
 } from "./Clickable";
 import TextCalculatorField from "./TextCalculatorField";
-import { alpha, styled } from "@mui/material/styles";
-import { pink } from "@mui/material/colors";
-import Switch from "@mui/material/Switch";
-import FormControlLabel from "@mui/material/FormControlLabel";
 
 const PinkSwitch = styled(Switch)(({ theme }) => ({
   "& .MuiSwitch-switchBase.Mui-checked": {
@@ -39,7 +39,11 @@ interface RecipeComponentProps {
   factory?: Factory;
   onClick?: MouseEventHandler<HTMLDivElement>;
   partRateEditable?: boolean;
-  setPartRate?: (recipePart: RecipePart, isProduct: boolean, newValue: number) => void;
+  setPartRate?: (
+    recipePart: RecipePart,
+    isProduct: boolean,
+    newValue: number,
+  ) => void;
   partsNeeded?: string[];
   slooped?: boolean;
   onSloopChange?: (shouldSloop: boolean) => void;
@@ -62,8 +66,13 @@ export default function RecipeComponent({
     "sp-recipe-component flex flex-row grow items-center gap-x-2 p-2";
   if (onClick) className += ` ${clickableClass}${clickableHoverClass}`;
 
-  function setPartRateInternal(recipePart: RecipePart, isProduct: boolean, newValue: number) {
-    if (partRateEditable && setPartRate) setPartRate(recipePart, isProduct, newValue);
+  function setPartRateInternal(
+    recipePart: RecipePart,
+    isProduct: boolean,
+    newValue: number,
+  ) {
+    if (partRateEditable && setPartRate)
+      setPartRate(recipePart, isProduct, newValue);
     setManualRatePart(undefined);
   }
 
@@ -72,7 +81,8 @@ export default function RecipeComponent({
   }
 
   const rateClassName = rate <= 0 ? "font-bold text-amber-500" : "";
-  const outputRateClassName = rate <= 0 ? rateClassName : (slooped ? "font-bold text-pink-600" : "");
+  const outputRateClassName =
+    rate <= 0 ? rateClassName : slooped ? "font-bold text-pink-600" : "";
 
   function toggleSlooping(shouldSloop: boolean) {
     if (onSloopChange) onSloopChange(shouldSloop);
@@ -147,7 +157,9 @@ export default function RecipeComponent({
                 className="w-24"
                 autoFocus
                 value={ing.quantity * rate}
-                onCalculate={(newValue) => setPartRateInternal(ing, false, newValue)}
+                onCalculate={(newValue) =>
+                  setPartRateInternal(ing, false, newValue)
+                }
               />
               /min
             </div>
@@ -208,13 +220,11 @@ export default function RecipeComponent({
                 autoFocus
                 value={prod.quantity * rate * (slooped ? 2 : 1)}
                 slotProps={{
-                  htmlInput: {
-                    sx: {
-                      textAlign: "right",
-                    },
-                  },
+                  htmlInput: { className: "text-right" },
                 }}
-                onCalculate={(newValue) => setPartRateInternal(prod, true, newValue)}
+                onCalculate={(newValue) =>
+                  setPartRateInternal(prod, true, newValue)
+                }
               />
               /min
             </div>

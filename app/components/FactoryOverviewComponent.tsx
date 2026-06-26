@@ -33,10 +33,7 @@ export default function FactoryOverviewComponent({
     <div className="flex flex-col w-xs">
       <div className="text-lg mb-2">Controls</div>
       <div className="flex flex-col gap-y-2">
-        <Button
-          variant="contained"
-          onClick={onRebuild}
-        >
+        <Button variant="contained" onClick={onRebuild}>
           Update
         </Button>
         <Button

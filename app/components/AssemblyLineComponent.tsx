@@ -3,9 +3,9 @@
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
 import { recipeLookup } from "../models/library";
+import type Part from "../models/part";
 import type { RecipePart } from "../models/recipe";
 import RecipeComponent from "./RecipeComponent";
-import type Part from "../models/part";
 
 interface AssemblyLineComponentProps {
   assemblyLine: AssemblyLine;
@@ -16,8 +16,13 @@ interface AssemblyLineComponentProps {
 export default function AssemblyLineComponent(
   props: AssemblyLineComponentProps,
 ) {
-  function adjustProductionRate(recipePart: RecipePart, isProduct: boolean, newValue: number) {
-    if (isProduct) props.assemblyLine.setPartProductionRate(recipePart.part, newValue);
+  function adjustProductionRate(
+    recipePart: RecipePart,
+    isProduct: boolean,
+    newValue: number,
+  ) {
+    if (isProduct)
+      props.assemblyLine.setPartProductionRate(recipePart.part, newValue);
     else props.assemblyLine.setPartConsumptionRate(recipePart.part, newValue);
     props.factory.update();
   }

@@ -1,15 +1,15 @@
+import solver, {
+  type ConstraintBound,
+  type ConstraintRelation,
+  type ObjectiveDirection,
+  type SolveResult,
+  type VariableCoefficients,
+} from "javascript-lp-solver";
 import { parts } from "../models/library";
 import type AssemblyLine from "./assembly-line";
 import type Part from "./part";
 import ProductionLine from "./production-line";
 import type Recipe from "./recipe";
-import solver, {
-  VariableCoefficients,
-  ObjectiveDirection,
-  ConstraintBound,
-  ConstraintRelation,
-  SolveResult,
-} from "javascript-lp-solver";
 
 export interface Rate {
   consumpionRate: number;
@@ -67,7 +67,9 @@ export default class Factory {
             productionRate: 0,
           };
 
-          rate.consumpionRate += assemblyLine.getPartConsumptionRate(recipePart.part);
+          rate.consumpionRate += assemblyLine.getPartConsumptionRate(
+            recipePart.part,
+          );
           this.rateLookup[recipePart.part.slug] = rate;
         }
 
@@ -79,7 +81,9 @@ export default class Factory {
             productionRate: 0,
           };
 
-          rate.productionRate += assemblyLine.getPartProductionRate(recipePart.part);
+          rate.productionRate += assemblyLine.getPartProductionRate(
+            recipePart.part,
+          );
           this.rateLookup[recipePart.part.slug] = rate;
         }
       }
@@ -208,7 +212,9 @@ export default class Factory {
         for (const recipePart of assemblyLine.recipe.ingredients) {
           if (recipePart.part.slug !== part.slug) continue;
 
-          productionRate += assemblyLine.getPartConsumptionRate(recipePart.part);
+          productionRate += assemblyLine.getPartConsumptionRate(
+            recipePart.part,
+          );
         }
 
         for (const recipePart of assemblyLine.recipe.products) {
@@ -221,7 +227,7 @@ export default class Factory {
     return productionRate;
   }
 
-  setPartRate(part: Part, productionRate: number, isAutoSet: boolean = false) {
+  setPartRate(part: Part, productionRate: number, _isAutoSet: boolean = false) {
     const productionLine = this._productionLineLookup[part.slug];
 
     if (productionLine.rate === 0) {
@@ -260,7 +266,7 @@ export default class Factory {
    */
   autoSetPartRate(part: Part) {
     const productionLine = this._productionLineLookup[part.slug];
-    if (!productionLine || !productionLine.autoCalculateRate) {
+    if (!productionLine?.autoCalculateRate) {
       // do not auto set rate for a production line without the flag set, or one that doesn't exist yet
       return;
     }
@@ -328,7 +334,7 @@ export default class Factory {
     // constraints["dissolved-silica"] = { equal: 0 } // this one really needs to balance
 
     for (const part of intermediateParts) {
-      if (constraints.hasOwnProperty(part.slug)) continue; // water is already accounted for
+      if (Object.hasOwn(constraints, part.slug)) continue; // water is already accounted for
 
       constraints[part.slug] = { equal: 0 };
     }
@@ -348,7 +354,8 @@ export default class Factory {
         variables[recipe.slug][ingredient.part.slug] = -ingredient.quantity;
       }
       for (const product of recipe.products) {
-        variables[recipe.slug][product.part.slug] = product.quantity * sloopMultiplier;
+        variables[recipe.slug][product.part.slug] =
+          product.quantity * sloopMultiplier;
       }
     }
 
@@ -364,7 +371,7 @@ export default class Factory {
     console.timeEnd("solver-runtime");
     console.log(rawResult);
 
-    // @ts-ignore
+    // @ts-expect-error
     const result: SolveResult = rawResult.midpoint ?? rawResult;
 
     // if (!result.feasible) {
@@ -384,7 +391,9 @@ export default class Factory {
         const rate = result[assemblyLine.recipe.slug] ?? 0;
         if (typeof rate === "number") {
           assemblyLine.rate = rate;
-          productionLine.rate += assemblyLine.getPartProductionRate(product.part);
+          productionLine.rate += assemblyLine.getPartProductionRate(
+            product.part,
+          );
         }
       }
       productionLine.rate = productionLine.assemblyLines.reduce(
@@ -401,36 +410,5 @@ export default class Factory {
     }
 
     this.update();
-  }
-}
-
-class Equation {
-  _variableLookup: { [variableName: string]: number };
-  constant: number;
-
-  constructor(constant: number = 0) {
-    this._variableLookup = {};
-    this.constant = constant;
-  }
-
-  setVariable(partSlug: string, coefficient: number) {
-    this._variableLookup[partSlug] = coefficient;
-  }
-
-  getVariable(partSlug: string) {
-    return this._variableLookup[partSlug] || 0;
-  }
-
-  toArray(variables: string[]) {
-    return variables.map((v) => this.getVariable(v));
-  }
-
-  clone(): Equation {
-    const clone = new Equation();
-    for (const variable in this._variableLookup) {
-      clone.setVariable(variable, this._variableLookup[variable]);
-    }
-
-    return clone;
   }
 }

@@ -10,10 +10,12 @@ committed via `factory.update()`).
 
 ### Features to implement
 
-- expand/collapse all button for assembly lines
+- manually set factory icon (instead of always deriving it from the first product)
 - auto-production-line filler based on customizable aspects
   - raw resource availability
   - default/custom point scores (based on part cost + power usage + space/buildings required + tech limits)
+- when a production line is added that already has its recipe set (either because it only has one or we're reloading a
+  saved factory) then don't expand it by default
 
 ### Bugs to fix
 

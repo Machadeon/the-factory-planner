@@ -50,17 +50,13 @@ export default class ProductionLine {
 
     const recipes = recipeLookup[part.slug];
     if (recipes.length === 1) {
-      this.assemblyLines.push(new AssemblyLine(
-        recipes[0],
-        productionRate / recipes[0].productLookup[part.slug],
-        false,
-      ));
-    }
-  }
-
-  getAssemblyLine(recipeSlug: string): AssemblyLine | undefined {
-    for (const assemblyLine of this.assemblyLines) {
-      if (assemblyLine.recipe.slug === recipeSlug) return assemblyLine;
+      this.assemblyLines.push(
+        new AssemblyLine(
+          recipes[0],
+          productionRate / recipes[0].productLookup[part.slug],
+          false,
+        ),
+      );
     }
   }
 }
