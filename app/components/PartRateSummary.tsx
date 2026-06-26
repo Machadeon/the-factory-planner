@@ -1,12 +1,12 @@
 "use client";
 
 import AddIcon from "@mui/icons-material/Add";
-import Clickable from "./Clickable";
-import Part from "../models/part";
-import { Rate } from "../models/factory";
-import Factory from "../models/factory";
 import Image from "next/image";
+import type Factory from "../models/factory";
+import type { Rate } from "../models/factory";
+import type Part from "../models/part";
 import { displayNum, getColorClassForProductionRate2 } from "../utils";
+import Clickable from "./Clickable";
 
 interface PartRateSummaryProps {
   part: Part;

@@ -24,6 +24,8 @@ export function getColorClassForProductionRate2(rate: number): string {
   return "";
 }
 
+// biome-ignore-start lint/style/noNonNullAssertion: external code
+
 // Source - https://stackoverflow.com/a/75355272
 // Posted by tanguy_k
 // Retrieved 2026-02-22, License - CC BY-SA 4.0
@@ -318,3 +320,5 @@ export function calculate(expression: string) {
   const rpn = shuntingYard(tokens);
   return evalReversePolishNotation(rpn);
 }
+
+// biome-ignore-end lint/style/noNonNullAssertion: external code

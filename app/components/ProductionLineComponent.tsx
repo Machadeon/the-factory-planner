@@ -7,18 +7,18 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
-import { type MouseEvent, useState, useEffect } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import type Factory from "../models/factory";
 import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import { displayNum, getColorClassForProductionRate1 } from "../utils";
 import AssemblyLine from "./AssemblyLineComponent";
-import Clickable, { ClickableStyle } from "./Clickable";
+import Clickable, { type ClickableStyle } from "./Clickable";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
-import Tooltip from "@mui/material/Tooltip";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
@@ -123,7 +123,7 @@ export default function ProductionLineComponent(
 
   const actualProductionRateTextColorClass =
     getColorClassForProductionRate1(productionRateDiff);
-  var productionRateDiffStr;
+  var productionRateDiffStr: string;
   if (actualProductionRateTextColorClass === "text-amber-500") {
     productionRateDiffStr = ` (+${displayNum(productionRateDiff)})`;
   } else if (actualProductionRateTextColorClass === "text-red-500") {
@@ -145,7 +145,7 @@ export default function ProductionLineComponent(
     } else {
       setShowRecipes(false);
     }
-  }, [needMoreProduction, setShowRecipes]);
+  }, [needMoreProduction]);
 
   return (
     <div className="flex flex-col gap-y-2 grow">
@@ -278,7 +278,10 @@ export default function ProductionLineComponent(
           })}
           {hasMoreRecipes && !needMoreProduction && !showRecipes && (
             <div>
-              <Clickable onClick={splitRecipes} className="flex flex-row items-center">
+              <Clickable
+                onClick={splitRecipes}
+                className="flex flex-row items-center"
+              >
                 <AddIcon />
                 Add Recipe
               </Clickable>

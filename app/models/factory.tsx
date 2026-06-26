@@ -1,10 +1,9 @@
+import { solve } from "linear-solve";
+import { parts } from "../models/library";
+import type AssemblyLine from "./assembly-line";
 import type Part from "./part";
 import ProductionLine from "./production-line";
-import { parts } from "../models/library";
-import Error from "next/error";
 import type Recipe from "./recipe";
-import { solve } from "linear-solve";
-import AssemblyLine from "./assembly-line";
 
 export interface Rate {
   consumpionRate: number;
@@ -97,7 +96,7 @@ export default class Factory {
   }
 
   allParts(): Part[] {
-    return parts.filter((part) => this.rateLookup.hasOwnProperty(part.slug));
+    return parts.filter((part) => Object.hasOwn(this.rateLookup, part.slug));
   }
 
   allOutputs(): Part[] {
@@ -334,10 +333,9 @@ export default class Factory {
           // create variable for each product of each recipe, formula {part-slug}_{recipe-slug} (step 1)
           const productVariable = `${part.slug}_${recipe.slug}`;
           if (variables.has(productVariable)) {
-            throw new Error({
-              statusCode: 500,
-              message: `variable ${productVariable} already exists in variable set`,
-            });
+            throw new Error(
+              `variable ${productVariable} already exists in variable set`,
+            );
           }
 
           variables.add(productVariable);
@@ -447,18 +445,19 @@ export default class Factory {
           } else {
             const message = `assembly line '${partSlug}'/'${recipeSlug}' did not have expected product '${partSlug}'`;
             console.error(message);
-            throw new Error({ statusCode: 500, message: message });
+            throw new Error(message);
           }
         } else {
           const message = `did not find assembly line for '${partSlug}'/'${recipeSlug}'`;
           console.error(message);
-          throw new Error({ statusCode: 500, message: message });
+          throw new Error(message);
         }
       }
     }
 
+    var rate: number;
     for (const productionLine of this.productionLines) {
-      var rate: number = 0;
+      rate = 0;
       for (const assemblyLine of productionLine.assemblyLines) {
         rate +=
           assemblyLine.rate *
@@ -525,10 +524,9 @@ function calculateRecipeEquations(
   const recipe = recipes[index];
   const ingredient = recipe.getIngredient(partSlug);
   if (!ingredient) {
-    throw new Error({
-      statusCode: 500,
-      message: `did not find ingredient ${partSlug} in recipe ${recipe.slug} while calculating recipe equations`,
-    });
+    throw new Error(
+      `did not find ingredient ${partSlug} in recipe ${recipe.slug} while calculating recipe equations`,
+    );
   }
 
   const equations: Equation[] = [];

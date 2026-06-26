@@ -25,7 +25,7 @@ export default function AssemblyLineComponent(
     .filter(
       (partSlug) =>
         allOutputs.indexOf(partSlug) < 0 &&
-        recipeLookup.hasOwnProperty(partSlug),
+        Object.hasOwn(recipeLookup, partSlug),
     );
 
   return (

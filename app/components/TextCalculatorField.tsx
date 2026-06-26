@@ -3,7 +3,7 @@
 import TextField, {
   type OutlinedTextFieldProps,
 } from "@mui/material/TextField";
-import { type FocusEvent, type KeyboardEvent, useRef, useState } from "react";
+import { type FocusEvent, type KeyboardEvent, useState } from "react";
 import { calculate as evaluateExpression } from "../utils";
 
 export interface TextCalculatorFieldProps extends OutlinedTextFieldProps {

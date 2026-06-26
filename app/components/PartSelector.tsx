@@ -3,6 +3,7 @@
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import Image from "next/image";
+import type { SyntheticEvent } from "react";
 import { parts } from "../models/library";
 import type Part from "../models/part";
 
@@ -23,7 +24,10 @@ export default function PartSelector({
     })
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  function onChange(_: any, option: any) {
+  function onChange(
+    _: SyntheticEvent<Element, Event>,
+    option: { label: string; part: Part } | null,
+  ) {
     if (option) onPartSelected(option.part);
   }
 

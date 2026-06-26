@@ -5,9 +5,14 @@
     }
   },
   "files": {
-    "includes": ["**", "!.next"]
+    "includes": ["**", "!.next", "!app/models/data.json"]
   },
   "formatter": {
     "indentStyle": "space"
+  },
+  "linter": {
+    "rules": {
+      "a11y": "off"
+    }
   }
 }

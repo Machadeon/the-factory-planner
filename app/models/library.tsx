@@ -1,8 +1,8 @@
 import type Building from "./building";
 import data from "./data.json";
 import type Part from "./part";
-import Recipe from "./recipe";
 import type { RecipePart, RecipePartLookup } from "./recipe";
+import Recipe from "./recipe";
 
 export const parts: Part[] = [];
 export const partLookup: { [className: string]: Part } = {};

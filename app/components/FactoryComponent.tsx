@@ -5,10 +5,10 @@ import { useState } from "react";
 import Factory from "../models/factory";
 import type Part from "../models/part";
 import Clickable from "./Clickable";
+import { HorizontalDivider, VerticalDivider } from "./Dividers";
+import FactoryOverviewComponent from "./FactoryOverviewComponent";
 import PartSelector from "./PartSelector";
 import ProductionLineComponent from "./ProductionLineComponent";
-import FactoryOverviewComponent from "./FactoryOverviewComponent";
-import { HorizontalDivider, VerticalDivider } from "./Dividers";
 
 export default function FactoryComponent() {
   const [addingProduct, setAddingProduct] = useState<boolean>(false);

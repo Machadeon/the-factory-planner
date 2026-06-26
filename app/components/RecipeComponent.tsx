@@ -3,6 +3,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
+import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { type MouseEventHandler, useState } from "react";
 import type Factory from "../models/factory";
@@ -15,7 +16,6 @@ import Clickable, {
   defaultHoverClass as clickableHoverClass,
 } from "./Clickable";
 import TextCalculatorField from "./TextCalculatorField";
-import Tooltip from "@mui/material/Tooltip";
 
 interface RecipeComponentProps {
   recipe: Recipe;

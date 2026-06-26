@@ -1,13 +1,13 @@
 "use client";
 
-import Factory from "../models/factory";
-import PartRateSummary from "./PartRateSummary";
-import { HorizontalDivider } from "./Dividers";
-import Clickable from "./Clickable";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useState } from "react";
 import Button from "@mui/material/Button";
+import { useState } from "react";
+import type Factory from "../models/factory";
+import Clickable from "./Clickable";
+import { HorizontalDivider } from "./Dividers";
+import PartRateSummary from "./PartRateSummary";
 
 interface FactoryOverviewComponentProps {
   factory: Factory;
@@ -19,7 +19,7 @@ export default function FactoryOverviewComponent({
   const [showIntermediateProducts, setShowIntermediateProducts] =
     useState<boolean>(false);
 
-  function schedule(obj: object, fn: Function) {
+  function schedule(obj: object, fn: () => void) {
     setTimeout(fn.bind(obj), 1);
   }
 
@@ -27,7 +27,10 @@ export default function FactoryOverviewComponent({
     <div className="flex flex-col w-xs">
       <div className="text-lg mb-2">Controls</div>
       <div className="flex flex-col gap-y-2">
-        <Button variant="contained" onClick={() => schedule(factory, factory.update)}>
+        <Button
+          variant="contained"
+          onClick={() => schedule(factory, factory.update)}
+        >
           Update
         </Button>
         <Button
