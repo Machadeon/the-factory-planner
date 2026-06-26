@@ -6,12 +6,18 @@ export interface RecipePart {
   quantity: number;
 }
 
+export interface RecipePartLookup {
+  [partSlug: string]: number;
+}
+
 export default interface Recipe {
   name: string;
   className: string;
   slug: string;
   ingredients: RecipePart[];
+  ingredientLookup: RecipePartLookup;
   products: RecipePart[];
+  productLookup: RecipePartLookup;
   building: Building;
   processingTime: number;
   customPowerUsage: boolean;

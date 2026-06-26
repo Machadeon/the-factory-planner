@@ -2,6 +2,28 @@ export function displayNum(num: number): number {
   return parseFloat(num.toFixed(4));
 }
 
+export function getColorClassForProductionRate1(rate: number): string {
+  const calcRate = displayNum(rate);
+  if (calcRate > 0) {
+    return "text-amber-500";
+  } else if (calcRate < 0) {
+    return "text-red-500";
+  }
+
+  return "text-green-500";
+}
+
+export function getColorClassForProductionRate2(rate: number): string {
+  const calcRate = displayNum(rate);
+  if (calcRate > 0) {
+    return "text-green-500";
+  } else if (calcRate < 0) {
+    return "text-red-500";
+  }
+
+  return "";
+}
+
 // Source - https://stackoverflow.com/a/75355272
 // Posted by tanguy_k
 // Retrieved 2026-02-22, License - CC BY-SA 4.0

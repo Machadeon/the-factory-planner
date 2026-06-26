@@ -6,7 +6,7 @@ import FactoryComponent from "./components/FactoryComponent";
 export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-zinc-950">
-      <main className="flex min-h-screen w-full max-w-7xl flex-col items-center py-8 px-4 bg-white dark:bg-zinc-900 sm:items-start gap-4">
+      <main className="flex min-h-screen w-full max-w-full flex-col items-center py-8 px-4 bg-white dark:bg-zinc-900 sm:items-start gap-4">
         <div className="flex-row">
           <Image
             className="inline"

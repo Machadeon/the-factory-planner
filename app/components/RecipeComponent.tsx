@@ -1,9 +1,12 @@
 "use client";
 
+import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
 import Image from "next/image";
 import { type MouseEventHandler, useState } from "react";
+import type Factory from "../models/factory";
+import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
 import { displayNum } from "../utils";
@@ -13,15 +16,21 @@ import TextCalculatorField from "./TextCalculatorField";
 interface RecipeComponentProps {
   recipe: Recipe;
   productionRate: number;
+  factory?: Factory;
   onClick?: MouseEventHandler<HTMLDivElement>;
+  partRateEditable?: boolean;
   setPartRate?: (recipePart: RecipePart, newValue: number) => void;
+  partsNeeded?: string[];
 }
 
 export default function RecipeComponent({
   recipe,
   productionRate,
+  factory,
   onClick,
+  partRateEditable,
   setPartRate,
+  partsNeeded,
 }: RecipeComponentProps) {
   const [manualRatePart, setManualRatePart] = useState<string | undefined>();
 
@@ -30,8 +39,12 @@ export default function RecipeComponent({
   if (onClick) className += ` ${clickableClass}`;
 
   function setPartRateInternal(recipePart: RecipePart, newValue: number) {
-    if (setPartRate) setPartRate(recipePart, newValue);
+    if (partRateEditable && setPartRate) setPartRate(recipePart, newValue);
     setManualRatePart(undefined);
+  }
+
+  function addProductionLine(part: Part) {
+    if (factory) factory.addProductionLine(part);
   }
 
   return (
@@ -42,8 +55,8 @@ export default function RecipeComponent({
         width={64}
         height={64}
       />
-      <span className="w-xs">{recipe.name}</span>
-      <div className="w-3xs grid grid-cols-[40px_40px_auto] gap-x-1 items-center">
+      <span className="w-3xs">{recipe.name}</span>
+      <div className="w-2xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.ingredients.flatMap((ing) => [
           <span className="text-right" key={`ing-${ing.part.slug}-quantity`}>
             {ing.quantity}x
@@ -54,10 +67,32 @@ export default function RecipeComponent({
             width={32}
             height={32}
             key={`ing-${ing.part.slug}-image`}
+            className="m-1"
           />,
-          manualRatePart === `ing-${ing.part.slug}` && setPartRate ? (
+          <div
+            className="flex flex-row grow justify-end"
+            key={`ing-${ing.part.slug}-controls`}
+          >
+            {partsNeeded && partsNeeded.indexOf(ing.part.slug) >= 0 && (
+              <Clickable
+                onClick={() => addProductionLine(ing.part)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <AddIcon />
+              </Clickable>
+            )}
+            {partRateEditable && (
+              <Clickable
+                onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <EditIcon />
+              </Clickable>
+            )}
+          </div>,
+          manualRatePart === `ing-${ing.part.slug}` && partRateEditable ? (
             <div
-              className="flex items-center"
+              className="flex items-center justify-end"
               key={`ing-${ing.part.slug}-rate`}
             >
               <TextCalculatorField
@@ -65,36 +100,22 @@ export default function RecipeComponent({
                 size="small"
                 className="w-24"
                 autoFocus
-                value={
-                  (ing.quantity * productionRate) / recipe.products[0].quantity
-                }
+                value={ing.quantity * productionRate}
                 onCalculate={(newValue) => setPartRateInternal(ing, newValue)}
               />
               /min
             </div>
           ) : (
-            <span className="text-right" key={`ing-${ing.part.slug}-rate`}>
-              {setPartRate ? (
-                <Clickable
-                  onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
-                  className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-                >
-                  <EditIcon />
-                </Clickable>
-              ) : (
-                ""
-              )}
+            <div className="text-right" key={`ing-${ing.part.slug}-rate`}>
               (
-              {displayNum(
-                (ing.quantity * productionRate) / recipe.products[0].quantity,
-              )}
+              {displayNum(ing.quantity * productionRate)}
               /min)
-            </span>
+            </div>
           ),
         ])}
       </div>
       <EastIcon />
-      <div className="w-3xs grid grid-cols-[40px_40px_auto] gap-x-1 items-center">
+      <div className="w-3xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.products.flatMap((prod) => [
           <span className="text-right" key={`prod-${prod.part.slug}-quantity`}>
             {prod.quantity}x
@@ -106,9 +127,22 @@ export default function RecipeComponent({
             height={32}
             key={`prod-${prod.part.slug}-image`}
           />,
-          manualRatePart === `prod-${prod.part.slug}` && setPartRate ? (
+          <div
+            className="grow text-right"
+            key={`prod-${prod.part.slug}-controls`}
+          >
+            {partRateEditable && (
+              <Clickable
+                onClick={() => setManualRatePart(`prod-${prod.part.slug}`)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <EditIcon />
+              </Clickable>
+            )}
+          </div>,
+          manualRatePart === `prod-${prod.part.slug}` && partRateEditable ? (
             <div
-              className="flex items-center"
+              className="flex items-center justify-end"
               key={`prod-${prod.part.slug}-rate`}
             >
               <TextCalculatorField
@@ -116,9 +150,7 @@ export default function RecipeComponent({
                 size="small"
                 className="w-24"
                 autoFocus
-                value={
-                  (prod.quantity * productionRate) / recipe.products[0].quantity
-                }
+                value={prod.quantity * productionRate}
                 slotProps={{
                   htmlInput: {
                     sx: {
@@ -131,32 +163,11 @@ export default function RecipeComponent({
               /min
             </div>
           ) : (
-            <span className="text-right" key={`prod-${prod.part.slug}-rate`}>
-              {manualRatePart === `prod-${prod.part.slug}` ? (
-                <div></div>
-              ) : (
-                <>
-                  {setPartRate ? (
-                    <Clickable
-                      onClick={() =>
-                        setManualRatePart(`prod-${prod.part.slug}`)
-                      }
-                      className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-                    >
-                      <EditIcon />
-                    </Clickable>
-                  ) : (
-                    ""
-                  )}
-                  (
-                  {displayNum(
-                    (prod.quantity * productionRate) /
-                      recipe.products[0].quantity,
-                  )}
-                  /min)
-                </>
-              )}
-            </span>
+            <div className="text-right" key={`prod-${prod.part.slug}-rate`}>
+              (
+              {displayNum(prod.quantity * productionRate)}
+              /min)
+            </div>
           ),
         ])}
       </div>

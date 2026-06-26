@@ -2,7 +2,7 @@ import type Building from "./building";
 import data from "./data.json";
 import type Part from "./part";
 import type Recipe from "./recipe";
-import type { RecipePart } from "./recipe";
+import type { RecipePart, RecipePartLookup } from "./recipe";
 
 export const parts: Part[] = [];
 export const partLookup: { [className: string]: Part } = {};
@@ -31,6 +31,8 @@ for (const partData of Object.values(data.items)) {
   partLookup[part.className] = part;
 }
 
+parts.sort((a, b) => a.name.localeCompare(b.name));
+
 for (const buildingData of Object.values(data.buildings)) {
   if (buildingData.metadata.manufacturingSpeed === 0) continue;
 
@@ -58,6 +60,16 @@ function ingredientToRecipePart(ingredient: {
   };
 }
 
+function ingredientsToRecipePartLookup(ingredients: {item: string; amount: number;}[]): RecipePartLookup {
+  const lookup: RecipePartLookup = {};
+  for (const ingredient of ingredients) {
+    const part = partLookup[ingredient.item];
+    lookup[part.slug] = ingredient.amount;
+  }
+
+  return lookup;
+}
+
 for (const recipeData of Object.values(data.recipes)) {
   if (!recipeData.inMachine) continue;
 
@@ -66,7 +78,9 @@ for (const recipeData of Object.values(data.recipes)) {
     className: recipeData.className,
     slug: recipeData.slug,
     ingredients: recipeData.ingredients.map<RecipePart>(ingredientToRecipePart),
+    ingredientLookup: ingredientsToRecipePartLookup(recipeData.ingredients),
     products: recipeData.products.map<RecipePart>(ingredientToRecipePart),
+    productLookup: ingredientsToRecipePartLookup(recipeData.products),
     building: buildingLookup[recipeData.producedIn[0]],
     processingTime: recipeData.time,
     customPowerUsage: recipeData.isVariablePower,
