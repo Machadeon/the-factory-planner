@@ -34,6 +34,7 @@ const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   sinkPoints: "Max sink points",
   power: "Min power",
   buildings: "Min buildings",
+  logistics: "Min logistics",
   inputValue: "Min input value",
 };
 

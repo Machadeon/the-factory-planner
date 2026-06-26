@@ -30,9 +30,16 @@ export type ScoringObjective =
   | "sinkPoints"
   | "power"
   | "buildings"
+  | "logistics"
   | "inputValue";
 
 export type RejectPrompt = "ask" | "always" | "never";
+
+/** A part the user marks as already available, with an optional supply rate. */
+export interface AvailablePart {
+  partSlug: string;
+  rate?: number;
+}
 
 /**
  * User-configurable settings for the auto-fill recipes feature. The
@@ -44,8 +51,8 @@ export interface AutoFillConfig {
   eager: boolean;
   /** Optimization goal driving the LP objective. */
   objective: ScoringObjective;
-  /** Part slugs preferred as already-available inputs. */
-  availableParts: string[];
+  /** Parts preferred as already-available inputs, with optional supply rate. */
+  availableParts: AvailablePart[];
   /** Source factory ids whose outputs are treated as available. */
   availableFactoryIds: string[];
   /** Game phase ceiling for recipe unlocks. */
@@ -54,8 +61,10 @@ export interface AutoFillConfig {
   defaultRecipesEnabled: boolean;
   /** Master toggle: alternate recipes selectable. */
   alternateRecipesEnabled: boolean;
-  /** Per-recipe allow(true)/deny(false) overrides over the master toggles. */
+  /** Per-recipe allow(true)/deny(false) overrides over building/master toggles. */
   recipeOverrides: Record<string, boolean>;
+  /** Per-building enable(true)/disable(false); disabling blocks its recipes. */
+  buildingOverrides: Record<string, boolean>;
   /** Overwrite all production lines vs only fill gaps. */
   overwrite: boolean;
   /** Whether rejecting a suggestion also removes the recipe from auto-fill. */
@@ -74,6 +83,7 @@ export function defaultAutoFillConfig(): AutoFillConfig {
     defaultRecipesEnabled: true,
     alternateRecipesEnabled: true,
     recipeOverrides: {},
+    buildingOverrides: {},
     overwrite: false,
     rejectPrompt: "ask",
   };

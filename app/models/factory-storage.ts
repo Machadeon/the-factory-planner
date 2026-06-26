@@ -131,6 +131,21 @@ export function serializeFactory(
   };
 }
 
+// autoFill is unreleased, but tolerate an older availableParts shape (string[])
+// and missing fields by merging onto the current defaults.
+function normalizeAutoFill(raw: AutoFillConfig | undefined): AutoFillConfig {
+  const base = defaultAutoFillConfig();
+  if (!raw) return base;
+  const rawParts = (raw.availableParts ?? []) as unknown as (
+    | string
+    | { partSlug: string; rate?: number }
+  )[];
+  const availableParts = rawParts.map((p) =>
+    typeof p === "string" ? { partSlug: p } : p,
+  );
+  return { ...base, ...raw, availableParts };
+}
+
 const recipeSlugLookup: Record<string, import("./recipe").default> = {};
 for (const recipe of recipes) {
   recipeSlugLookup[recipe.slug] = recipe;
@@ -144,7 +159,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
-  factory.autoFill = data.autoFill ?? defaultAutoFillConfig();
+  factory.autoFill = normalizeAutoFill(data.autoFill);
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -232,7 +247,7 @@ export function deserializeFactory(
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
-  factory.autoFill = data.autoFill ?? defaultAutoFillConfig();
+  factory.autoFill = normalizeAutoFill(data.autoFill);
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];

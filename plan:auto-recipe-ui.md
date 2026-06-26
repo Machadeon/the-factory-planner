@@ -258,3 +258,38 @@ For any item with `autoCreated === true`:
    edit each control, Apply, assert persisted state + suggested-chip flow).
 8. `make` lint/typecheck (Biome) passes; match existing `biome-ignore` for the
    open-sync `useEffect`.
+
+## Revision 2 — feedback refinements
+
+1. **Available parts carry a rate.** Change `AutoFillConfig.availableParts` from
+   `string[]` to `{ partSlug: string; rate?: number }[]`. Dialog rows add a
+   `TextCalculatorField` "Available /min" (`allowClear`) next to each part.
+   `autoFill` is new/unreleased so no storage migration is needed, but
+   `deserializeFactory` should tolerate the old `string` shape defensively.
+2. **Wider dialog.** `AutoFillDialog` `maxWidth="sm"` → `"md"` so a 6-ingredient
+   recipe's inputs→outputs fit on one `RecipeOverrideRow` line (keep the row
+   `flex-wrap` as a fallback).
+3. **More vertical spacing.** Add breathing room (e.g. `mt-4`/`mb-2` on section
+   headers, spacing above `TextField`s) so MUI helper/label text no longer
+   overlaps the preceding line.
+4. **Recipe-override search → autocomplete.** Replace the inline live recipe
+   results list with the PartSelector idiom: an "Add recipe override" `Clickable`
+   that swaps to a `RecipeSelector` autocomplete (new component mirroring
+   `PartSelector.tsx`, options = `recipes` excluding those already overridden,
+   label = `displayRecipeName`). Selecting a recipe adds an override (deny by
+   default). Active-override rows become clickable to flip allow/deny, keeping
+   the delete affordance.
+5. **Per-building enable/disable.** Add `buildingOverrides: Record<string,
+   boolean>` to `AutoFillConfig`. New "Buildings" section lists manufacturing
+   buildings (`buildings` from library) each with a `Switch` (default on);
+   disabling sets `buildingOverrides[slug] = false`. Effective-recipe precedence
+   in `isRecipeAllowed`: per-recipe override → building override → default/
+   alternate master toggle. (Building disabled blocks its recipes unless a
+   per-recipe override re-allows.)
+
+Files: `app/models/factory.tsx` (config shape + default), `factory-storage.ts`
+(tolerate old availableParts), `app/components/AutoFillDialog.tsx`, new
+`app/components/RecipeSelector.tsx`. Verify: existing auto-fill e2e still passes;
+manually confirm 6-ingredient row fits, available-part rate persists, building
+toggle hides a building's recipes from the override search results' effective
+state.

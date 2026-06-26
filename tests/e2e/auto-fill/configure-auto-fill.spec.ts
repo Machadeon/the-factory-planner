@@ -61,4 +61,38 @@ test.describe("Auto-fill Dialog", () => {
       }),
     ).toBeChecked();
   });
+
+  test("building toggle and available-part rate persist across reload", async ({
+    page,
+  }) => {
+    await seedWithIronPlate(page);
+
+    await page.getByText("Configure auto-fill").click();
+    const dialog = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+    await expect(dialog).toBeVisible();
+
+    // Disable the Constructor building.
+    await dialog
+      .getByRole("switch", { name: "Constructor Constructor" })
+      .uncheck();
+
+    // Add an available part (Iron Ingot) with a supply rate.
+    await dialog.getByText("Add available part").click();
+    await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
+    await dialog.getByRole("textbox", { name: "Available /min" }).fill("120");
+
+    await dialog.getByRole("button", { name: "Apply" }).click();
+    await expect(dialog).not.toBeVisible();
+
+    await page.reload();
+    await page.getByText("Configure auto-fill").click();
+    const reopened = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+
+    await expect(
+      reopened.getByRole("switch", { name: "Constructor Constructor" }),
+    ).not.toBeChecked();
+    await expect(
+      reopened.getByRole("textbox", { name: "Available /min" }),
+    ).toHaveValue("120");
+  });
 });

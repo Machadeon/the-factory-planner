@@ -6,12 +6,10 @@ export default interface Building {
   iconSmall: string;
   iconLarge: string;
   basePowerUsage: number;
-  maxSomersloops?: number;
-  variablePowerUsage?: boolean;
-  minPowerUsage?: number;
-  maxPowerUsage?: number;
-  itemInputs?: number;
-  fluidInputs?: number;
-  itemOutputs?: number;
-  fluidOutputs?: number;
+  somersloopSlots: number;
+  unlockPhase: number;
+  menuGroup: BuildingCategory;
+  menuGroupIndex: number;
 }
+
+export type BuildingCategory = "factory" | "smelter" | "refinery" | "generator";

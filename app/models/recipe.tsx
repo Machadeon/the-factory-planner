@@ -26,6 +26,7 @@ export default class Recipe {
   alternate: boolean;
   minPowerUsage?: number;
   maxPowerUsage?: number;
+  unlockPhase: number;
 
   _ingredientLookup: { [partSlug: string]: RecipePart };
   _productLookup: { [partSlug: string]: RecipePart };
@@ -42,6 +43,7 @@ export default class Recipe {
     processingTime: number,
     customPowerUsage: boolean,
     alternate = false,
+    unlockPhase: number,
   ) {
     this.name = name;
     this.className = className;
@@ -54,6 +56,7 @@ export default class Recipe {
     this.processingTime = processingTime;
     this.customPowerUsage = customPowerUsage;
     this.alternate = alternate;
+    this.unlockPhase = unlockPhase;
 
     this._ingredientLookup = {};
     for (const ingredient of ingredients) {

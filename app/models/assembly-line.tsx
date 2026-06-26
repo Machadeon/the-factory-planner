@@ -64,7 +64,7 @@ export default class AssemblyLine {
 
   maxSloopSlots(): number {
     if (this.recipe.isFactoryRecipe) return 0;
-    return (this.recipe as Recipe).building.maxSomersloops ?? 0;
+    return (this.recipe as Recipe).building.somersloopSlots ?? 0;
   }
 
   getSloopMultiplier(): number {
