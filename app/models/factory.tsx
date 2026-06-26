@@ -7,9 +7,10 @@ import solver, {
 } from "javascript-lp-solver";
 import { parts } from "../models/library";
 import type AssemblyLine from "./assembly-line";
+import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
 import ProductionLine from "./production-line";
-import type Recipe from "./recipe";
+import type { RecipeLike } from "./recipe-like";
 
 export interface Rate {
   consumpionRate: number;
@@ -20,6 +21,7 @@ export default class Factory {
   productionLines: ProductionLine[];
   icon?: string;
   autoAddProductLines: boolean;
+  supplierFactories: FactoryRecipe[];
   update: () => void;
   rateLookup: { [partSlug: string]: Rate };
 
@@ -35,6 +37,7 @@ export default class Factory {
     this.icon = oldFactory?.icon;
     this.update = oldFactory?.update || (() => {});
     this.autoAddProductLines = oldFactory?.autoAddProductLines || false;
+    this.supplierFactories = oldFactory?.supplierFactories || [];
 
     this.rateLookup = {};
     this._productionLineLookup = {};
@@ -122,8 +125,26 @@ export default class Factory {
     return parts.filter((part) => {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
-      return rate.consumpionRate - rate.productionRate > 0.0001;
+      const ownDeficit = rate.consumpionRate - rate.productionRate;
+      if (ownDeficit <= 0.0001) return false;
+      const supplied = this.supplierFactories.reduce((sum, fr) => {
+        const p = fr.getProduct(part.slug);
+        return sum + (p?.quantity ?? 0);
+      }, 0);
+      return ownDeficit - supplied > 0.0001;
     });
+  }
+
+  addSupplier(fr: FactoryRecipe) {
+    this.supplierFactories.push(fr);
+    this.update();
+  }
+
+  removeSupplier(factoryId: string) {
+    this.supplierFactories = this.supplierFactories.filter(
+      (fr) => fr.slug !== `factory:${factoryId}`,
+    );
+    this.update();
   }
 
   recipeOutputs(): Part[] {
@@ -295,7 +316,7 @@ export default class Factory {
     const recipeOutputs = new Set<Part>();
     const recipeInputs = new Set<Part>();
     const factoryOutputs = new Set<[Part, number]>();
-    const allRecipes = new Set<Recipe>();
+    const allRecipes = new Set<RecipeLike>();
     const assemblyLineLookup = new Map<string, AssemblyLine>();
 
     // step 1: determine included parts

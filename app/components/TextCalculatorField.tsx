@@ -18,11 +18,9 @@ export default function TextCalculatorField({
   const [error, setError] = useState<boolean>(false);
 
   function parseValue(value: string): number {
-    try {
-      return parseFloat(value);
-    } catch {
-      return evaluateExpression(value);
-    }
+    const result = evaluateExpression(value);
+    if (!Number.isNaN(result)) return result;
+    return parseFloat(value);
   }
 
   function calculate(newValue: string) {

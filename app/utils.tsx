@@ -1,9 +1,12 @@
-export function displayNum(num: number): number {
-  return parseFloat(num.toFixed(4));
+export function displayNum(num: number): string {
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
 }
 
 export function getColorClassForProductionRate1(rate: number): string {
-  const calcRate = displayNum(rate);
+  const calcRate = parseFloat(rate.toFixed(1));
   if (calcRate > 0) {
     return "text-amber-500";
   } else if (calcRate < 0) {
@@ -14,7 +17,7 @@ export function getColorClassForProductionRate1(rate: number): string {
 }
 
 export function getColorClassForProductionRate2(rate: number): string {
-  const calcRate = displayNum(rate);
+  const calcRate = parseFloat(rate.toFixed(1));
   if (calcRate > 0) {
     return "text-green-500";
   } else if (calcRate < 0) {

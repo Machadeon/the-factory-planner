@@ -11,6 +11,7 @@ export interface RecipePartLookup {
 }
 
 export default class Recipe {
+  readonly isFactoryRecipe = false as const;
   name: string;
   className: string;
   slug: string;

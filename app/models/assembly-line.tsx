@@ -1,14 +1,14 @@
 import type Part from "./part";
-import type Recipe from "./recipe";
+import type { RecipeLike } from "./recipe-like";
 
 export default class AssemblyLine {
   /**
-   * The {@link Recipe} used in this assembly line.
+   * The {@link RecipeLike} used in this assembly line.
    */
-  readonly recipe: Recipe;
+  readonly recipe: RecipeLike;
 
   /**
-   * The number of times the recipe completes per minute.
+   * The number of times the recipe completes per minute (or factory instances for FactoryRecipe).
    */
   rate: number;
 
@@ -17,7 +17,7 @@ export default class AssemblyLine {
    */
   private slooped: boolean;
 
-  constructor(recipe: Recipe, rate: number, slooped: boolean) {
+  constructor(recipe: RecipeLike, rate: number, slooped: boolean) {
     this.recipe = recipe;
     this.rate = rate;
     this.slooped = slooped;
@@ -68,6 +68,7 @@ export default class AssemblyLine {
   }
 
   setSlooped(slooped: boolean) {
+    if (this.recipe.isFactoryRecipe) return;
     if (slooped === this.slooped) return;
 
     if (slooped) {

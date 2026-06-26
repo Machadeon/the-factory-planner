@@ -1,5 +1,6 @@
 "use client";
 
+import AddBoxIcon from "@mui/icons-material/AddBox";
 import DownloadIcon from "@mui/icons-material/Download";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import SaveIcon from "@mui/icons-material/Save";
@@ -18,6 +19,7 @@ interface Props {
   onToggleAutosave: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
+  onNewFactory: () => void;
 }
 
 export default function FactoryHeader({
@@ -30,6 +32,7 @@ export default function FactoryHeader({
   onToggleAutosave,
   onExport,
   onImport,
+  onNewFactory,
 }: Props) {
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +47,7 @@ export default function FactoryHeader({
       <Tooltip title="Open factory library">
         <span>
           <Clickable className="p-1" onClick={onOpenLibrary}>
-            <FolderOpenIcon />
+            <FolderOpenIcon sx={{ fontSize: "2.25rem" }} />
           </Clickable>
         </span>
       </Tooltip>
@@ -69,6 +72,13 @@ export default function FactoryHeader({
       />
 
       <div className="flex flex-row ml-auto">
+      <Tooltip title="New factory">
+        <span>
+          <Clickable className="p-1" onClick={onNewFactory}>
+            <AddBoxIcon />
+          </Clickable>
+        </span>
+      </Tooltip>
         <Tooltip title="Import factory from file">
           <span>
             <Clickable

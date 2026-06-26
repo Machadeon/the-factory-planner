@@ -93,13 +93,17 @@ export default function FactoryComponent() {
 
   function buildSerialized(overrideName?: string): SerializedFactory {
     const now = new Date().toISOString();
-    return serializeFactory(factory, {
-      id: currentFactoryId ?? generateId(),
-      name: overrideName ?? factoryName,
-      folderId: currentFolderId,
-      createdAt: createdAt || now,
-      updatedAt: now,
-    });
+    return serializeFactory(
+      factory,
+      {
+        id: currentFactoryId ?? generateId(),
+        name: overrideName ?? factoryName,
+        folderId: currentFolderId,
+        createdAt: createdAt || now,
+        updatedAt: now,
+      },
+      library,
+    );
   }
 
   // On mount: load library and restore session if consent given
@@ -118,7 +122,7 @@ export default function FactoryComponent() {
     const autosaved = readAutosave();
     if (autosaved) {
       // Unsaved changes take priority
-      const restored = deserializeFactory(autosaved);
+      const restored = deserializeFactory(autosaved, lib);
       if (restored) {
         factoryRef.current = restored;
         restored.update = factory.update;
@@ -137,7 +141,7 @@ export default function FactoryComponent() {
     if (lastId) {
       const saved = lib.factories.find((f) => f.id === lastId);
       if (saved) {
-        const restored = deserializeFactory(saved);
+        const restored = deserializeFactory(saved, lib);
         if (restored) {
           factoryRef.current = restored;
           restored.update = factory.update;
@@ -213,13 +217,17 @@ export default function FactoryComponent() {
       setCreatedAt(now);
     }
 
-    const serialized = serializeFactory(factory, {
-      id,
-      name: factoryName,
-      folderId: currentFolderId,
-      createdAt: currentFactoryId ? createdAt : now,
-      updatedAt: now,
-    });
+    const serialized = serializeFactory(
+      factory,
+      {
+        id,
+        name: factoryName,
+        folderId: currentFolderId,
+        createdAt: currentFactoryId ? createdAt : now,
+        updatedAt: now,
+      },
+      library,
+    );
 
     const existingEntry = library.factories.find((f) => f.id === id);
     const updatedLib = existingEntry
@@ -340,7 +348,7 @@ export default function FactoryComponent() {
   }
 
   function loadFactoryFromSerialized(serialized: SerializedFactory) {
-    const loaded = deserializeFactory(serialized);
+    const loaded = deserializeFactory(serialized, library);
     if (!loaded) {
       alert(
         "Could not restore factory — some recipe or part data may be missing.",
@@ -465,6 +473,7 @@ export default function FactoryComponent() {
           onToggleAutosave={handleToggleAutosave}
           onExport={handleExportCurrent}
           onImport={handleImport}
+          onNewFactory={() => handleNewFactory(null)}
         />
 
         <div className="flex flex-row grow">
@@ -503,6 +512,8 @@ export default function FactoryComponent() {
                     <ProductionLineComponent
                       productionLine={product}
                       factory={currentFactory}
+                      library={library}
+                      currentFactoryId={currentFactoryId}
                       onDeleteClicked={() => removeProductionLine(product.part)}
                       forceExpanded={forceExpanded}
                       onToggle={() => setForceExpanded(null)}
@@ -533,6 +544,8 @@ export default function FactoryComponent() {
           <FactoryOverviewComponent
             factory={currentFactory}
             onRebuild={rebuildFactory}
+            library={library}
+            currentFactoryId={currentFactoryId}
           />
         </div>
       </div>

@@ -1,10 +1,13 @@
 import AssemblyLine from "./assembly-line";
 import Factory from "./factory";
+import FactoryRecipe from "./factory-recipe";
 import { partSlugLookup, recipes } from "./library";
 import ProductionLine from "./production-line";
 
 export interface SerializedAssemblyLine {
-  recipeSlug: string;
+  recipeSlug?: string;
+  nestedFactoryId?: string;
+  nestedFactoryData?: SerializedFactory;
   rate: number;
   slooped: boolean;
 }
@@ -26,6 +29,7 @@ export interface SerializedFactory {
   icon?: string;
   autoAddProductLines: boolean;
   productionLines: SerializedProductionLine[];
+  supplierIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +64,7 @@ export function serializeFactory(
     createdAt: string;
     updatedAt: string;
   },
+  library?: StorageLibrary,
 ): SerializedFactory {
   return {
     schemaVersion: 1,
@@ -68,6 +73,12 @@ export function serializeFactory(
     folderId: meta.folderId,
     icon: factory.icon,
     autoAddProductLines: factory.autoAddProductLines,
+    supplierIds:
+      factory.supplierFactories.length > 0
+        ? factory.supplierFactories.map((fr) =>
+            fr.slug.slice("factory:".length),
+          )
+        : undefined,
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
     productionLines: factory.productionLines.map((pl) => ({
@@ -76,11 +87,24 @@ export function serializeFactory(
       outputRate: pl.outputRate,
       autoCalculateRate: pl.autoCalculateRate,
       autoCreated: pl.autoCreated,
-      assemblyLines: pl.assemblyLines.map((al) => ({
-        recipeSlug: al.recipe.slug,
-        rate: al.rate,
-        slooped: al.isSlooped(),
-      })),
+      assemblyLines: pl.assemblyLines.map((al) => {
+        if (al.recipe.isFactoryRecipe) {
+          const nestedId = al.recipe.slug.slice("factory:".length);
+          return {
+            nestedFactoryId: nestedId,
+            nestedFactoryData: library?.factories.find(
+              (f) => f.id === nestedId,
+            ),
+            rate: al.rate,
+            slooped: false,
+          };
+        }
+        return {
+          recipeSlug: al.recipe.slug,
+          rate: al.rate,
+          slooped: al.isSlooped(),
+        };
+      }),
     })),
   };
 }
@@ -90,7 +114,18 @@ for (const recipe of recipes) {
   recipeSlugLookup[recipe.slug] = recipe;
 }
 
-export function deserializeFactory(data: SerializedFactory): Factory | null {
+export function deserializeFactory(
+  data: SerializedFactory,
+  library?: StorageLibrary,
+  _visiting: Set<string> = new Set(),
+): Factory | null {
+  if (_visiting.has(data.id)) {
+    console.warn(
+      `[deserialize] Cycle detected for factory: ${data.id}, skipping`,
+    );
+    return null;
+  }
+  _visiting.add(data.id);
   const factory = new Factory();
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
@@ -114,6 +149,42 @@ export function deserializeFactory(data: SerializedFactory): Factory | null {
     pl.assemblyLines = [];
 
     for (const alData of plData.assemblyLines) {
+      if (alData.nestedFactoryId) {
+        const nestedSerialized =
+          library?.factories.find((f) => f.id === alData.nestedFactoryId) ??
+          alData.nestedFactoryData;
+        if (!nestedSerialized) {
+          console.warn(
+            `[deserialize] Nested factory not found: ${alData.nestedFactoryId}, skipping assembly line`,
+          );
+          continue;
+        }
+        const nestedFactory = deserializeFactory(
+          nestedSerialized,
+          library,
+          new Set(_visiting),
+        );
+        if (!nestedFactory) {
+          console.warn(
+            `[deserialize] Failed to deserialize nested factory: ${alData.nestedFactoryId}, skipping assembly line`,
+          );
+          continue;
+        }
+        const fr = new FactoryRecipe(
+          alData.nestedFactoryId,
+          nestedSerialized.name,
+          nestedFactory,
+        );
+        pl.assemblyLines.push(new AssemblyLine(fr, alData.rate, false));
+        continue;
+      }
+
+      if (!alData.recipeSlug) {
+        console.warn(
+          "[deserialize] Assembly line has neither recipeSlug nor nestedFactoryId, skipping",
+        );
+        continue;
+      }
       const recipe = recipeSlugLookup[alData.recipeSlug];
       if (!recipe) {
         console.warn(
@@ -134,5 +205,32 @@ export function deserializeFactory(data: SerializedFactory): Factory | null {
   }
 
   factory._updateRates();
+
+  for (const supplierId of data.supplierIds ?? []) {
+    const nestedSerialized = library?.factories.find(
+      (f) => f.id === supplierId,
+    );
+    if (!nestedSerialized) {
+      console.warn(
+        `[deserialize] Supplier factory not found: ${supplierId}, skipping`,
+      );
+      continue;
+    }
+    const nestedFactory = deserializeFactory(
+      nestedSerialized,
+      library,
+      new Set(_visiting),
+    );
+    if (!nestedFactory) {
+      console.warn(
+        `[deserialize] Failed to deserialize supplier factory: ${supplierId}, skipping`,
+      );
+      continue;
+    }
+    factory.supplierFactories.push(
+      new FactoryRecipe(supplierId, nestedSerialized.name, nestedFactory),
+    );
+  }
+
   return factory;
 }

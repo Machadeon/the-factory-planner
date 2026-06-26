@@ -12,18 +12,32 @@ import Image from "next/image";
 import { type MouseEvent, useEffect, useState } from "react";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
+import { wouldCreateCycle } from "../models/factory-cycle-detection";
+import FactoryRecipe from "../models/factory-recipe";
+import {
+  deserializeFactory,
+  type StorageLibrary,
+} from "../models/factory-storage";
 import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
+import type { RecipeLike } from "../models/recipe-like";
 import { displayNum, getColorClassForProductionRate1 } from "../utils";
 import AssemblyLine from "./AssemblyLineComponent";
-import Clickable, { type ClickableStyle } from "./Clickable";
+import Clickable, {
+  type ClickableStyle,
+  defaultClass as clickableClass,
+  defaultHoverClass as clickableHoverClass,
+} from "./Clickable";
+import FactoryPickerDialog from "./FactoryPickerDialog";
 import RecipeComponent from "./RecipeComponent";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
   factory: Factory;
+  library: StorageLibrary;
+  currentFactoryId: string | null;
   onDeleteClicked: () => void;
   forceExpanded?: boolean | null;
   onToggle?: () => void;
@@ -32,6 +46,8 @@ interface ProductionLineComponentProps {
 export default function ProductionLineComponent(
   props: ProductionLineComponentProps,
 ) {
+  const [showFactoryPicker, setShowFactoryPicker] = useState<boolean>(false);
+  const [showSupplyPicker, setShowSupplyPicker] = useState<boolean>(false);
   const part = props.productionLine.part;
   const recipeList = recipeLookup[part.slug];
   const actualProductionRate = props.productionLine.assemblyLines.reduce(
@@ -47,13 +63,34 @@ export default function ProductionLineComponent(
     props.productionLine.assemblyLines.length <
     recipeLookup[props.productionLine.part.slug].length;
 
+  const factoryCandidates = props.library.factories.flatMap((sf) => {
+    if (sf.id === props.currentFactoryId) return [];
+    if (
+      props.currentFactoryId &&
+      wouldCreateCycle(props.currentFactoryId, sf.id, props.library.factories)
+    ) {
+      return [];
+    }
+    const f = deserializeFactory(sf, props.library);
+    if (!f) return [];
+    if (!f.allOutputs().some((p) => p.slug === part.slug)) return [];
+    if (
+      props.productionLine.assemblyLines.some(
+        (al) => al.recipe.slug === `factory:${sf.id}`,
+      )
+    ) {
+      return [];
+    }
+    return [{ sf, factory: f }];
+  });
+
   const [expanded, setExpanded] = useState<boolean>(
     props.productionLine.assemblyLines.length !== 1 ||
       !props.productionLine.autoCreated,
   );
 
-  const isExpanded =
-    props.forceExpanded != null ? props.forceExpanded : expanded;
+  const recipeIsSet = props.productionLine.assemblyLines.length > 0;
+  const isExpanded = props.forceExpanded === true || !recipeIsSet ? true : expanded;
   const [showRecipes, setShowRecipes] = useState<boolean>(false);
 
   function getProductionRateForRecipe(recipe: Recipe): number {
@@ -89,11 +126,35 @@ export default function ProductionLineComponent(
     setShowRecipes(false);
   }
 
-  function removeAssemblyLine(recipe: Recipe) {
+  function removeAssemblyLine(recipe: RecipeLike) {
     const index = props.productionLine.assemblyLines
       .map((assemblyLine) => assemblyLine.recipe.slug)
       .indexOf(recipe.slug);
     props.productionLine.assemblyLines.splice(index, 1);
+    updateProductionLine();
+  }
+
+  function addSupplierFactory(
+    id: string,
+    name: string,
+    supplierFactory: Factory,
+  ) {
+    props.factory.addSupplier(new FactoryRecipe(id, name, supplierFactory));
+    setShowSupplyPicker(false);
+  }
+
+  function addFactoryAssemblyLine(
+    id: string,
+    name: string,
+    nestedFactory: Factory,
+  ) {
+    const fr = new FactoryRecipe(id, name, nestedFactory);
+    const productionDeficit = props.productionLine.rate - actualProductionRate;
+    const qty = fr.getProduct(part.slug)?.quantity ?? 1;
+    props.productionLine.assemblyLines.push(
+      new AssemblyLineModel(fr, productionDeficit / qty, false),
+    );
+    setShowFactoryPicker(false);
     updateProductionLine();
   }
 
@@ -267,7 +328,8 @@ export default function ProductionLineComponent(
                   mainPart={part}
                   factory={props.factory}
                 />
-                {recipeList.length !== 1 ? (
+                {recipeList.length !== 1 ||
+                assemblyLine.recipe.isFactoryRecipe ? (
                   <Tooltip title="Remove recipe">
                     <span>
                       <Clickable
@@ -285,7 +347,7 @@ export default function ProductionLineComponent(
             );
           })}
           {hasMoreRecipes && !needMoreProduction && !showRecipes && (
-            <div>
+            <div className="flex flex-row items-center gap-x-2">
               <Clickable
                 onClick={splitRecipes}
                 className="flex flex-row items-center"
@@ -293,8 +355,56 @@ export default function ProductionLineComponent(
                 <AddIcon />
                 Add Recipe
               </Clickable>
+              <Clickable
+                onClick={() => setShowFactoryPicker(true)}
+                className="flex flex-row items-center"
+              >
+                <AddIcon />
+                Use Factory
+              </Clickable>
+              <Clickable
+                onClick={() => setShowSupplyPicker(true)}
+                className="flex flex-row items-center"
+              >
+                <AddIcon />
+                Supply from Factory
+              </Clickable>
             </div>
           )}
+          {!hasMoreRecipes && !needMoreProduction && !showRecipes && (
+            <div className="flex flex-row items-center gap-x-2">
+              <Clickable
+                onClick={() => setShowFactoryPicker(true)}
+                className="flex flex-row items-center"
+              >
+                <AddIcon />
+                Use Factory
+              </Clickable>
+              <Clickable
+                onClick={() => setShowSupplyPicker(true)}
+                className="flex flex-row items-center"
+              >
+                <AddIcon />
+                Supply from Factory
+              </Clickable>
+            </div>
+          )}
+          <FactoryPickerDialog
+            open={showFactoryPicker}
+            library={props.library}
+            currentFactoryId={props.currentFactoryId}
+            targetPartSlug={part.slug}
+            onPick={addFactoryAssemblyLine}
+            onClose={() => setShowFactoryPicker(false)}
+          />
+          <FactoryPickerDialog
+            open={showSupplyPicker}
+            library={props.library}
+            currentFactoryId={props.currentFactoryId}
+            targetPartSlug={part.slug}
+            onPick={addSupplierFactory}
+            onClose={() => setShowSupplyPicker(false)}
+          />
           {(needMoreProduction || showRecipes) &&
             recipeList.map((recipe) => {
               if (
@@ -316,6 +426,35 @@ export default function ProductionLineComponent(
                   onClick={() => addAssemblyLine(recipe)}
                   key={recipe.slug}
                 />
+              );
+            })}
+          {(needMoreProduction || showRecipes) &&
+            factoryCandidates.map(({ sf, factory: f }) => {
+              const fr = new FactoryRecipe(sf.id, sf.name, f);
+              const qty = fr.getProduct(part.slug)?.quantity ?? 1;
+              const instanceRate = -productionRateDiff / qty;
+              return (
+                <div
+                  key={sf.id}
+                  className={`sp-recipe-component flex flex-row grow items-center gap-x-2 p-2 ${clickableClass}${clickableHoverClass}`}
+                  onClick={() => addFactoryAssemblyLine(sf.id, sf.name, f)}
+                >
+                  {sf.icon ? (
+                    <Image src={sf.icon} alt={sf.name} width={64} height={64} />
+                  ) : (
+                    <div className="w-16 h-16 flex items-center justify-center text-gray-400 text-xs border border-gray-600 rounded">
+                      Factory
+                    </div>
+                  )}
+                  <span className="w-3xs font-medium">{sf.name}</span>
+                  <span className="text-sm text-gray-400">
+                    {displayNum(instanceRate)} instance
+                    {instanceRate !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-sm text-gray-400">
+                    → {displayNum(qty * instanceRate)}/min
+                  </span>
+                </div>
               );
             })}
         </div>
