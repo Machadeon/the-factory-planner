@@ -54,12 +54,12 @@ export interface Target {
 }
 
 /**
- * User-configurable settings for the auto-fill recipes feature. The
+ * User-configurable settings for the optimize recipes feature. The
  * recipe-selection algorithm that consumes these lives separately; this config
  * is the UI-facing state (see plan:auto-recipe-ui.md).
  */
-export interface AutoFillConfig {
-  /** Re-run auto-fill on every edit (vs only when the user clicks Run). */
+export interface RecipeOptimizerConfig {
+  /** Re-run optimizer on every edit (vs only when the user clicks Run). */
   eager: boolean;
   /** Optimization goal driving the LP objective. */
   objective: ScoringObjective;
@@ -75,7 +75,7 @@ export interface AutoFillConfig {
   defaultRecipesEnabled: boolean;
   /** Master toggle: alternate recipes selectable. */
   alternateRecipesEnabled: boolean;
-  /** Explicit list of building slugs enabled as auto-fill helpers (UI state). */
+  /** Explicit list of building slugs enabled as optimizer helpers (UI state). */
   buildingsEnabled: string[];
   /**
    * The exact set of recipe slugs the solver may use — the single source of
@@ -85,13 +85,13 @@ export interface AutoFillConfig {
   enabledRecipes: string[];
   /** Overwrite all production lines vs only fill gaps. */
   overwrite: boolean;
-  /** Whether rejecting a suggestion also removes the recipe from auto-fill. */
+  /** Whether rejecting a suggestion also removes the recipe from optimizer. */
   rejectPrompt: RejectPrompt;
 }
 
 export const MAX_GAME_PHASE = 5;
 
-export function defaultAutoFillConfig(): AutoFillConfig {
+export function defaultRecipeOptimizerConfig(): RecipeOptimizerConfig {
   return {
     eager: false,
     objective: "sinkPoints",
@@ -111,7 +111,10 @@ export function defaultAutoFillConfig(): AutoFillConfig {
 }
 
 /** Whether `slug` is in the solver's enabled-recipe set. */
-export function isRecipeEnabled(config: AutoFillConfig, slug: string): boolean {
+export function isRecipeEnabled(
+  config: RecipeOptimizerConfig,
+  slug: string,
+): boolean {
   return config.enabledRecipes.includes(slug);
 }
 
@@ -139,7 +142,7 @@ export function setRecipesEnabled(
  * still diverge from this until the next bulk action.
  */
 export function recipeMatchesFilters(
-  config: AutoFillConfig,
+  config: RecipeOptimizerConfig,
   recipe: Recipe,
 ): boolean {
   if (recipe.unlockPhase > config.phase) return false;
@@ -163,7 +166,7 @@ export default class Factory {
   update: () => void;
   solverError: string | null;
   constraints: PartConstraint[];
-  autoFill: AutoFillConfig;
+  optimizer: RecipeOptimizerConfig;
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
@@ -185,7 +188,7 @@ export default class Factory {
     this.supplierFactories = oldFactory?.supplierFactories || [];
     this.solverError = oldFactory?.solverError ?? null;
     this.constraints = oldFactory?.constraints ?? [];
-    this.autoFill = oldFactory?.autoFill ?? defaultAutoFillConfig();
+    this.optimizer = oldFactory?.optimizer ?? defaultRecipeOptimizerConfig();
 
     this.rateLookup = {};
     this._productionLineLookup = {};
@@ -273,18 +276,18 @@ export default class Factory {
   }
 
   /**
-   * Auto-fill production lines to satisfy requested outputs from available
-   * inputs, choosing recipes per {@link autoFill}. The LP-based recipe-selection
+   * Optimize production lines to satisfy requested outputs from available
+   * inputs, choosing recipes per {@link optimizer}. The LP-based recipe-selection
    * algorithm is implemented separately (see plan:auto-recipe-ui.md); this is
    * the entry point the UI invokes.
    */
-  autoFillProductionLines() {
+  optimizeRecipes() {
     // TODO: implement LP-based recipe selection. No-op for now so the UI wiring
     // (Run button, eager mode) is in place ahead of the algorithm.
     //
     // Contract for the future algorithm: call targetConstraints() to get the
     // declared goals, expand LP variables over recipeLookup filtered by
-    // autoFill.enabledRecipes (respecting availableParts as free inputs, phase,
+    // optimizer.enabledRecipes (respecting availableParts as free inputs, phase,
     // and objective), emit { equal: rate } for each fixed target and
     // opType "max" for each maximize target, materialize the chosen recipes into
     // ProductionLine/AssemblyLine objects, then call this.update().
@@ -300,7 +303,7 @@ export default class Factory {
   targetConstraints(): { fixed: Map<string, number>; maximize: Set<string> } {
     const fixed = new Map<string, number>();
     const maximize = new Set<string>();
-    for (const t of this.autoFill.targets) {
+    for (const t of this.optimizer.targets) {
       if (t.maximize) maximize.add(t.partSlug);
       else if (t.rate !== undefined && t.rate > 0)
         fixed.set(t.partSlug, t.rate);
@@ -310,7 +313,7 @@ export default class Factory {
 
   /** True when rejecting a suggestion should prompt the user. */
   shouldPromptReject(): boolean {
-    return this.autoFill.rejectPrompt === "ask";
+    return this.optimizer.rejectPrompt === "ask";
   }
 
   /**
@@ -323,9 +326,9 @@ export default class Factory {
     choice: "never" | "no" | "yes" | "always",
   ) {
     if (choice === "never") {
-      this.autoFill.rejectPrompt = "never";
+      this.optimizer.rejectPrompt = "never";
     } else if (choice === "always") {
-      this.autoFill.rejectPrompt = "always";
+      this.optimizer.rejectPrompt = "always";
       this._denyRecipes(recipeSlugs);
     } else if (choice === "yes") {
       this._denyRecipes(recipeSlugs);
@@ -337,14 +340,14 @@ export default class Factory {
    * a deny override, "never" does nothing).
    */
   applyRejectSilent(recipeSlugs: string[]) {
-    if (this.autoFill.rejectPrompt === "always") {
+    if (this.optimizer.rejectPrompt === "always") {
       this._denyRecipes(recipeSlugs);
     }
   }
 
   _denyRecipes(recipeSlugs: string[]) {
     const deny = new Set(recipeSlugs.filter(Boolean));
-    this.autoFill.enabledRecipes = this.autoFill.enabledRecipes.filter(
+    this.optimizer.enabledRecipes = this.optimizer.enabledRecipes.filter(
       (s) => !deny.has(s),
     );
   }

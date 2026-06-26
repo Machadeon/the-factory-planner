@@ -425,4 +425,4 @@ The following items are work in addition to the plans above.
 
 - Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
 - Constraints dialog should show global defaults
-- Source factories section in AutoFillDialog should match "Add available part" style (button that turns into autocomplete)
+- Source factories section in RecipeOptimizerOptionsDialog should match "Add available part" style (button that turns into autocomplete)

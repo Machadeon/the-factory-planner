@@ -32,7 +32,7 @@ describe("ProductionTargetsBar", () => {
   it("adds a power target with a fixed rate and stores it on the model", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    factory.autoFill.targets = [{ partSlug: "power" }];
+    factory.optimizer.targets = [{ partSlug: "power" }];
 
     render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
 
@@ -43,7 +43,7 @@ describe("ProductionTargetsBar", () => {
     await user.type(rateField, "100000");
     await user.tab();
 
-    expect(factory.autoFill.targets).toEqual([
+    expect(factory.optimizer.targets).toEqual([
       { partSlug: "power", rate: 100000, maximize: false },
     ]);
   });
@@ -51,7 +51,7 @@ describe("ProductionTargetsBar", () => {
   it("Solve runs the solver", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    factory.autoFill.targets = [{ partSlug: "power", rate: 100000 }];
+    factory.optimizer.targets = [{ partSlug: "power", rate: 100000 }];
     const solveSpy = vi.spyOn(factory, "autoCalculateRates");
 
     render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);

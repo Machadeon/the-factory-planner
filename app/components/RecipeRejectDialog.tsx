@@ -24,12 +24,12 @@ export default function RecipeRejectDialog({
 }: RecipeRejectDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Remove from auto-fill suggestions?</DialogTitle>
+      <DialogTitle>Remove from optimizer recipe list?</DialogTitle>
       <DialogContent>
         <p className="text-sm text-gray-400">
           Also remove{" "}
           {recipeName ? <strong>{recipeName}</strong> : "this recipe"} from the
-          recipes the auto-filler may suggest?
+          recipes the optimizer may suggest?
         </p>
         <ul className="text-xs text-gray-400 mt-2 list-disc list-inside">
           <li>

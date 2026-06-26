@@ -38,7 +38,7 @@ export default class AssemblyLine {
   allowRemainder: boolean;
 
   /**
-   * Whether this recipe choice was auto-suggested by the auto-filler. Tracked
+   * Whether this recipe choice was auto-suggested by the recipe optimizer. Tracked
    * independently of the production line's autoCreated flag so a suggested
    * recipe on an otherwise-permanent line can be accepted/rejected on its own.
    */

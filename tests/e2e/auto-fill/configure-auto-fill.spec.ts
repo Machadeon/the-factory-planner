@@ -1,8 +1,8 @@
 // spec: plan:auto-recipe-ui.md
 // seed: tests/e2e/seed.spec.ts
 //
-// Verifies the Auto-fill dialog: changing the objective + eager toggle and
-// applying persists to factory.autoFill (reflected in the sidebar summary and
+// Verifies the recipe optimizer options dialog: changing the objective + eager toggle and
+// applying persists to factory.optimizer (reflected in the sidebar summary and
 // retained across a reload).
 
 import { expect, type Page, test } from "@playwright/test";
@@ -19,7 +19,7 @@ async function seedWithIronPlate(page: Page) {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 }
 
-test.describe("Auto-fill Dialog", () => {
+test.describe("Recipe Optimizer Options Dialog", () => {
   test("configuring objective and eager persists across reload", async ({
     page,
   }) => {
@@ -29,8 +29,10 @@ test.describe("Auto-fill Dialog", () => {
     await expect(page.getByText("Max sink points · fill gaps")).toBeVisible();
 
     // Open the dialog.
-    await page.getByText("Configure auto-fill").click();
-    const dialog = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+    await page.getByText("Configure").click();
+    const dialog = page.getByRole("dialog", {
+      name: "Recipe Optimizer Options",
+    });
     await expect(dialog).toBeVisible();
 
     // Switch objective to Minimum power consumption and enable eager.
@@ -52,8 +54,10 @@ test.describe("Auto-fill Dialog", () => {
     await expect(page.getByText("Min power · eager · fill gaps")).toBeVisible();
 
     // Reopening the dialog shows the retained values.
-    await page.getByText("Configure auto-fill").click();
-    const reopened = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+    await page.getByText("Configure").click();
+    const reopened = page.getByRole("dialog", {
+      name: "Recipe Optimizer Options",
+    });
     await expect(
       reopened.getByRole("radio", { name: "Minimum power consumption" }),
     ).toBeChecked();
@@ -69,8 +73,10 @@ test.describe("Auto-fill Dialog", () => {
   }) => {
     await seedWithIronPlate(page);
 
-    await page.getByText("Configure auto-fill").click();
-    const dialog = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+    await page.getByText("Configure").click();
+    const dialog = page.getByRole("dialog", {
+      name: "Recipe Optimizer Options",
+    });
     await expect(dialog).toBeVisible();
 
     // Disable the Constructor building.
@@ -87,8 +93,10 @@ test.describe("Auto-fill Dialog", () => {
     await expect(dialog).not.toBeVisible();
 
     await page.reload();
-    await page.getByText("Configure auto-fill").click();
-    const reopened = page.getByRole("dialog", { name: "Auto-fill Recipes" });
+    await page.getByText("Configure").click();
+    const reopened = page.getByRole("dialog", {
+      name: "Recipe Optimizer Options",
+    });
 
     await expect(
       reopened.getByRole("switch", { name: "Constructor Constructor" }),

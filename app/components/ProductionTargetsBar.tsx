@@ -13,9 +13,9 @@ import type Factory from "../models/factory";
 import type { Target } from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import { partSlugLookup } from "../models/library";
-import AutoFillDialog from "./AutoFillDialog";
 import Clickable from "./Clickable";
 import PartSelector from "./PartSelector";
+import RecipeOptimizerOptionsDialog from "./RecipeOptimizerOptionsDialog";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface ProductionTargetsBarProps {
@@ -30,12 +30,13 @@ export default function ProductionTargetsBar({
   currentFactoryId,
 }: ProductionTargetsBarProps) {
   const [showPartSelector, setShowPartSelector] = useState(false);
-  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [showRecipeOptimizerDialog, setShowRecipeOptimizerDialog] =
+    useState(false);
 
-  const targets = factory.autoFill.targets;
+  const targets = factory.optimizer.targets;
 
   function setTargets(next: Target[]) {
-    factory.autoFill.targets = next;
+    factory.optimizer.targets = next;
     factory.update();
   }
 
@@ -67,7 +68,7 @@ export default function ProductionTargetsBar({
   }
 
   function solve() {
-    factory.autoFillProductionLines();
+    factory.optimizeRecipes();
     factory.autoCalculateRates();
   }
 
@@ -76,7 +77,7 @@ export default function ProductionTargetsBar({
       <div className="flex flex-row items-center mb-2">
         <span className="text-xl grow">Production Targets</span>
         <Clickable
-          onClick={() => setShowAutoFillDialog(true)}
+          onClick={() => setShowRecipeOptimizerDialog(true)}
           className="flex flex-row items-center p-1"
         >
           <TuneIcon fontSize="small" />
@@ -161,6 +162,7 @@ export default function ProductionTargetsBar({
             <PartSelector
               existingParts={targets.map((t) => t.partSlug)}
               onPartSelected={(part) => addTarget(part.slug)}
+              onBlur={() => setShowPartSelector(false)}
             />
           </div>
         ) : (
@@ -181,9 +183,9 @@ export default function ProductionTargetsBar({
         </Button>
       </div>
 
-      <AutoFillDialog
-        open={showAutoFillDialog}
-        onClose={() => setShowAutoFillDialog(false)}
+      <RecipeOptimizerOptionsDialog
+        open={showRecipeOptimizerDialog}
+        onClose={() => setShowRecipeOptimizerDialog(false)}
         factory={factory}
         onApply={() => {}}
         library={library}

@@ -24,11 +24,11 @@ import {
 } from "../models/factory-storage";
 import { partSlugLookup } from "../models/library";
 import { displayNum } from "../utils";
-import AutoFillDialog from "./AutoFillDialog";
 import Clickable from "./Clickable";
 import ConstraintsDialog from "./ConstraintsDialog";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
+import RecipeOptimizerOptionsDialog from "./RecipeOptimizerOptionsDialog";
 
 const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   sinkPoints: "Max sink points",
@@ -60,8 +60,9 @@ export default function FactoryOverviewComponent({
   const [showSuppliers, setShowSuppliers] = useState(true);
   const [showConstraints, setShowConstraints] = useState(true);
   const [showConstraintsDialog, setShowConstraintsDialog] = useState(false);
-  const [showAutoFill, setShowAutoFill] = useState(true);
-  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [showRecipeOptimizer, setShowRecipeOptimizer] = useState(true);
+  const [showRecipeOptimizerDialog, setShowRecipeOptimizerDialog] =
+    useState(false);
   const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
   const suggestedLineCount = factory.productionLines.filter(
@@ -459,20 +460,24 @@ export default function FactoryOverviewComponent({
       />
       <HorizontalDivider />
       <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">Auto-fill</span>
+        <span className="text-lg grow">Recipe Optimizer</span>
         <Clickable
-          onClick={() => setShowAutoFill(!showAutoFill)}
+          onClick={() => setShowRecipeOptimizer(!showRecipeOptimizer)}
           className="inline"
         >
-          {showAutoFill ? <VisibilityOffIcon /> : <VisibilityIcon />}
+          {showRecipeOptimizer ? <VisibilityOffIcon /> : <VisibilityIcon />}
         </Clickable>
       </div>
-      <div style={{ contentVisibility: showAutoFill ? "visible" : "hidden" }}>
+      <div
+        style={{
+          contentVisibility: showRecipeOptimizer ? "visible" : "hidden",
+        }}
+      >
         <p className="text-sm text-gray-400 mb-1">
-          {OBJECTIVE_LABELS[factory.autoFill.objective]}
-          {factory.autoFill.eager ? " · eager" : ""} ·{" "}
-          {factory.autoFill.overwrite ? "overwrite" : "fill gaps"} · phase{" "}
-          {factory.autoFill.phase}
+          {OBJECTIVE_LABELS[factory.optimizer.objective]}
+          {factory.optimizer.eager ? " · eager" : ""} ·{" "}
+          {factory.optimizer.overwrite ? "overwrite" : "fill gaps"} · phase{" "}
+          {factory.optimizer.phase}
         </p>
         {suggestionCount > 0 && (
           <p className="text-sm text-gray-400 mb-1">
@@ -482,21 +487,21 @@ export default function FactoryOverviewComponent({
         )}
         <div className="flex flex-row items-center gap-x-2">
           <Clickable
-            onClick={() => setShowAutoFillDialog(true)}
+            onClick={() => setShowRecipeOptimizerDialog(true)}
             className="flex flex-row items-center p-1"
           >
             <AutoFixHighIcon fontSize="small" />
-            <span className="text-sm ml-1">Configure auto-fill</span>
+            <span className="text-sm ml-1">Configure</span>
           </Clickable>
           <Clickable
             onClick={() => {
-              factory.autoFillProductionLines();
+              factory.optimizeRecipes();
               factory.update();
             }}
             className="flex flex-row items-center p-1"
           >
             <PlayArrowIcon fontSize="small" />
-            <span className="text-sm ml-1">Run auto-fill</span>
+            <span className="text-sm ml-1">Optimize recipes</span>
           </Clickable>
         </div>
         {suggestionCount > 0 && (
@@ -521,9 +526,9 @@ export default function FactoryOverviewComponent({
           </div>
         )}
       </div>
-      <AutoFillDialog
-        open={showAutoFillDialog}
-        onClose={() => setShowAutoFillDialog(false)}
+      <RecipeOptimizerOptionsDialog
+        open={showRecipeOptimizerDialog}
+        onClose={() => setShowRecipeOptimizerDialog(false)}
         factory={factory}
         onApply={() => {}}
         library={library}

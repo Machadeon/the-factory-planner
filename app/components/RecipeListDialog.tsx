@@ -99,7 +99,7 @@ export default function RecipeListDialog({
       <DialogTitle>Manage recipes</DialogTitle>
       <DialogContent>
         <p className="text-xs text-gray-400 mb-2">
-          Only enabled recipes are used by auto-fill.
+          Only enabled recipes are considered by the optimizer.
         </p>
         <TextField
           size="small"

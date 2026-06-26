@@ -8,7 +8,7 @@ points, power, buildings, etc.) is the core optimization challenge. The
 auto-fill production lines between desired products and raw resources.
 
 This plan covers **only the UI surface**. The LP objective construction,
-recipe-selection algorithm, and `autoFillProductionLines()` solver logic are
+recipe-selection algorithm, and `optimizeProductionLines()` solver logic are
 **out of scope** — handled separately. Here we define the controls, dialog, and
 indicators the user interacts with, matching existing UI conventions so the
 feature feels native.
@@ -56,10 +56,10 @@ Decisions locked with the user:
 
 ## Model touch-points (UI-facing fields only; algorithm separate)
 
-- `app/models/factory.tsx` — add `factory.autoFill` config (mirror the
+- `app/models/factory.tsx` — add `factory.optimizer` config (mirror the
   `constraints` field pattern, `:42`):
   ```ts
-  autoFill: {
+  optimizer: {
     eager: boolean;                 // re-run on every edit; default false
     objective: ScoringObjective;    // "sinkPoints"|"power"|"buildings"|"inputValue"; default "sinkPoints"
     availableParts: string[];       // part slugs preferred as already-available
@@ -77,7 +77,7 @@ Decisions locked with the user:
   `"Alternate: "` name prefix (the same prefix stripped in display). Derive an
   `isAlternate` helper on `Recipe` (prefix check, or a data flag if present in
   `data.json`) so the two master toggles can partition recipes.
-- Serialization: add optional `autoFill?` to `app/models/factory-storage.ts`
+- Serialization: add optional `optimizer?` to `app/models/factory-storage.ts`
   next to `constraints` (`:36`, write `:90-91`, restore `:137,:223`).
 - Recipe provenance:
   - `ProductionLine.autoCreated` (`production-line.tsx:29`) — already exists,
@@ -108,8 +108,8 @@ Add after the Constraints block (after `:392`), built like Constraints
   of available parts + source factories, phase, keep/overwrite, and suggested
   count (e.g. "3 suggested recipes").
 - Actions row (`Clickable` + icon, like "Edit constraints" `:379-385`):
-  - `AutoFixHighIcon` "Configure auto-fill" → opens `AutoFillDialog`.
-  - `PlayArrowIcon` "Run auto-fill" → `factory.autoFillProductionLines()` then
+  - `AutoFixHighIcon` "Configure auto-fill" → opens `RecipeOptimizerOptionsDialog`.
+  - `PlayArrowIcon` "Run auto-fill" → `factory.optimizeProductionLines()` then
     re-render. (Always available; eager just additionally runs it on edits.)
 - **Accept all / Reject all** — when suggestions exist, render below the actions
   row as **full-width MUI `Button`s** (`fullWidth` + `DoneAllIcon`/`ClearAllIcon`
@@ -120,14 +120,14 @@ Add after the Constraints block (after `:392`), built like Constraints
   `factory.update()`. Reject all does a single bulk confirm (not the per-recipe
   4-option prompt) but still honors `rejectPrompt === "always"` (add deny
   overrides for the removed recipes).
-- Render `<AutoFillDialog open onClose factory onApply />` controlled by a new
-  `showAutoFillDialog` `useState` (mirror `showConstraintsDialog`).
+- Render `<RecipeOptimizerOptionsDialog open onClose factory onApply />` controlled by a new
+  `showRecipeOptimizerOptionsDialog` `useState` (mirror `showConstraintsDialog`).
 
-### 2. `AutoFillDialog.tsx` (new) — `app/components/AutoFillDialog.tsx`
+### 2. `RecipeOptimizerOptionsDialog.tsx` (new) — `app/components/RecipeOptimizerOptionsDialog.tsx`
 
-Copy `ConstraintsDialog.tsx`. Local state seeded from `factory.autoFill`,
+Copy `ConstraintsDialog.tsx`. Local state seeded from `factory.optimizer`,
 re-synced on `open` (the `useEffect` at `ConstraintsDialog.tsx:42-47`).
-`handleApply` writes `factory.autoFill = config; factory.autoCalculateRates();`
+`handleApply` writes `factory.optimizer = config; factory.autoCalculateRates();`
 then `onApply()` + `onClose()`. `handleClose` discards local state.
 
 `DialogContent` sections, separated by `HorizontalDivider`:
@@ -197,7 +197,7 @@ Optional third text `Button` "Apply & Run".
 "Reject all"):** when a user rejects a suggested recipe, decide whether to also
 remove it from the auto-filler's available recipes (a deny `recipeOverride`):
 
-- If `factory.autoFill.rejectPrompt === "ask"`, open a small MUI `Dialog` —
+- If `factory.optimizer.rejectPrompt === "ask"`, open a small MUI `Dialog` —
   "Remove this recipe from auto-fill suggestions?" — with four actions:
   - **Never** → set `rejectPrompt = "never"`, do **not** add an override, then
     reject. (Future rejects never remove, no prompt.)
@@ -211,7 +211,7 @@ remove it from the auto-filler's available recipes (a deny `recipeOverride`):
 
 This is a 4-button confirm `Dialog` (MUI `Dialog` + `DialogActions` with four
 `Button`s; reuse the inline-confirm-dialog pattern from
-`FactoryComponent.tsx:646`). `rejectPrompt` is part of `autoFill` config and is
+`FactoryComponent.tsx:646`). `rejectPrompt` is part of `optimizer` config and is
 persisted.
 
 For any item with `autoCreated === true`:
@@ -231,7 +231,7 @@ For any item with `autoCreated === true`:
 
 ## Out of scope (handled elsewhere)
 
-- `autoFillProductionLines()` / objective + variable expansion over
+- `optimizeProductionLines()` / objective + variable expansion over
   `recipeLookup`, raw-resource limits, recycled rubber/plastic loop exclusion.
 - Sink-point virtual scoring, power/space/point-value heuristics, requirement
   priority ordering.
@@ -244,10 +244,10 @@ For any item with `autoCreated === true`:
 1. `make` / `npm run dev`, open the app.
 2. Overview shows the **Auto-fill** section under Constraints; show/hide works;
    summary reflects config; Accept all / Reject all appear only with suggestions.
-3. "Configure auto-fill" opens `AutoFillDialog`. Verify: eager switch, objective
+3. "Configure auto-fill" opens `RecipeOptimizerOptionsDialog`. Verify: eager switch, objective
    radio, phase select + per-recipe override toggles, keep/overwrite, part
    availability add/remove, and source-factory add/remove via FactoryPickerDialog.
-   Cancel discards; Apply persists to `factory.autoFill`.
+   Cancel discards; Apply persists to `factory.optimizer`.
 4. Reload after save → config restored (`factory-storage.ts` round-trip).
 5. With suggested lines present: "Suggested" chip + Accept/Reject render at both
    production-line and assembly-line level; Accept clears the chip (flips
@@ -261,12 +261,12 @@ For any item with `autoCreated === true`:
 
 ## Revision 2 — feedback refinements
 
-1. **Available parts carry a rate.** Change `AutoFillConfig.availableParts` from
+1. **Available parts carry a rate.** Change `RecipeOptimizerConfig.availableParts` from
    `string[]` to `{ partSlug: string; rate?: number }[]`. Dialog rows add a
    `TextCalculatorField` "Available /min" (`allowClear`) next to each part.
-   `autoFill` is new/unreleased so no storage migration is needed, but
+   `optimizer` is new/unreleased so no storage migration is needed, but
    `deserializeFactory` should tolerate the old `string` shape defensively.
-2. **Wider dialog.** `AutoFillDialog` `maxWidth="sm"` → `"md"` so a 6-ingredient
+2. **Wider dialog.** `RecipeOptimizerOptionsDialog` `maxWidth="sm"` → `"md"` so a 6-ingredient
    recipe's inputs→outputs fit on one `RecipeOverrideRow` line (keep the row
    `flex-wrap` as a fallback).
 3. **More vertical spacing.** Add breathing room (e.g. `mt-4`/`mb-2` on section
@@ -280,7 +280,7 @@ For any item with `autoCreated === true`:
    default). Active-override rows become clickable to flip allow/deny, keeping
    the delete affordance.
 5. **Per-building enable/disable.** Add `buildingOverrides: Record<string,
-   boolean>` to `AutoFillConfig`. New "Buildings" section lists manufacturing
+   boolean>` to `RecipeOptimizerConfig`. New "Buildings" section lists manufacturing
    buildings (`buildings` from library) each with a `Switch` (default on);
    disabling sets `buildingOverrides[slug] = false`. Effective-recipe precedence
    in `isRecipeAllowed`: per-recipe override → building override → default/
@@ -288,7 +288,7 @@ For any item with `autoCreated === true`:
    per-recipe override re-allows.)
 
 Files: `app/models/factory.tsx` (config shape + default), `factory-storage.ts`
-(tolerate old availableParts), `app/components/AutoFillDialog.tsx`, new
+(tolerate old availableParts), `app/components/RecipeOptimizerOptionsDialog.tsx`, new
 `app/components/RecipeSelector.tsx`. Verify: existing auto-fill e2e still passes;
 manually confirm 6-ingredient row fits, available-part rate persists, building
 toggle hides a building's recipes from the override search results' effective
@@ -314,12 +314,12 @@ Two principles:
 
 ### Model (`app/models/factory.tsx`)
 
-- `AutoFillConfig`: **removed** `recipeOverrides`; **replaced** `buildingOverrides:
+- `RecipeOptimizerConfig`: **removed** `recipeOverrides`; **replaced** `buildingOverrides:
   Record<string,boolean>` (sparse diff) with **`buildingsEnabled: string[]`**
   (explicit list of enabled building slugs); **added** `enabledRecipes: string[]`
   (solver source of truth). Kept `phase`, `defaultRecipesEnabled`,
   `alternateRecipesEnabled` as persisted control state.
-- `defaultAutoFillConfig`: `buildingsEnabled` = all recipe-running building slugs;
+- `defaultRecipeOptimizerConfig`: `buildingsEnabled` = all recipe-running building slugs;
   `enabledRecipes` = all recipe slugs (start permissive). Imports `buildings` +
   `recipes` from `../models/library`.
 - New exported helpers: `isRecipeEnabled(config, slug)` and
@@ -330,9 +330,9 @@ Two principles:
 
 ### Storage (`app/models/factory-storage.ts`)
 
-No change needed — `normalizeAutoFill` already merges raw onto
-`defaultAutoFillConfig()` (`{ ...base, ...raw }`), so the new fields fall back to
-defaults when absent and the whole `autoFill` object is serialized as-is.
+No change needed — `normalizeRecipeOptimizer` already merges raw onto
+`defaultRecipeOptimizerConfig()` (`{ ...base, ...raw }`), so the new fields fall back to
+defaults when absent and the whole `optimizer` object is serialized as-is.
 
 ### Components
 
@@ -341,7 +341,7 @@ defaults when absent and the whole `autoFill` object is serialized as-is.
   alphabetical list in a `max-h-[60vh] overflow-y-auto` of `RecipeOverrideRow`s,
   each with `trailing={<Switch checked={enabledSet.has(slug)} .../>}`, **no
   `denied`/`onClick`**. `DialogActions`: single "Done".
-- **`AutoFillDialog.tsx`** — override section replaced with a "Recipes: N of M
+- **`RecipeOptimizerOptionsDialog.tsx`** — override section replaced with a "Recipes: N of M
   enabled" summary + `TuneIcon` "Manage recipes" `Clickable` opening
   `RecipeListDialog`; new `showRecipeList` state + `toggleRecipe` handler.
   `updatePhase`, `toggleCategory`, `toggleBuilding` rewritten to set their own

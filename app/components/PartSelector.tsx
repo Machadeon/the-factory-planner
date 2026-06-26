@@ -10,6 +10,7 @@ import Icon from "./Icon";
 interface PartSelectorProps {
   existingParts: string[];
   onPartSelected: (part: Part) => void;
+  [key: string]: unknown;
 }
 
 export default function PartSelector({
@@ -36,7 +37,9 @@ export default function PartSelector({
       {...other}
       openOnFocus
       options={partsOptions}
-      renderInput={(params) => <TextField {...params} label="Part" autoFocus />}
+      renderInput={(params) => (
+        <TextField {...params} label="Part" autoFocus size="small" />
+      )}
       renderOption={(params, option) => (
         <li {...params} key={params.key}>
           <Icon

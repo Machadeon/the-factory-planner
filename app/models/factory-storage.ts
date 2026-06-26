@@ -1,8 +1,8 @@
 import AssemblyLine from "./assembly-line";
 import Factory, {
-  type AutoFillConfig,
-  defaultAutoFillConfig,
+  defaultRecipeOptimizerConfig,
   type PartConstraint,
+  type RecipeOptimizerConfig,
 } from "./factory";
 import FactoryRecipe from "./factory-recipe";
 import { partSlugLookup, recipes } from "./library";
@@ -45,7 +45,7 @@ export interface SerializedFactory {
   productionLines: SerializedProductionLine[];
   supplierIds?: string[];
   constraints?: PartConstraint[];
-  autoFill?: AutoFillConfig;
+  optimizer?: RecipeOptimizerConfig;
   createdAt: string;
   updatedAt: string;
 }
@@ -144,7 +144,7 @@ export function serializeFactory(
     updatedAt: meta.updatedAt,
     constraints:
       factory.constraints.length > 0 ? factory.constraints : undefined,
-    autoFill: factory.autoFill,
+    optimizer: factory.optimizer,
     productionLines: factory.productionLines.map((pl) => ({
       partSlug: pl.part.slug,
       rate: pl.rate,
@@ -179,10 +179,12 @@ export function serializeFactory(
   };
 }
 
-// autoFill is unreleased, but tolerate an older availableParts shape (string[])
+// optimizer is unreleased, but tolerate an older availableParts shape (string[])
 // and missing fields by merging onto the current defaults.
-function normalizeAutoFill(raw: AutoFillConfig | undefined): AutoFillConfig {
-  const base = defaultAutoFillConfig();
+function normalizeRecipeOptimizer(
+  raw: RecipeOptimizerConfig | undefined,
+): RecipeOptimizerConfig {
+  const base = defaultRecipeOptimizerConfig();
   if (!raw) return base;
   const rawParts = (raw.availableParts ?? []) as unknown as (
     | string
@@ -207,7 +209,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
-  factory.autoFill = normalizeAutoFill(data.autoFill);
+  factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -321,7 +323,7 @@ export function deserializeFactory(
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
-  factory.autoFill = normalizeAutoFill(data.autoFill);
+  factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];

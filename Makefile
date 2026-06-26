@@ -21,3 +21,4 @@ run:
 	npm run start
 
 verify: format lint test
+	pre-commit run --all-files

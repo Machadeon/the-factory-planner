@@ -7,15 +7,15 @@ their desired product and raw resources.
 
 _This section is pulled out of [plan.md](plan.md#9-auto-production-line-filler)_
 
-**Files:** `app/models/factory.tsx`, new `app/components/AutoFillDialog.tsx`
+**Files:** `app/models/factory.tsx`, new `app/components/RecipeOptimizerOptionsDialog.tsx`
 
-- Add `autoFillProductionLines(config: AutoFillConfig)` to `Factory`. Config: `resourceLimits`, `targetPartSlugs`,
+- Add `optimizeProductionLines(config: RecipeOptimizerConfig)` to `Factory`. Config: `resourceLimits`, `targetPartSlugs`,
   `scoringWeights` (defaults to `sinkPoints`).
 - LP variables expand to all recipes in `recipeLookup`. Raw resource slugs get `≤ resourceLimits[slug]` constraints.
   Objective depends on user requirements.
 - After solving, instantiate `ProductionLine` + `AssemblyLine` objects from non-zero variables and replace
   `factory.productionLines` while adhering to user requirements.
-- UI: "Auto-fill" button in `FactoryComponent` opens `AutoFillDialog` with per-resource inputs (`TextCalculatorField`)
+- UI: "Auto-fill" button in `FactoryComponent` opens `RecipeOptimizerOptionsDialog` with per-resource inputs (`TextCalculatorField`)
   and a score-override table.
 
 Edge cases: exclude the recycled rubber/plastic circular loop (already detected in the current solver). Add a loading

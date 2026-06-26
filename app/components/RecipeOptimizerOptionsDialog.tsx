@@ -22,9 +22,9 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type Factory from "../models/factory";
 import {
-  type AutoFillConfig,
-  defaultAutoFillConfig,
+  defaultRecipeOptimizerConfig,
   MAX_GAME_PHASE,
+  type RecipeOptimizerConfig,
   recipeMatchesFilters,
   type ScoringObjective,
   setRecipesEnabled,
@@ -107,7 +107,7 @@ const recipeBuildingGroups = recipeBuildings
   )
   .sort((a, b) => (GROUP_ORDER[a.group] ?? 99) - (GROUP_ORDER[b.group] ?? 99));
 
-interface AutoFillDialogProps {
+interface RecipeOptimizerDialogProps {
   open: boolean;
   onClose: () => void;
   factory: Factory;
@@ -116,31 +116,33 @@ interface AutoFillDialogProps {
   currentFactoryId?: string | null;
 }
 
-export default function AutoFillDialog({
+export default function RecipeOptimizerOptionsDialog({
   open,
   onClose,
   factory,
   onApply,
   library,
   currentFactoryId,
-}: AutoFillDialogProps) {
-  const [config, setConfig] = useState<AutoFillConfig>(() => ({
-    ...defaultAutoFillConfig(),
-    ...factory.autoFill,
+}: RecipeOptimizerDialogProps) {
+  const [config, setConfig] = useState<RecipeOptimizerConfig>(() => ({
+    ...defaultRecipeOptimizerConfig(),
+    ...factory.optimizer,
   }));
   const [showPartSelector, setShowPartSelector] = useState(false);
+  const [showFactorySelector, setShowFactorySelector] = useState(false);
   const [showRecipeList, setShowRecipeList] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only when dialog opens, not on every factory.autoFill mutation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only when dialog opens, not on every factory.optimizer mutation
   useEffect(() => {
     if (open) {
-      setConfig({ ...defaultAutoFillConfig(), ...factory.autoFill });
+      setConfig({ ...defaultRecipeOptimizerConfig(), ...factory.optimizer });
       setShowPartSelector(false);
+      setShowFactorySelector(false);
       setShowRecipeList(false);
     }
   }, [open]);
 
-  function update(patch: Partial<AutoFillConfig>) {
+  function update(patch: Partial<RecipeOptimizerConfig>) {
     setConfig((prev) => ({ ...prev, ...patch }));
   }
 
@@ -249,7 +251,7 @@ export default function AutoFillDialog({
   }
 
   function handleApply() {
-    factory.autoFill = config;
+    factory.optimizer = config;
     factory.autoCalculateRates();
     onApply();
     onClose();
@@ -281,7 +283,7 @@ export default function AutoFillDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Auto-fill Recipes</DialogTitle>
+      <DialogTitle>Recipe Optimizer Options</DialogTitle>
       <DialogContent>
         {/* Run mode */}
         <FormControlLabel
@@ -300,7 +302,7 @@ export default function AutoFillDialog({
         <HorizontalDivider />
 
         {/* Scoring objective */}
-        <p className="text-md mt-4 mb-1">Optimize for</p>
+        <p className="text-lg mt-2 mb-1">Optimize for</p>
         <RadioGroup
           value={config.objective}
           onChange={(_, v) => update({ objective: v as ScoringObjective })}
@@ -333,7 +335,7 @@ export default function AutoFillDialog({
 
         {/* Keep vs overwrite */}
         <div className="text-md mt-2">
-          Should auto-fill replace existing recipes?
+          Should the optimizer replace existing recipes?
         </div>
         <FormControlLabel
           control={
@@ -352,6 +354,11 @@ export default function AutoFillDialog({
         <HorizontalDivider />
 
         {/* Tech / game phase filter */}
+        <div className="flex flex-row text-lg">Recipe Filters</div>
+        <div className="text-sm text-gray-400 mb-2">
+          Filter recipes by game phase and other controls. Changing game phase
+          will reset all recipe selections.
+        </div>
         <div className="flex flex-row items-center gap-x-2 mt-2 mb-2">
           <span className="text-md w-28 shrink-0">Game phase</span>
           <Select
@@ -367,10 +374,6 @@ export default function AutoFillDialog({
               ),
             )}
           </Select>
-        </div>
-        <div className="text-sm text-gray-400 mb-2">
-          Filter recipes and buildings by game phase. You can further customize
-          your recipe selection below.
         </div>
         <FormControlLabel
           control={
@@ -430,11 +433,8 @@ export default function AutoFillDialog({
           ))}
         </div>
 
-        <HorizontalDivider />
-
         {/* Recipe management */}
-        <p className="text-md mt-4 mb-1">Recipes</p>
-        <p className="text-sm text-gray-400 mb-1">
+        <p className="text-sm text-gray-400 mb-1 mt-4">
           {config.enabledRecipes.length} of {recipes.length} recipes enabled.
           The controls above are helpers; fine-tune individual recipes here.
         </p>
@@ -494,6 +494,7 @@ export default function AutoFillDialog({
             <PartSelector
               existingParts={partExclusions}
               onPartSelected={(part) => addAvailablePart(part.slug)}
+              onBlur={() => setShowPartSelector(false)}
             />
           </div>
         ) : (
@@ -545,25 +546,42 @@ export default function AutoFillDialog({
             ))}
           </div>
         ))}
-        {library && factoryOptions.length > 0 && (
-          <div className="mt-2">
-            <Autocomplete
-              options={factoryOptions}
-              openOnFocus
-              blurOnSelect
-              value={null}
-              onChange={(_, option) => option && addSourceFactory(option.id)}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  size="small"
-                  label="Add source factory"
-                />
-              )}
-            />
-          </div>
-        )}
+        {library &&
+          factoryOptions.length > 0 &&
+          (showFactorySelector ? (
+            <div className="mt-2">
+              <Autocomplete
+                options={factoryOptions}
+                openOnFocus
+                blurOnSelect
+                value={null}
+                onChange={(_, option) => {
+                  if (option) {
+                    addSourceFactory(option.id);
+                    setShowFactorySelector(false);
+                  }
+                }}
+                onBlur={() => setShowFactorySelector(false)}
+                isOptionEqualToValue={(o, v) => o.id === v.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    size="small"
+                    label="Add source factory"
+                    autoFocus
+                  />
+                )}
+              />
+            </div>
+          ) : (
+            <Clickable
+              onClick={() => setShowFactorySelector(true)}
+              className="flex flex-row items-center p-1 mt-1"
+            >
+              <AddIcon fontSize="small" />
+              <span className="text-sm ml-1">Add source factory</span>
+            </Clickable>
+          ))}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>

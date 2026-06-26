@@ -817,6 +817,7 @@ export default function FactoryComponent() {
                   (p) => p.part.slug,
                 )}
                 onPartSelected={addProductionLine}
+                onBlur={() => setAddingProduct(false)}
               />
             ) : (
               <Clickable

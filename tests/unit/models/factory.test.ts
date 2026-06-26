@@ -573,7 +573,7 @@ describe("serialization — constraints + maximizeOutput", () => {
 describe("targetConstraints()", () => {
   it("maps fixed-rate targets to the fixed map", () => {
     const factory = makeFactory();
-    factory.autoFill.targets = [{ partSlug: "iron-plate", rate: 20 }];
+    factory.optimizer.targets = [{ partSlug: "iron-plate", rate: 20 }];
     const { fixed, maximize } = factory.targetConstraints();
     expect(fixed.get("iron-plate")).toBe(20);
     expect(maximize.size).toBe(0);
@@ -581,7 +581,7 @@ describe("targetConstraints()", () => {
 
   it("maps maximize targets to the maximize set and ignores their rate", () => {
     const factory = makeFactory();
-    factory.autoFill.targets = [
+    factory.optimizer.targets = [
       { partSlug: "iron-plate", rate: 20, maximize: true },
     ];
     const { fixed, maximize } = factory.targetConstraints();
@@ -591,7 +591,7 @@ describe("targetConstraints()", () => {
 
   it("ignores fixed targets with missing or non-positive rate", () => {
     const factory = makeFactory();
-    factory.autoFill.targets = [
+    factory.optimizer.targets = [
       { partSlug: "iron-plate" },
       { partSlug: "iron-rod", rate: 0 },
     ];
@@ -611,7 +611,7 @@ describe("autoCalculateRates() — targets", () => {
       0, // no per-line output target
     );
     pl.autoCalculateRate = true;
-    factory.autoFill.targets = [{ partSlug: "iron-ingot", rate: 30 }];
+    factory.optimizer.targets = [{ partSlug: "iron-ingot", rate: 30 }];
 
     factory.autoCalculateRates();
 
@@ -629,7 +629,7 @@ describe("autoCalculateRates() — targets", () => {
       30, // per-line target = 30
     );
     pl.autoCalculateRate = true;
-    factory.autoFill.targets = [{ partSlug: "iron-ingot", rate: 10 }];
+    factory.optimizer.targets = [{ partSlug: "iron-ingot", rate: 10 }];
 
     factory.autoCalculateRates();
 
@@ -638,7 +638,7 @@ describe("autoCalculateRates() — targets", () => {
   });
 });
 
-describe("serialization — autoFill targets", () => {
+describe("serialization — optimizer targets", () => {
   const meta = {
     id: "test-id",
     name: "Test",
@@ -647,15 +647,15 @@ describe("serialization — autoFill targets", () => {
     updatedAt: new Date().toISOString(),
   };
 
-  it("round-trips autoFill.targets", () => {
+  it("round-trips optimizer.targets", () => {
     const factory = makeFactory();
-    factory.autoFill.targets = [
+    factory.optimizer.targets = [
       { partSlug: "power", rate: 100000 },
       { partSlug: "iron-plate", maximize: true },
     ];
 
     const restored = deserializeFactory(serializeFactory(factory, meta));
-    expect(restored?.autoFill.targets).toEqual([
+    expect(restored?.optimizer.targets).toEqual([
       { partSlug: "power", rate: 100000 },
       { partSlug: "iron-plate", maximize: true },
     ]);
@@ -664,10 +664,10 @@ describe("serialization — autoFill targets", () => {
   it("defaults targets to [] for legacy saves without the field", () => {
     const factory = makeFactory();
     const serialized = serializeFactory(factory, meta);
-    // Simulate old save data predating autoFill.targets
-    delete (serialized.autoFill as { targets?: unknown }).targets;
+    // Simulate old save data predating optimizer.targets
+    delete (serialized.optimizer as { targets?: unknown }).targets;
 
     const restored = deserializeFactory(serialized);
-    expect(restored?.autoFill.targets).toEqual([]);
+    expect(restored?.optimizer.targets).toEqual([]);
   });
 });
