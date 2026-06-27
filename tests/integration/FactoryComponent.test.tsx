@@ -130,21 +130,14 @@ describe("FactoryComponent", () => {
     expect(screen.getAllByText("Iron Rod").length).toBeGreaterThan(0);
   });
 
-  // Regression test for: bugs/inconsistent-warning-visibility.md
-  // The solver warning was not re-appearing after dismissal when a recalculation
-  // produced the same error text as the previously-dismissed alert.
-  //
-  // A production line added with no recipe is immediately infeasible when the LP
-  // runs (no variables can satisfy the output target). We use the output rate field
-  // to drive two different solver errors and then cycle back to the first one —
-  // that final cycle is the regression scenario.
-  it("solver warning reappears after dismiss when solverError returns to a previously-dismissed value", async () => {
+  // The solver warning appears whenever the LP is infeasible. It is not dismissible —
+  // it remains visible as long as solverError is non-null so users always see the
+  // current solver state.
+  it("solver warning appears and persists whenever the LP is infeasible", async () => {
     const user = userEvent.setup();
     render(<FactoryComponent />);
 
-    // Add Iron Plate (no recipe). The first production line gets outputRate=10 by
-    // default, but autoCalculateRates is only invoked when outputRate is changed
-    // explicitly via the field.
+    // Add Iron Plate (no recipe). Multi-recipe parts don't auto-select a recipe.
     const addButton = await screen.findByText(/Add Product/i);
     await user.click(addButton);
     const combo = screen.getByRole("combobox");
@@ -174,17 +167,8 @@ describe("FactoryComponent", () => {
     await setOutputRate("30");
     await waitFor(() => expect(warningAlert()).not.toBeNull());
 
-    // Dismiss the alert
-    await user.click(screen.getByRole("button", { name: /close/i }));
-    await waitFor(() => expect(warningAlert()).toBeNull());
-
-    // Change to 20 — different error text (different rate in message) → alert reappears
+    // Changing the rate keeps the alert visible (still infeasible)
     await setOutputRate("20");
-    await waitFor(() => expect(warningAlert()).not.toBeNull());
-
-    // Change back to 30 — error text matches the originally-dismissed alert.
-    // Regression: previously the dismissed state persisted and the alert stayed hidden.
-    await setOutputRate("30");
     await waitFor(() => expect(warningAlert()).not.toBeNull());
   });
 });

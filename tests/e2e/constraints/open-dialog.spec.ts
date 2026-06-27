@@ -32,11 +32,9 @@ test.describe("Constraints Dialog", () => {
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Apply" })).toBeVisible();
 
-    // 5. Expect empty-state message
+    // 5. Expect default limits section is shown (no user constraints set yet)
     await expect(
-      page.getByText(
-        "No constraints set. Add a constraint to limit how much of an input or output this factory uses.",
-      ),
+      page.getByText("Default limits (add to override):"),
     ).toBeVisible();
   });
 });

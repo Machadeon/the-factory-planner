@@ -95,8 +95,6 @@ export default function FactoryComponent() {
     string | null
   >(null);
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
-  const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const prevSolverErrorRef = useRef<string | null | undefined>(undefined);
 
   const otherFactoriesKey = useMemo(
     () =>
@@ -645,16 +643,6 @@ export default function FactoryComponent() {
 
   const currentFactory = factoryRef.current;
 
-  if (prevSolverErrorRef.current !== currentFactory.solverError) {
-    if (
-      prevSolverErrorRef.current !== undefined &&
-      currentFactory.solverError !== null
-    ) {
-      setDismissedError(null);
-    }
-    prevSolverErrorRef.current = currentFactory.solverError;
-  }
-
   return (
     <>
       <StorageConsentDialog
@@ -777,18 +765,11 @@ export default function FactoryComponent() {
               currentFactoryId={currentFactoryId}
             />
             <HorizontalDivider />
-            {currentFactory.solverError &&
-              currentFactory.solverError !== dismissedError && (
-                <Alert
-                  severity="warning"
-                  className="m-2 text-sm"
-                  onClose={() =>
-                    setDismissedError(currentFactory.solverError ?? null)
-                  }
-                >
-                  {currentFactory.solverError}
-                </Alert>
-              )}
+            {currentFactory.solverError && (
+              <Alert severity="warning" className="m-2 text-sm">
+                {currentFactory.solverError}
+              </Alert>
+            )}
             {currentFactory.productionLines.length === 0 ? (
               <p className="p-4 pb-1 text-gray-400 text-sm">
                 Or, add a product to manually select recipes and rates

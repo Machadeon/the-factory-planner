@@ -25,8 +25,8 @@ test.describe("Recipe Optimizer Options Dialog", () => {
   }) => {
     await seedWithIronPlate(page);
 
-    // Default summary shows the max-sink-points objective.
-    await expect(page.getByText("Max sink points · fill gaps")).toBeVisible();
+    // Default summary shows the min-resources objective.
+    await expect(page.getByText(/Min resources · fill gaps/)).toBeVisible();
 
     // Open the dialog.
     await page.getByText("Configure").click();
@@ -47,11 +47,11 @@ test.describe("Recipe Optimizer Options Dialog", () => {
     await expect(dialog).not.toBeVisible();
 
     // Sidebar summary reflects the new config.
-    await expect(page.getByText("Min power · eager · fill gaps")).toBeVisible();
+    await expect(page.getByText(/Min power · eager · fill gaps/)).toBeVisible();
 
     // Persisted across reload.
     await page.reload();
-    await expect(page.getByText("Min power · eager · fill gaps")).toBeVisible();
+    await expect(page.getByText(/Min power · eager · fill gaps/)).toBeVisible();
 
     // Reopening the dialog shows the retained values.
     await page.getByText("Configure").click();

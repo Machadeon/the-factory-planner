@@ -45,15 +45,13 @@ test.describe("Constraints Dialog", () => {
       .locator(".flex.flex-row.items-center.gap-x-2.mb-2 > .cursor-pointer")
       .click();
 
-    // 6. Expect Iron Ingot row disappears, empty-state shown
+    // 6. Expect Iron Ingot constraint row disappears; default limits section still visible
     const dialog = page.getByRole("dialog", { name: "Resource Constraints" });
     await expect(
-      dialog.getByRole("img", { name: "Iron Ingot" }),
+      dialog.getByRole("textbox", { name: "Min rate" }),
     ).not.toBeVisible();
     await expect(
-      dialog.getByText(
-        "No constraints set. Add a constraint to limit how much of an input or output this factory uses.",
-      ),
+      dialog.getByText("Default limits (add to override):"),
     ).toBeVisible();
 
     // 7. Click "Apply"

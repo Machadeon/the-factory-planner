@@ -48,9 +48,7 @@ test.describe("Constraints Dialog", () => {
     await page.getByRole("option", { name: "Iron Ore Iron Ore" }).click();
 
     // 5. Expect Iron Ore no longer appears in the "Default limits (add to override):" section
-    await expect(
-      dialog.getByText("Default limits (add to override):"),
-    ).not.toBeVisible();
+    //    (other resources remain, so the section header itself stays visible)
     await expect(dialog.getByText("max 92100/min (default)")).not.toBeVisible();
 
     // 6. Expect Iron Ore now appears as an editable constraint row with Min/Max rate inputs

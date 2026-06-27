@@ -41,20 +41,19 @@ test.describe("Constraints Dialog", () => {
     await expect(dialog).not.toBeVisible();
     await expect(page.getByText("Constraints (0)")).toBeVisible();
 
-    // 8. Reopen dialog — expect no Iron Ingot row, empty-state message shown
+    // 8. Reopen dialog — expect no Iron Ingot constraint row (it was cancelled),
+    //    default limits section shown instead of empty-state message
     await page.getByText("Edit constraints").click();
     await expect(
       page.getByRole("dialog", { name: "Resource Constraints" }),
     ).toBeVisible();
     await expect(
-      page.getByText(
-        "No constraints set. Add a constraint to limit how much of an input or output this factory uses.",
-      ),
+      page.getByText("Default limits (add to override):"),
     ).toBeVisible();
     await expect(
       page
         .getByRole("dialog", { name: "Resource Constraints" })
-        .getByRole("img", { name: "Iron Ingot" }),
+        .getByRole("textbox", { name: "Min rate" }),
     ).not.toBeVisible();
   });
 });

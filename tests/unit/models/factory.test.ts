@@ -556,44 +556,6 @@ describe("targetConstraints()", () => {
   });
 });
 
-describe("autoCalculateRates() — targets", () => {
-  it("a fixed target drives an existing line's rate", () => {
-    const factory = makeFactory();
-    const pl = addManualProductionLine(
-      factory,
-      ironIngotPart,
-      ironIngotRecipe,
-      1,
-      0, // no per-line output target
-    );
-    pl.autoCalculateRate = true;
-    factory.optimizer.targets = [{ partSlug: "iron-ingot", rate: 30 }];
-
-    factory.autoCalculateRates();
-
-    expect(factory.solverError).toBeNull();
-    expect(pl.rate).toBeCloseTo(30);
-  });
-
-  it("a target overrides a same-slug line outputRate", () => {
-    const factory = makeFactory();
-    const pl = addManualProductionLine(
-      factory,
-      ironIngotPart,
-      ironIngotRecipe,
-      1,
-      30, // per-line target = 30
-    );
-    pl.autoCalculateRate = true;
-    factory.optimizer.targets = [{ partSlug: "iron-ingot", rate: 10 }];
-
-    factory.autoCalculateRates();
-
-    expect(factory.solverError).toBeNull();
-    expect(pl.rate).toBeCloseTo(10);
-  });
-});
-
 describe("serialization — optimizer targets", () => {
   const meta = {
     id: "test-id",

@@ -325,7 +325,7 @@ export default class Factory {
     // The chosen recipes are materialized into ProductionLine/AssemblyLine
     // objects; the caller's autoCalculateRates() then re-balances the rates.
     // console.clear();
-    const optimizeStart = performance.now();
+    // const optimizeStart = performance.now();
     this.solverError = null;
     const config = this.optimizer;
     const overwrite = config.overwrite;
@@ -527,12 +527,12 @@ export default class Factory {
 
       // Run the optimizer to get maximum rates for each maximized target. Then set those maximized
       // rates as new constraints, then continue to optimize the scoring objective.
-      console.debug("Recipe optimizer model (max):", maxModel);
-      const solutionStart = performance.now();
+      // console.debug("Recipe optimizer model (max):", maxModel);
+      // const solutionStart = performance.now();
       const solution = solver.Solve(maxModel) as SolveResult;
-      const solutionTime = performance.now() - solutionStart;
-      console.debug(`max solver took: ${solutionTime.toFixed(2)}ms`);
-      console.debug("Recipe optimizer raw result (max):", solution);
+      // const solutionTime = performance.now() - solutionStart;
+      // console.debug(`max solver took: ${solutionTime.toFixed(2)}ms`);
+      // console.debug("Recipe optimizer raw result (max):", solution);
 
       if (!solution.feasible) {
         onInfeasible();
@@ -569,13 +569,13 @@ export default class Factory {
     // ====================================================================================================
     // Run solver
 
-    console.debug("Recipe optimizer model:", model);
+    // console.debug("Recipe optimizer model:", model);
     // console.debug("Recipe optimizer model:", JSON.stringify(model));
-    const solutionStart = performance.now();
+    // const solutionStart = performance.now();
     const solution = solver.Solve(model) as SolveResult;
-    const solutionTime = performance.now() - solutionStart;
-    console.debug(`solver took: ${solutionTime.toFixed(2)}ms`);
-    console.debug("Recipe optimizer raw result:", solution);
+    // const solutionTime = performance.now() - solutionStart;
+    // console.debug(`solver took: ${solutionTime.toFixed(2)}ms`);
+    // console.debug("Recipe optimizer raw result:", solution);
     // console.debug("Recipe optimizer raw result:", JSON.stringify(solution));
 
     // ====================================================================================================
@@ -665,9 +665,9 @@ export default class Factory {
     this._applyRates(rates);
     this.update();
 
-    console.debug(
-      `full optimization took ${(performance.now() - optimizeStart).toFixed(2)}ms`,
-    );
+    // console.debug(
+    //   `full optimization took ${(performance.now() - optimizeStart).toFixed(2)}ms`,
+    // );
   }
 
   /**
@@ -1222,12 +1222,12 @@ export default class Factory {
       model.opType = "min";
     }
 
-    console.debug("model", model);
-    const solutionStart = performance.now();
+    // console.debug("model", model);
+    // const solutionStart = performance.now();
     const solution = solver.Solve(model) as SolveResult;
-    const solutionTime = performance.now() - solutionStart;
-    console.debug(`solver took: ${solutionTime.toFixed(2)}ms`);
-    console.debug("solver result:", solution);
+    // const solutionTime = performance.now() - solutionStart;
+    // console.debug(`solver took: ${solutionTime.toFixed(2)}ms`);
+    // console.debug("solver result:", solution);
 
     // console.log("feasible", solution.feasible);
     if (solution.feasible) {

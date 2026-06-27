@@ -80,7 +80,7 @@ describe("optimizeRecipes() — target satisfaction", () => {
     const f = makeFactory();
     f.optimizeRecipes();
     expect(f.productionLines).toHaveLength(0);
-    expect(f.solverError).toBeNull();
+    expect(f.solverError).toBe("Nothing to optimize");
   });
 });
 
