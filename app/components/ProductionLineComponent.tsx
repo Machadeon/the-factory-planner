@@ -445,13 +445,15 @@ export default function ProductionLineComponent(
                 mainPart={part}
                 factory={props.factory}
                 onNavigateToFactory={props.onNavigateToFactory}
+                belowRecipeName={
+                  assemblyLine.autoCreated ? (
+                    <SuggestedActions
+                      onAccept={() => acceptAssembly(assemblyLine.recipe)}
+                      onReject={() => rejectAssembly(assemblyLine.recipe)}
+                    />
+                  ) : undefined
+                }
               />
-              {assemblyLine.autoCreated && (
-                <SuggestedActions
-                  onAccept={() => acceptAssembly(assemblyLine.recipe)}
-                  onReject={() => rejectAssembly(assemblyLine.recipe)}
-                />
-              )}
               {recipeList.length !== 1 ||
               assemblyLine.recipe.isFactoryRecipe ||
               props.productionLine.assemblyLines.length > 1 ? (

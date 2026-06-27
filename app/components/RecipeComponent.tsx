@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
 import Tooltip from "@mui/material/Tooltip";
+import type { ReactNode } from "react";
 import { type MouseEventHandler, useState } from "react";
 import type Factory from "../models/factory";
 import type Part from "../models/part";
@@ -30,6 +31,7 @@ interface RecipeComponentProps {
   ) => void;
   partsNeeded?: string[];
   sloopMultiplier?: number;
+  belowRecipeName?: ReactNode;
 }
 
 export default function RecipeComponent({
@@ -41,6 +43,7 @@ export default function RecipeComponent({
   setPartRate,
   partsNeeded,
   sloopMultiplier,
+  belowRecipeName,
 }: RecipeComponentProps) {
   const [manualRatePart, setManualRatePart] = useState<string | undefined>();
 
@@ -75,7 +78,10 @@ export default function RecipeComponent({
         label={recipe.building.name}
         size={64}
       />
-      <span className="w-3xs">{recipe.name}</span>
+      <div className="w-3xs flex flex-col gap-y-1">
+        <span>{recipe.name}</span>
+        {belowRecipeName}
+      </div>
       <div className="w-2xs grid grid-cols-[40px_40px_auto_max-content] gap-x-1 items-center">
         {recipe.ingredients.flatMap((ing) => [
           <span className="text-right" key={`ing-${ing.part.slug}-quantity`}>
