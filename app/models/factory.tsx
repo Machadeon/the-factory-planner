@@ -7,6 +7,7 @@ import solver, {
 import {
   buildings,
   defaultResourceLimits,
+  notAutomatable,
   partSlugLookup,
   parts,
   recipes,
@@ -494,7 +495,10 @@ export default class Factory {
       // goal is to maximize a part
       for (const partSlug of targetMax) {
         for (const coefficients of Object.values(maxModel.variables)) {
-          if (coefficients[partSlug] !== 0) {
+          if (
+            coefficients[partSlug] !== undefined &&
+            coefficients[partSlug] !== 0
+          ) {
             if (config.objective === "sinkPoints") {
               const sp = partSlugLookup[partSlug]?.sinkPoints ?? 0;
               coefficients._obj =
@@ -585,6 +589,7 @@ export default class Factory {
       this.productionLines = [];
       this._productionLineLookup = {};
     }
+
     const ensureLine = (part: Part): ProductionLine => {
       let pl = this._productionLineLookup[part.slug];
       if (!pl) {
@@ -594,26 +599,41 @@ export default class Factory {
       }
       return pl;
     };
+
     for (const { recipe, rate } of selected) {
       const primary = recipe.products[0].part;
-      ensureLine(primary).assemblyLines.push(
-        new AssemblyLine(recipe, rate, 0, 100, 0, true, true),
-      );
+      const pl = ensureLine(primary);
+
+      let alExists = false;
+      for (const al of pl.assemblyLines) {
+        if (al.recipe.slug === recipe.slug) {
+          al.rate = rate;
+          alExists = true;
+          break;
+        }
+      }
+      if (!alExists) {
+        pl.assemblyLines.push(
+          new AssemblyLine(recipe, rate, 0, 100, 0, true, true),
+        );
+      }
     }
+
     for (const [slug, rate] of targetFixed) {
       const part = partSlugLookup[slug];
       if (!part) continue;
       const pl = ensureLine(part);
       pl.outputRate = rate;
-      pl.autoCalculateRate = false;
+      pl.autoCalculateRate = true;
       pl.maximizeOutput = false;
     }
+
     for (const slug of targetMax) {
       const part = partSlugLookup[slug];
       if (!part) continue;
       const pl = ensureLine(part);
       pl.maximizeOutput = true;
-      pl.autoCalculateRate = false;
+      pl.autoCalculateRate = true;
     }
 
     const rates = new Map<AssemblyLine, number>();
@@ -660,6 +680,8 @@ export default class Factory {
       for (const recipe of recipes) {
         for (const ing of recipe.ingredients) {
           const slug = ing.part.slug;
+          if (notAutomatable.has(slug)) continue;
+
           const inSlug = `_in_${slug}`;
           if (
             model.variables[inSlug] !== undefined ||

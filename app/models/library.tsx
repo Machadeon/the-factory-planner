@@ -65,6 +65,24 @@ export const defaultResourceLimits: Record<string, number> = {
   "purple-power-slug": 0,
 };
 
+export const notAutomatable = new Set<string>([
+  "wood",
+  "leaves",
+  "mycelia",
+  "hog-remains",
+  "spitter-remains",
+  "stinger-remains",
+  "hatcher-remains",
+  "alien-protein",
+  "biomass",
+  "solid-biofuel",
+  "liquid-biofuel",
+  "packaged-liquid-biofuel",
+  "blue-power-slug",
+  "yellow-power-slug",
+  "purple-power-slug",
+]);
+
 for (const partData of Object.values(data.items)) {
   const part: Part = {
     name: partData.name,
