@@ -209,7 +209,8 @@ export default function RecipeComponent({
               className={`text-right ${outputRateClassName}`}
               key={`prod-${prod.part.slug}-rate`}
             >
-              {displayNum(prod.quantity * rate * mult)}/min
+              {displayNum(prod.quantity * rate * mult)}
+              {prod.part.slug === "power" ? " MW" : "/min"}
             </div>
           ),
         ])}

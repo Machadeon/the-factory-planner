@@ -421,7 +421,6 @@ The following items are work in addition to the plans above.
 - update page URL to enable bookmarks for specific factories and forward/back functionality
 - support custom game modes such as randomized resource nodes, recipe cost, power usage, etc.
 - implement custom part point values
-- set sink point values for all parts
 
 ### Improvements
 
@@ -429,3 +428,5 @@ The following items are work in addition to the plans above.
 - Add "getFootprint()" to the main recipe interface
 - prevent occasional freeze for some optimization runs (run solver on background thread, time out, display error)
 - hide default constraints by default with toggle to show
+- make everything client-side
+- improve performance for large factories
