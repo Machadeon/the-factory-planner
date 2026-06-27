@@ -105,7 +105,7 @@ export default function AssemblyLineControls({
         <TextCalculatorField
           variant="outlined"
           size="small"
-          className="w-14 shrink-0"
+          className="w-17 shrink-0"
           value={totalMachines}
           onCalculate={setMachineCount}
           slotProps={{ htmlInput: { className: "text-right" } }}

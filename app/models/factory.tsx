@@ -119,7 +119,11 @@ export function defaultRecipeOptimizerConfig(): RecipeOptimizerConfig {
       .filter((b) => recipes.some((r) => r.building.slug === b.slug))
       .map((b) => b.slug),
     enabledRecipes: recipes
-      .filter((r) => !r.isOreConversionRecipe())
+      .filter(
+        (r) =>
+          !r.isOreConversionRecipe() &&
+          r.slug !== "recipe-alternate-dilutedpackagedfuel-c",
+      )
       .map((r) => r.slug),
     overwrite: false,
     rejectPrompt: "ask",
@@ -145,7 +149,14 @@ export function setRecipesEnabled(
   enabled: boolean,
 ): string[] {
   const set = new Set(current);
-  if (enabled) for (const s of slugs) set.add(s);
+  if (enabled)
+    for (const s of slugs) {
+      set.add(s);
+
+      // diluted packaged fuel is worse in every way than diluted fuel
+      if (s === "recipe-alternate-dilutedfuel-c")
+        set.delete("recipe-alternate-dilutedpackagedfuel-c");
+    }
   else for (const s of slugs) set.delete(s);
   return [...set];
 }
@@ -313,7 +324,8 @@ export default class Factory {
     // the balance rows; the ScoringObjective becomes a single linear `_obj` row.
     // The chosen recipes are materialized into ProductionLine/AssemblyLine
     // objects; the caller's autoCalculateRates() then re-balances the rates.
-    console.clear();
+    // console.clear();
+    const optimizeStart = performance.now();
     this.solverError = null;
     const config = this.optimizer;
     const overwrite = config.overwrite;
@@ -541,11 +553,11 @@ export default class Factory {
         }
       }
 
-      console.log("max rates:", maxRates);
+      // console.log("max rates:", maxRates);
 
       // set maximum rate as a constraint
       for (const [slug, rate] of Object.entries(maxRates)) {
-        model.constraints[slug] = { equal: rate - 1e-6 }; // add fudge factor for precision errors
+        model.constraints[slug] = { equal: rate * (1 - 1e-8) }; // add fudge factor for precision errors
       }
     }
 
@@ -558,11 +570,13 @@ export default class Factory {
     // Run solver
 
     console.debug("Recipe optimizer model:", model);
+    // console.debug("Recipe optimizer model:", JSON.stringify(model));
     const solutionStart = performance.now();
     const solution = solver.Solve(model) as SolveResult;
     const solutionTime = performance.now() - solutionStart;
     console.debug(`solver took: ${solutionTime.toFixed(2)}ms`);
     console.debug("Recipe optimizer raw result:", solution);
+    // console.debug("Recipe optimizer raw result:", JSON.stringify(solution));
 
     // ====================================================================================================
     // Error on infeasible
@@ -650,6 +664,10 @@ export default class Factory {
 
     this._applyRates(rates);
     this.update();
+
+    console.debug(
+      `full optimization took ${(performance.now() - optimizeStart).toFixed(2)}ms`,
+    );
   }
 
   /**
@@ -666,37 +684,7 @@ export default class Factory {
     model.opType = "min";
 
     if (objective === "sinkPoints") {
-      // Cost net inputs. Any part the factory consumes but does not produce is a net
-      // input and must subtract its sink value. There are two flavors:
-      //
-      //  1. Capped sources — raw resources (`_raw_`) and available supplies (`_supply_`)
-      //     already exist as variables with a hard cap; just price them.
-      //  2. Everything else — a part consumed by a recipe but with no capped source. By
-      //     default such a part has no balance row, so the solver imports it for free.
-      //     Give it a `{min:0}` row plus an uncapped `_in_<slug>` source priced at its
-      //     sink value, so imports cost points even when every raw-backed recipe is
-      //     disabled and inputs bottom out at manufactured intermediates.
-      const constraints = model.constraints as Record<string, ConstraintBound>;
-      for (const recipe of recipes) {
-        for (const ing of recipe.ingredients) {
-          const slug = ing.part.slug;
-          if (notAutomatable.has(slug)) continue;
-
-          const inSlug = `_in_${slug}`;
-          if (
-            model.variables[inSlug] !== undefined ||
-            model.variables[`_raw_${slug}`] !== undefined ||
-            model.variables[`_supply_${slug}`] !== undefined
-          )
-            continue; // already costed (this loop, raw, or supply)
-
-          this.mergeConstraint(constraints, slug, { min: 0 });
-          const sp = partSlugLookup[slug]?.sinkPoints ?? 0;
-          model.variables[inSlug] = { [slug]: 1, _obj: sp };
-        }
-      }
-
-      // Price the capped sources (raw + supply). `_in_` sources are priced inline above.
+      // Price the capped sources (raw + supply).
       for (const [varName, coefficients] of Object.entries(model.variables)) {
         let slug: string | null = null;
         if (varName.startsWith("_raw_")) slug = varName.substring(5);
@@ -1101,7 +1089,7 @@ export default class Factory {
       existing.min = desired.min;
     if (
       desired.max !== undefined &&
-      (existing.max === undefined || existing.max < desired.max)
+      (existing.max === undefined || existing.max > desired.max)
     )
       existing.max = desired.max;
   }
@@ -1124,9 +1112,18 @@ export default class Factory {
       variables[rawSlug] = { [rawSlug]: 1, [resource]: 1 };
     }
 
+    for (const slug of notAutomatable) {
+      constraints[slug] = { min: 0 };
+    }
+
     // Overlay factory constraints
-    for (const constraint of this.constraints) {
-      this.mergeConstraint(constraints, constraint.partSlug, constraint);
+    for (const { partSlug, ...desired } of this.constraints) {
+      const rawSlug = `_raw_${partSlug}`;
+      if (constraints[rawSlug]) {
+        this.mergeConstraint(constraints, rawSlug, desired);
+      } else {
+        this.mergeConstraint(constraints, partSlug, desired);
+      }
     }
 
     // fill recipes

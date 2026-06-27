@@ -52,17 +52,6 @@ export const defaultResourceLimits: Record<string, number> = {
   sulfur: 10800,
   sam: 10200,
   uranium: 2100,
-  // organic resources are not automatable so set the global limit to 0
-  wood: 0,
-  leaves: 0,
-  mycelia: 0,
-  "hog-remains": 0,
-  "spitter-remains": 0,
-  "stinger-remains": 0,
-  "hatcher-remains": 0,
-  "blue-power-slug": 0,
-  "yellow-power-slug": 0,
-  "purple-power-slug": 0,
 };
 
 export const notAutomatable = new Set<string>([
@@ -82,6 +71,12 @@ export const notAutomatable = new Set<string>([
   "yellow-power-slug",
   "purple-power-slug",
 ]);
+
+// Sink point value for resources that cannot actually be sunk. This prevents
+// the sink points optimizer from choosing these as "free" inputs.
+export const syntheticSinkPoints: Record<string, number> = {
+  "power-shard": 14560,
+};
 
 for (const partData of Object.values(data.items)) {
   const part: Part = {
