@@ -1129,6 +1129,9 @@ export default class Factory {
     // fill recipes
     const recipeInputs = new Set<string>();
     const recipeOutputs = new Set<string>();
+    // A factory-as-recipe represents whole copies of a physical sub-factory, so its
+    // completions/min must be integer. Mark those variables for the MILP solver.
+    const ints: Record<string, 1> = {};
 
     for (const recipe of recipes) {
       // TODO fix for factories as recipes
@@ -1148,6 +1151,7 @@ export default class Factory {
       }
 
       variables[recipe.slug] = coefficients;
+      if (recipe.isFactoryRecipe) ints[recipe.slug] = 1;
     }
 
     // set constraints on intermediate parts
@@ -1166,6 +1170,10 @@ export default class Factory {
       variables,
       optimize: "_obj",
     };
+
+    if (Object.keys(ints).length > 0) {
+      (model as ModelDefinition & { ints: Record<string, 1> }).ints = ints;
+    }
 
     return model;
   }

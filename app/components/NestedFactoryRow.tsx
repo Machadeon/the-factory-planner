@@ -23,7 +23,8 @@ export default function NestedFactoryRow({
   const factoryId = recipe.slug.replace("factory:", "");
 
   function updateRate(newRate: number) {
-    assemblyLine.rate = newRate;
+    // A factory-as-recipe represents whole copies of a physical sub-factory.
+    assemblyLine.rate = Math.max(0, Math.round(newRate));
     factory.update();
   }
 
