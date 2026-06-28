@@ -2,6 +2,7 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -165,10 +166,11 @@ export default function ProductionTargetsBar({
         )}
         <Button
           variant="contained"
+          startIcon={<PlayArrowIcon />}
           onClick={solve}
           disabled={targets.length === 0}
         >
-          Solve
+          Optimize recipes
         </Button>
       </div>
     </div>

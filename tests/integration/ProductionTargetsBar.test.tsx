@@ -56,13 +56,15 @@ describe("ProductionTargetsBar", () => {
 
     render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
 
-    await user.click(screen.getByRole("button", { name: "Solve" }));
+    await user.click(screen.getByRole("button", { name: "Optimize recipes" }));
     expect(solveSpy).toHaveBeenCalled();
   });
 
   it("disables Solve when there are no targets", () => {
     const factory = buildFactory();
     render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
-    expect(screen.getByRole("button", { name: "Solve" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Optimize recipes" }),
+    ).toBeDisabled();
   });
 });

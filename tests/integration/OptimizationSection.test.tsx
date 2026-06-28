@@ -89,6 +89,8 @@ describe("OptimizationSection", () => {
   it("disables Solve with no targets", () => {
     const factory = buildFactory();
     render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
-    expect(screen.getByRole("button", { name: "Solve" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Optimize recipes" }),
+    ).toBeDisabled();
   });
 });

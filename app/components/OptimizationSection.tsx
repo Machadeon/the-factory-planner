@@ -2,7 +2,6 @@
 
 import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -92,16 +91,6 @@ export default function OptimizationSection({
       />
 
       <HorizontalDivider />
-      <ConstraintsPanel factory={factory} />
-
-      <HorizontalDivider />
-      <RecipeOptimizerPanel
-        factory={factory}
-        library={library}
-        currentFactoryId={currentFactoryId}
-      />
-
-      <HorizontalDivider />
       <div>
         <p className="text-lg mb-1">Suggestions</p>
         <p className="text-sm text-gray-400 mb-1">
@@ -116,16 +105,6 @@ export default function OptimizationSection({
             {suggestionCount === 1 ? "recipe" : "recipes"}
           </p>
         )}
-        <Button
-          variant="outlined"
-          startIcon={<PlayArrowIcon />}
-          onClick={() => {
-            factory.optimizeRecipes();
-            factory.update();
-          }}
-        >
-          Optimize recipes
-        </Button>
         {suggestionCount > 0 && (
           <div className="flex flex-col gap-2 mt-3">
             <Button
@@ -148,6 +127,16 @@ export default function OptimizationSection({
           </div>
         )}
       </div>
+
+      <HorizontalDivider />
+      <ConstraintsPanel factory={factory} />
+
+      <HorizontalDivider />
+      <RecipeOptimizerPanel
+        factory={factory}
+        library={library}
+        currentFactoryId={currentFactoryId}
+      />
 
       <Dialog
         open={showRejectAllConfirm}
