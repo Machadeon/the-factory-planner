@@ -154,7 +154,6 @@ function Graph({
       minZoom={0.1}
       fitView
       proOptions={{ hideAttribution: true }}
-      onlyRenderVisibleElements
     >
       <Background gap={GRID} color="#ffffff10" />
       <MiniMap pannable zoomable />
