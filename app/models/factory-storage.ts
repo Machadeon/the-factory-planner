@@ -10,6 +10,8 @@ import { partSlugLookup, recipes } from "./library";
 import ProductionLine from "./production-line";
 
 export interface SerializedAssemblyLine {
+  id?: string;
+  rows?: number;
   recipeSlug?: string;
   nestedFactoryId?: string;
   /**
@@ -47,6 +49,7 @@ export interface SerializedFactory {
   supplierIds?: string[];
   constraints?: PartConstraint[];
   optimizer?: RecipeOptimizerConfig;
+  graphLayout?: Record<string, { x: number; y: number }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -70,7 +73,7 @@ export interface StorageLibrary {
   rootId?: string;
 }
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 export function generateId(): string {
   return crypto.randomUUID();
@@ -146,6 +149,10 @@ export function serializeFactory(
     constraints:
       factory.constraints.length > 0 ? factory.constraints : undefined,
     optimizer: factory.optimizer,
+    graphLayout:
+      Object.keys(factory.graphLayout).length > 0
+        ? factory.graphLayout
+        : undefined,
     productionLines: factory.productionLines.map((pl) => ({
       partSlug: pl.part.slug,
       rate: pl.rate,
@@ -159,6 +166,8 @@ export function serializeFactory(
           // independent library entry, not embedded here.
           const nestedId = al.recipe.slug.slice("factory:".length);
           return {
+            id: al.id,
+            rows: al.rows !== 1 ? al.rows : undefined,
             nestedFactoryId: nestedId,
             rate: al.rate,
             sloopedSlots: 0,
@@ -168,6 +177,8 @@ export function serializeFactory(
           };
         }
         return {
+          id: al.id,
+          rows: al.rows !== 1 ? al.rows : undefined,
           recipeSlug: al.recipe.slug,
           rate: al.rate,
           sloopedSlots: al.sloopedSlots,
@@ -211,6 +222,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
   factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
+  factory.graphLayout = data.graphLayout ?? {};
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -236,6 +248,8 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
           alData.allowRemainder,
           alData.autoCreated ?? false,
+          alData.id ?? generateId(),
+          alData.rows ?? 1,
         ),
       );
     }
@@ -325,6 +339,7 @@ export function deserializeFactory(
   factory.autoAddProductLines = data.autoAddProductLines;
   factory.constraints = data.constraints ?? [];
   factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
+  factory.graphLayout = data.graphLayout ?? {};
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
@@ -380,6 +395,9 @@ export function deserializeFactory(
             alData.machineSpeed,
             Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
             alData.allowRemainder,
+            alData.autoCreated ?? false,
+            alData.id ?? generateId(),
+            alData.rows ?? 1,
           ),
         );
         continue;
@@ -407,6 +425,8 @@ export function deserializeFactory(
           Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
           alData.allowRemainder,
           alData.autoCreated ?? false,
+          alData.id ?? generateId(),
+          alData.rows ?? 1,
         ),
       );
     }

@@ -204,6 +204,9 @@ export default class Factory {
   solverError: string | null;
   constraints: PartConstraint[];
   optimizer: RecipeOptimizerConfig;
+  /** Persisted graph-view node positions, keyed by node id (assembly-line id,
+   * or `_src_/_sink_/_supplier_/_consumer_` terminal keys). */
+  graphLayout: { [nodeId: string]: { x: number; y: number } };
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
@@ -226,6 +229,7 @@ export default class Factory {
     this.solverError = oldFactory?.solverError ?? null;
     this.constraints = oldFactory?.constraints ?? [];
     this.optimizer = oldFactory?.optimizer ?? defaultRecipeOptimizerConfig();
+    this.graphLayout = oldFactory?.graphLayout ?? {};
 
     this.rateLookup = {};
     this._productionLineLookup = {};

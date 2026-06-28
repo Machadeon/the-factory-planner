@@ -8,6 +8,18 @@ function shardsForClock(clock: number): number {
 
 export default class AssemblyLine {
   /**
+   * Stable unique id, used as the graph-view node key (recipe slug is not unique
+   * across the factory when two lines share a recipe).
+   */
+  readonly id: string;
+
+  /**
+   * Number of machine rows the bank occupies in the graph view (1..machineCount).
+   * Affects only the node's rendered footprint shape.
+   */
+  rows: number;
+
+  /**
    * The {@link RecipeLike} used in this assembly line.
    */
   readonly recipe: RecipeLike;
@@ -52,6 +64,8 @@ export default class AssemblyLine {
     powerShards: number,
     allowRemainder: boolean,
     autoCreated = false,
+    id: string = crypto.randomUUID(),
+    rows = 1,
   ) {
     this.recipe = recipe;
     this.rate = rate;
@@ -60,6 +74,8 @@ export default class AssemblyLine {
     this.powerShards = powerShards;
     this.allowRemainder = allowRemainder;
     this.autoCreated = autoCreated;
+    this.id = id;
+    this.rows = Math.max(1, Math.floor(rows));
   }
 
   maxSloopSlots(): number {
