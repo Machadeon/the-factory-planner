@@ -305,7 +305,10 @@ export default function RecipeOptimizerPanel({
         onChange={(_, v) => update({ objective: v as ScoringObjective })}
       >
         {OBJECTIVE_OPTIONS.map((o) => (
-          <div key={o.value} className="flex flex-row items-center">
+          <div
+            key={o.value}
+            className="flex flex-row items-center rounded -mx-1 px-1 hover:bg-white/5"
+          >
             <FormControlLabel
               className="grow"
               value={o.value}

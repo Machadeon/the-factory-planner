@@ -24,17 +24,19 @@ test.describe("Sidebar Section Visibility Toggles", () => {
     const outputsHeader = page.getByText("Outputs (1)").locator("..");
     const outputsWrapper = outputsHeader.locator("+ div");
 
-    await expect(outputsHeader.getByTestId("VisibilityOffIcon")).toBeVisible();
+    // Outputs section starts expanded — ExpandMoreIcon shown
+    await expect(outputsHeader.getByTestId("ExpandMoreIcon")).toBeVisible();
 
-    await outputsHeader.getByTestId("VisibilityOffIcon").click();
+    await outputsHeader.getByTestId("ExpandMoreIcon").click();
 
     await expect(outputsWrapper).toHaveCSS("content-visibility", "hidden");
-    await expect(outputsHeader.getByTestId("VisibilityIcon")).toBeVisible();
+    // After collapsing — ChevronRightIcon shown
+    await expect(outputsHeader.getByTestId("ChevronRightIcon")).toBeVisible();
 
-    await outputsHeader.getByTestId("VisibilityIcon").click();
+    await outputsHeader.getByTestId("ChevronRightIcon").click();
 
     await expect(outputsWrapper).toHaveCSS("content-visibility", "visible");
-    await expect(outputsHeader.getByTestId("VisibilityOffIcon")).toBeVisible();
+    await expect(outputsHeader.getByTestId("ExpandMoreIcon")).toBeVisible();
   });
 
   test("Toggle Intermediates section visibility", async ({ page }) => {
@@ -45,26 +47,26 @@ test.describe("Sidebar Section Visibility Toggles", () => {
       .locator("..");
     const intermediatesWrapper = intermediatesHeader.locator("+ div");
 
-    // Starts hidden by default
+    // Starts hidden by default — ChevronRightIcon shown
     await expect(
-      intermediatesHeader.getByTestId("VisibilityIcon"),
+      intermediatesHeader.getByTestId("ChevronRightIcon"),
     ).toBeVisible();
     await expect(intermediatesWrapper).toHaveCSS(
       "content-visibility",
       "hidden",
     );
 
-    await intermediatesHeader.getByTestId("VisibilityIcon").click();
+    await intermediatesHeader.getByTestId("ChevronRightIcon").click();
 
     await expect(intermediatesWrapper).toHaveCSS(
       "content-visibility",
       "visible",
     );
     await expect(
-      intermediatesHeader.getByTestId("VisibilityOffIcon"),
+      intermediatesHeader.getByTestId("ExpandMoreIcon"),
     ).toBeVisible();
 
-    await intermediatesHeader.getByTestId("VisibilityOffIcon").click();
+    await intermediatesHeader.getByTestId("ExpandMoreIcon").click();
 
     await expect(intermediatesWrapper).toHaveCSS(
       "content-visibility",
@@ -80,14 +82,15 @@ test.describe("Sidebar Section Visibility Toggles", () => {
     const inputsHeader = page.getByText("Inputs (1)").locator("..");
     const inputsWrapper = inputsHeader.locator("+ div");
 
-    await expect(inputsHeader.getByTestId("VisibilityOffIcon")).toBeVisible();
+    // Inputs section starts expanded — ExpandMoreIcon shown
+    await expect(inputsHeader.getByTestId("ExpandMoreIcon")).toBeVisible();
 
-    await inputsHeader.getByTestId("VisibilityOffIcon").click();
+    await inputsHeader.getByTestId("ExpandMoreIcon").click();
 
     await expect(inputsWrapper).toHaveCSS("content-visibility", "hidden");
-    await expect(inputsHeader.getByTestId("VisibilityIcon")).toBeVisible();
+    await expect(inputsHeader.getByTestId("ChevronRightIcon")).toBeVisible();
 
-    await inputsHeader.getByTestId("VisibilityIcon").click();
+    await inputsHeader.getByTestId("ChevronRightIcon").click();
 
     await expect(inputsWrapper).toHaveCSS("content-visibility", "visible");
   });

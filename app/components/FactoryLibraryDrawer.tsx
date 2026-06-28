@@ -11,6 +11,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import UploadIcon from "@mui/icons-material/Upload";
 import {
   Button,
@@ -56,6 +58,8 @@ interface Props {
   onLoadFactory: (factory: SerializedFactory) => void;
   onNewFactory: (folderId: string | null) => void;
   onImport: (file: File) => void;
+  pinned?: boolean;
+  onPinChange?: (pinned: boolean) => void;
 }
 
 interface EditState {
@@ -78,6 +82,8 @@ export default function FactoryLibraryDrawer({
   onLoadFactory,
   onNewFactory,
   onImport,
+  pinned,
+  onPinChange,
 }: Props) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
@@ -413,17 +419,25 @@ export default function FactoryLibraryDrawer({
     );
   }
 
-  return (
-    <Drawer
-      anchor="left"
-      open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: 320 } }}
-    >
+  const content = (
+    <>
       {/* Header */}
       <div className="flex flex-row items-center justify-between px-4 py-2">
         <span className="font-semibold">Factories</span>
         <div className="flex flex-row">
+          {onPinChange && (
+            <Tooltip title={pinned ? "Unpin sidebar" : "Pin sidebar"}>
+              <span>
+                <Clickable className="p-1" onClick={() => onPinChange(!pinned)}>
+                  {pinned ? (
+                    <PushPinIcon fontSize="small" />
+                  ) : (
+                    <PushPinOutlinedIcon fontSize="small" />
+                  )}
+                </Clickable>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip title="New factory">
             <span>
               <Clickable className="p-1" onClick={() => onNewFactory(null)}>
@@ -610,6 +624,28 @@ export default function FactoryLibraryDrawer({
           </Button>
         </DialogActions>
       </Dialog>
+    </>
+  );
+
+  if (pinned) {
+    return (
+      <div
+        className="flex flex-col flex-none border-r border-gray-700 overflow-hidden"
+        style={{ width: 320 }}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Drawer
+      anchor="left"
+      open={open}
+      onClose={onClose}
+      PaperProps={{ sx: { width: 320 } }}
+    >
+      {content}
     </Drawer>
   );
 }

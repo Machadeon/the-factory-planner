@@ -18,7 +18,7 @@ test.describe("Expand and Collapse Production Lines", () => {
     await page.getByText("Iron Plate3x15/min2x10/min").click();
 
     // Production lines are collapsed by default; expand it first
-    await page.getByTestId("ChevronRightIcon").click();
+    await page.getByTestId("ChevronRightIcon").first().click();
 
     // expect: production line expanded, assembly line and machine controls visible
     await expect(
@@ -29,7 +29,7 @@ test.describe("Expand and Collapse Production Lines", () => {
     ).toBeVisible();
 
     // 2. Click the expand/collapse toggle icon on the production line header row
-    await page.getByTestId("ExpandMoreIcon").click();
+    await page.getByTestId("ExpandMoreIcon").first().click();
 
     // expect: production line collapses, assembly details hidden, header row still visible
     await expect(
@@ -44,7 +44,7 @@ test.describe("Expand and Collapse Production Lines", () => {
     ).not.toBeVisible();
 
     // 3. Click the collapse icon (ChevronRight) to expand again
-    await page.getByTestId("ChevronRightIcon").click();
+    await page.getByTestId("ChevronRightIcon").first().click();
 
     // expect: production line expands, assembly details visible again
     await expect(

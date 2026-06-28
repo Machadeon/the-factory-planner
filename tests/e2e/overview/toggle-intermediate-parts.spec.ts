@@ -40,14 +40,14 @@ test("Toggle intermediate parts visibility in the sidebar", async ({
     .getByText(/Intermediate Parts \([1-9]/)
     .locator("..");
 
-  // Toggle visibility ON — VisibilityIcon data-testid
-  await intermediateHeader.getByTestId("VisibilityIcon").click();
-  // Intermediate parts detail rows are now visible (production + consumption rates shown)
-  await expect(
-    intermediateHeader.getByTestId("VisibilityOffIcon"),
-  ).toBeVisible();
+  // Section starts collapsed — ChevronRightIcon shown; click to expand
+  await intermediateHeader.getByTestId("ChevronRightIcon").click();
+  // Intermediate parts detail rows are now visible — ExpandMoreIcon shown
+  await expect(intermediateHeader.getByTestId("ExpandMoreIcon")).toBeVisible();
 
-  // Toggle visibility OFF
-  await intermediateHeader.getByTestId("VisibilityOffIcon").click();
-  await expect(intermediateHeader.getByTestId("VisibilityIcon")).toBeVisible();
+  // Toggle OFF — collapse again
+  await intermediateHeader.getByTestId("ExpandMoreIcon").click();
+  await expect(
+    intermediateHeader.getByTestId("ChevronRightIcon"),
+  ).toBeVisible();
 });

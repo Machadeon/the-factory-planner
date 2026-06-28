@@ -42,7 +42,6 @@ import {
   updateFactory,
   writeAutosave,
 } from "../models/storage-service";
-import { VerticalDivider } from "./Dividers";
 import FactoryHeader from "./FactoryHeader";
 import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
 import FactoryOverviewComponent from "./FactoryOverviewComponent";
@@ -60,6 +59,11 @@ const AUTOSAVE_DEBOUNCE_MS = 400;
 export default function FactoryComponent() {
   const [activeSection, setActiveSection] = useState<Section>("planning");
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
+  const [libraryPinned, setLibraryPinned] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(380);
+  const dragStateRef = useRef<{ startX: number; startWidth: number } | null>(
+    null,
+  );
 
   const factoryRef = useRef<Factory>(new Factory());
   const factory = factoryRef.current;
@@ -625,6 +629,27 @@ export default function FactoryComponent() {
     if (sf) handleLoadFactory(sf);
   }
 
+  function handleResizeDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault();
+    dragStateRef.current = { startX: e.clientX, startWidth: sidebarWidth };
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!dragStateRef.current) return;
+      const delta = dragStateRef.current.startX - ev.clientX;
+      const newWidth = Math.max(
+        200,
+        Math.min(700, dragStateRef.current.startWidth + delta),
+      );
+      setSidebarWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      dragStateRef.current = null;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }
+
   function handleToggleAutosave() {
     const next = !autosaveEnabled;
     setAutosaveEnabled(next);
@@ -652,16 +677,20 @@ export default function FactoryComponent() {
         onCancel={handleConsentCancel}
       />
 
-      <FactoryLibraryDrawer
-        open={libraryOpen}
-        onClose={handleCloseLibrary}
-        library={library}
-        currentFactoryId={currentFactoryId}
-        onLibraryChange={setLibrary}
-        onLoadFactory={handleLoadFactory}
-        onNewFactory={handleNewFactory}
-        onImport={handleImport}
-      />
+      {!libraryPinned && (
+        <FactoryLibraryDrawer
+          open={libraryOpen}
+          onClose={handleCloseLibrary}
+          library={library}
+          currentFactoryId={currentFactoryId}
+          onLibraryChange={setLibrary}
+          onLoadFactory={handleLoadFactory}
+          onNewFactory={handleNewFactory}
+          onImport={handleImport}
+          pinned={false}
+          onPinChange={setLibraryPinned}
+        />
+      )}
 
       <Dialog
         open={unsavedPromptOpen}
@@ -738,76 +767,102 @@ export default function FactoryComponent() {
         </DialogActions>
       </Dialog>
 
-      <div className="flex flex-col min-w-full min-h-full grow">
-        <FactoryHeader
-          factoryName={factoryName}
-          factoryIcon={currentFactory.icon}
-          isDirty={isDirty}
-          autosaveEnabled={autosaveEnabled}
-          onNameChange={handleFactoryNameChange}
-          onIconChange={handleIconChange}
-          onOpenLibrary={() => requireConsent("openLibrary")}
-          onSave={handleSave}
-          onToggleAutosave={handleToggleAutosave}
-          onExport={handleExportCurrent}
-          onImport={handleImport}
-          onNewFactory={() => handleNewFactory(null)}
-          onViewJson={() => setJsonDialogOpen(true)}
-          onExpandAll={() => setForceExpanded(true)}
-          onCollapseAll={() => setForceExpanded(false)}
-          productionLineCount={currentFactory.productionLines.length}
-        />
-
-        <Tabs
-          value={activeSection}
-          onChange={(_, v) => setActiveSection(v as Section)}
-          className="border-b border-gray-700"
-        >
-          <Tab label="Planning" value="planning" />
-          <Tab label="Optimization" value="optimization" />
-          <Tab label="Logistics" value="logistics" />
-        </Tabs>
-
-        {currentFactory.solverError && (
-          <Alert severity="warning" className="m-2 text-sm">
-            {currentFactory.solverError}
-          </Alert>
-        )}
-
-        <div className="flex flex-row grow">
-          <div className="flex flex-col grow min-w-0">
-            {activeSection === "planning" && (
-              <PlanningSection
-                factory={currentFactory}
-                library={library}
-                currentFactoryId={currentFactoryId}
-                candidateFactories={deserializedOtherFactories}
-                forceExpanded={forceExpanded}
-                onToggle={() => setForceExpanded(null)}
-                onAddProduct={addProductionLine}
-                onRemoveProduct={removeProductionLine}
-                onNavigateToFactory={handleNavigateToFactory}
-              />
-            )}
-            {activeSection === "optimization" && (
-              <OptimizationSection
-                factory={currentFactory}
-                library={library}
-                currentFactoryId={currentFactoryId}
-              />
-            )}
-            {activeSection === "logistics" && (
-              <LogisticsSection factory={currentFactory} />
-            )}
-          </div>
-          <VerticalDivider />
-          <FactoryOverviewComponent
-            factory={currentFactory}
-            onRebuild={rebuildFactory}
+      <div className="flex flex-row grow min-h-full min-w-full">
+        {libraryPinned && (
+          <FactoryLibraryDrawer
+            open={true}
+            onClose={handleCloseLibrary}
             library={library}
             currentFactoryId={currentFactoryId}
-            onNavigateToFactory={handleNavigateToFactory}
+            onLibraryChange={setLibrary}
+            onLoadFactory={handleLoadFactory}
+            onNewFactory={handleNewFactory}
+            onImport={handleImport}
+            pinned={true}
+            onPinChange={setLibraryPinned}
           />
+        )}
+        <div
+          className={`flex flex-col min-h-full grow ${libraryPinned ? "min-w-0" : "min-w-full"}`}
+        >
+          <FactoryHeader
+            factoryName={factoryName}
+            factoryIcon={currentFactory.icon}
+            isDirty={isDirty}
+            autosaveEnabled={autosaveEnabled}
+            onNameChange={handleFactoryNameChange}
+            onIconChange={handleIconChange}
+            onOpenLibrary={() => requireConsent("openLibrary")}
+            onSave={handleSave}
+            onToggleAutosave={handleToggleAutosave}
+            onExport={handleExportCurrent}
+            onImport={handleImport}
+            onNewFactory={() => handleNewFactory(null)}
+            onViewJson={() => setJsonDialogOpen(true)}
+            onExpandAll={() => setForceExpanded(true)}
+            onCollapseAll={() => setForceExpanded(false)}
+            productionLineCount={currentFactory.productionLines.length}
+          />
+
+          <Tabs
+            value={activeSection}
+            onChange={(_, v) => setActiveSection(v as Section)}
+            className="border-b border-gray-700"
+          >
+            <Tab label="Planning" value="planning" />
+            <Tab label="Optimization" value="optimization" />
+            <Tab label="Logistics" value="logistics" />
+          </Tabs>
+
+          {currentFactory.solverError && (
+            <Alert severity="warning" className="m-2 text-sm">
+              {currentFactory.solverError}
+            </Alert>
+          )}
+
+          <div className="flex flex-row grow">
+            <div className="flex flex-col grow min-w-0">
+              {activeSection === "planning" && (
+                <PlanningSection
+                  factory={currentFactory}
+                  library={library}
+                  currentFactoryId={currentFactoryId}
+                  candidateFactories={deserializedOtherFactories}
+                  forceExpanded={forceExpanded}
+                  onToggle={() => setForceExpanded(null)}
+                  onAddProduct={addProductionLine}
+                  onRemoveProduct={removeProductionLine}
+                  onNavigateToFactory={handleNavigateToFactory}
+                />
+              )}
+              {activeSection === "optimization" && (
+                <OptimizationSection
+                  factory={currentFactory}
+                  library={library}
+                  currentFactoryId={currentFactoryId}
+                />
+              )}
+              {activeSection === "logistics" && (
+                <LogisticsSection factory={currentFactory} />
+              )}
+            </div>
+            <div
+              className="w-1.5 cursor-ew-resize flex-none hover:bg-blue-500/40 bg-black/20 dark:bg-white/20 min-h-full transition-colors"
+              onMouseDown={handleResizeDividerMouseDown}
+            />
+            <div
+              style={{ width: sidebarWidth }}
+              className="flex-none overflow-y-auto"
+            >
+              <FactoryOverviewComponent
+                factory={currentFactory}
+                onRebuild={rebuildFactory}
+                library={library}
+                currentFactoryId={currentFactoryId}
+                onNavigateToFactory={handleNavigateToFactory}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </>

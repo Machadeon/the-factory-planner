@@ -13,7 +13,7 @@ test("Adjust clock speed via the slider", async ({ page }) => {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
   // Production lines are collapsed by default; expand to access machine controls
-  await page.getByTestId("ChevronRightIcon").click();
+  await page.getByTestId("ChevronRightIcon").first().click();
 
   const clockSlider = page.getByRole("slider").first();
   await expect(clockSlider).toHaveValue("100");

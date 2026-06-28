@@ -207,6 +207,7 @@ describe("setSloopedSlots()", () => {
       products: [],
       getIngredient: () => undefined,
       getProduct: () => undefined,
+      getFootprint: () => undefined,
     };
     const al = new AssemblyLine(mockFactoryRecipe, 1, 0, 100, 0, false);
     al.setSloopedSlots(1);

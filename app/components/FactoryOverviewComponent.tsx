@@ -1,8 +1,8 @@
 "use client";
 
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useMemo, useState } from "react";
@@ -22,6 +22,30 @@ interface FactoryOverviewComponentProps {
   currentFactoryId?: string | null;
   onNavigateToFactory?: (id: string) => void;
   onRebuild?: () => void;
+}
+
+function SectionHeader({
+  label,
+  expanded,
+  onToggle,
+}: {
+  label: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Clickable
+      onClick={onToggle}
+      className="flex flex-row items-center mb-2 w-full"
+    >
+      <span className="text-lg grow text-gray-400">{label}</span>
+      {expanded ? (
+        <ExpandMoreIcon fontSize="small" />
+      ) : (
+        <ChevronRightIcon fontSize="small" />
+      )}
+    </Clickable>
+  );
 }
 
 export default function FactoryOverviewComponent({
@@ -77,16 +101,12 @@ export default function FactoryOverviewComponent({
   const hasConsumers = consumersByPartSlug.size > 0;
 
   return (
-    <div className="flex flex-col w-xs">
-      <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">Outputs ({factoryOutputs.length})</span>
-        <Clickable
-          onClick={() => setShowOutputs(!showOutputs)}
-          className="inline"
-        >
-          {showOutputs ? <VisibilityOffIcon /> : <VisibilityIcon />}
-        </Clickable>
-      </div>
+    <div className="flex flex-col px-2 pb-4">
+      <SectionHeader
+        label={`Outputs (${factoryOutputs.length})`}
+        expanded={showOutputs}
+        onToggle={() => setShowOutputs(!showOutputs)}
+      />
       <div style={{ contentVisibility: showOutputs ? "visible" : "hidden" }}>
         {factoryOutputs.map((output, idx) => (
           <div key={output.part.slug}>
@@ -110,15 +130,11 @@ export default function FactoryOverviewComponent({
       {hasConsumers && (
         <>
           <HorizontalDivider />
-          <div className="flex flex-row items-center mb-2">
-            <span className="text-lg grow">Consumers</span>
-            <Clickable
-              onClick={() => setShowConsumers(!showConsumers)}
-              className="inline"
-            >
-              {showConsumers ? <VisibilityOffIcon /> : <VisibilityIcon />}
-            </Clickable>
-          </div>
+          <SectionHeader
+            label="Consumers"
+            expanded={showConsumers}
+            onToggle={() => setShowConsumers(!showConsumers)}
+          />
           <div
             style={{ contentVisibility: showConsumers ? "visible" : "hidden" }}
           >
@@ -203,15 +219,11 @@ export default function FactoryOverviewComponent({
         </>
       )}
       <HorizontalDivider />
-      <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">Inputs ({factoryInputs.length})</span>
-        <Clickable
-          onClick={() => setShowInputs(!showInputs)}
-          className="inline"
-        >
-          {showInputs ? <VisibilityOffIcon /> : <VisibilityIcon />}
-        </Clickable>
-      </div>
+      <SectionHeader
+        label={`Inputs (${factoryInputs.length})`}
+        expanded={showInputs}
+        onToggle={() => setShowInputs(!showInputs)}
+      />
       <div style={{ contentVisibility: showInputs ? "visible" : "hidden" }}>
         {factoryInputs.map((part) => (
           <PartRateSummary
@@ -225,17 +237,11 @@ export default function FactoryOverviewComponent({
         ))}
       </div>
       <HorizontalDivider />
-      <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">
-          Intermediate Parts ({intermediateParts.length})
-        </span>
-        <Clickable
-          onClick={() => setShowIntermediates(!showIntermediates)}
-          className="inline"
-        >
-          {showIntermediates ? <VisibilityOffIcon /> : <VisibilityIcon />}
-        </Clickable>
-      </div>
+      <SectionHeader
+        label={`Intermediate Parts (${intermediateParts.length})`}
+        expanded={showIntermediates}
+        onToggle={() => setShowIntermediates(!showIntermediates)}
+      />
       <div
         style={{ contentVisibility: showIntermediates ? "visible" : "hidden" }}
       >
@@ -261,15 +267,11 @@ export default function FactoryOverviewComponent({
         return (
           <>
             <HorizontalDivider />
-            <div className="flex flex-row items-center mb-2">
-              <span className="text-lg grow">Power & Modules</span>
-              <Clickable
-                onClick={() => setShowPower(!showPower)}
-                className="inline"
-              >
-                {showPower ? <VisibilityOffIcon /> : <VisibilityIcon />}
-              </Clickable>
-            </div>
+            <SectionHeader
+              label="Power & Modules"
+              expanded={showPower}
+              onToggle={() => setShowPower(!showPower)}
+            />
             <div
               style={{ contentVisibility: showPower ? "visible" : "hidden" }}
             >
@@ -320,17 +322,11 @@ export default function FactoryOverviewComponent({
       {factory.supplierFactories.length > 0 && (
         <>
           <HorizontalDivider />
-          <div className="flex flex-row items-center mb-2">
-            <span className="text-lg grow">
-              Suppliers ({factory.supplierFactories.length})
-            </span>
-            <Clickable
-              onClick={() => setShowSuppliers(!showSuppliers)}
-              className="inline"
-            >
-              {showSuppliers ? <VisibilityOffIcon /> : <VisibilityIcon />}
-            </Clickable>
-          </div>
+          <SectionHeader
+            label={`Suppliers (${factory.supplierFactories.length})`}
+            expanded={showSuppliers}
+            onToggle={() => setShowSuppliers(!showSuppliers)}
+          />
           <div
             style={{ contentVisibility: showSuppliers ? "visible" : "hidden" }}
           >

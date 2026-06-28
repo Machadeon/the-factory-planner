@@ -19,7 +19,7 @@ test.describe("Recipe Selection", () => {
     await page.getByText("Iron Plate3x15/min2x10/min").click();
 
     // Production lines are collapsed by default; expand to access assembly line details
-    await page.getByTestId("ChevronRightIcon").click();
+    await page.getByTestId("ChevronRightIcon").first().click();
 
     // expect: assembly line with standard recipe visible
     await expect(

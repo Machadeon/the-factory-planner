@@ -424,11 +424,7 @@ The following items are work in addition to the plans above.
 
 ### Improvements
 
-- Add "getFootprint()" to the main recipe interface
-- increase width of overview sidebar and make it user adjustable
-- adjust overview sidebar section headers (lighter color, click anywhere to show/hide, arrow icon on right to hint)
-- highlight "optimize for" options when hovering since they're full width (or don't make them full width)
-- allow pinning factory directory/sidebar to always show
+- Enable computing the footprint of a factory as a recipe
 
 ### Optimizations
 

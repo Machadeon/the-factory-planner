@@ -13,7 +13,7 @@ test("Toggle the 'All equal' clock speed switch", async ({ page }) => {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 
   // Production lines are collapsed by default; expand to access machine controls
-  await page.getByTestId("ChevronRightIcon").click();
+  await page.getByTestId("ChevronRightIcon").first().click();
 
   await page.getByRole("textbox", { name: "Factory Output Rate" }).fill("25");
   await page.keyboard.press("Tab");

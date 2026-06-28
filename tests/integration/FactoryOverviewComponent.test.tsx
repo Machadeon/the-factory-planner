@@ -117,11 +117,9 @@ describe("FactoryOverviewComponent", () => {
     const row = intermediateHeading.closest(".flex");
     expect(row).not.toBeNull();
 
-    // The Clickable div is the next sibling div with cursor-pointer class
-    const toggleDiv = row?.querySelector<HTMLElement>(".cursor-pointer");
-    expect(toggleDiv).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeNull
-    await user.click(toggleDiv!);
+    // The header row itself is the Clickable (cursor-pointer)
+    // biome-ignore lint/style/noNonNullAssertion: already checked with toBeNull above
+    await user.click(row! as HTMLElement);
 
     // After toggling, Iron Ingot (the intermediate) should appear
     // Use getAllByText since Iron Ingot now appears in multiple places
@@ -142,10 +140,8 @@ describe("FactoryOverviewComponent", () => {
 
     const outputsHeader = screen.getByText(/Outputs/i).closest(".flex");
     expect(outputsHeader).not.toBeNull();
-    const toggle = outputsHeader?.querySelector<HTMLElement>(".cursor-pointer");
-    expect(toggle).not.toBeNull();
     // biome-ignore lint/style/noNonNullAssertion: already checked
-    await user.click(toggle!);
+    await user.click(outputsHeader! as HTMLElement);
 
     // The wrapper div after the header should have contentVisibility: hidden
     const wrapper = outputsHeader?.nextElementSibling as HTMLElement | null;
@@ -166,10 +162,8 @@ describe("FactoryOverviewComponent", () => {
 
     const inputsHeader = screen.getByText(/Inputs/i).closest(".flex");
     expect(inputsHeader).not.toBeNull();
-    const toggle = inputsHeader?.querySelector<HTMLElement>(".cursor-pointer");
-    expect(toggle).not.toBeNull();
     // biome-ignore lint/style/noNonNullAssertion: already checked
-    await user.click(toggle!);
+    await user.click(inputsHeader! as HTMLElement);
 
     const wrapper = inputsHeader?.nextElementSibling as HTMLElement | null;
     expect(wrapper).not.toBeNull();
@@ -196,10 +190,8 @@ describe("FactoryOverviewComponent", () => {
     expect(wrapper).not.toBeNull();
     expect(wrapper?.style.contentVisibility).toBe("hidden");
 
-    const toggle = row?.querySelector<HTMLElement>(".cursor-pointer");
-    expect(toggle).not.toBeNull();
-    // biome-ignore lint/style/noNonNullAssertion: already checked
-    await user.click(toggle!);
+    // biome-ignore lint/style/noNonNullAssertion: already checked above
+    await user.click(row! as HTMLElement);
 
     expect(wrapper?.style.contentVisibility).toBe("visible");
   });

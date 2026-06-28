@@ -1,6 +1,9 @@
 # Development Process
 
-Agentic dev happens in six phases:
+Agents MUST follow this development process for all changes, no matter how small. Begin as soon as the user requests to
+make a change, before any investigation.
+
+Agentic dev happens in eight phases:
 
 1. Spec drafting
 2. Spec review
