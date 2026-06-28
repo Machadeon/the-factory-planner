@@ -24,7 +24,8 @@ Spec lives at `plans/<change name>/spec.md`.
 Different agent from drafter. If same session, spawn subagent.
 
 Reviewer reads spec cold, checks: ambiguity, missing edge cases, scope creep, arch conflicts. Output: concerns list or
-approval. Unresolved concerns block next phase. Return to drafting if needed.
+approval. Unresolved concerns block next phase. Return to spec drafting and repeat review on unresolved concerns. Cannot
+move to validation drafting until a review returns clean.
 
 ## Validation Drafting
 
@@ -46,7 +47,8 @@ Plan lives at `plans/<change name>/validation.md`.
 Same agent as spec reviewer.
 
 Checks: all spec requirements covered, correct test types, no missing edge cases, no trivially-passing tests. Output:
-concerns or approval. Unresolved concerns block implementation. Return to validation drafting if needed.
+concerns or approval. Unresolved concerns block implementation. Return to validation drafting and repeat review on
+unresolved concerns. Cannot move to implementation planning until a review returns clean.
 
 ## Implementation Planning
 
@@ -61,6 +63,15 @@ Include:
 - Known risks or side effects
 
 No coding. Enough detail another agent could execute. Minor changes: one-paragraph plan.
+
+## Validation Review
+
+Same agent as spec and validation reviewer.
+
+Checks: all spec and validation requirements covered, correct frontend design, no outdated patterns, no code
+anti-patterns. Use skills from modern-web-guidance@googlechrome and frontend-design@claude-plugins-official. Output:
+concerns or approval. Unresolved concerns block implementation. Return to implementation planning and repeat review on
+unresolved concerns. Cannot move to implementation loop until a review returns clean.
 
 ## Implementation Loop
 

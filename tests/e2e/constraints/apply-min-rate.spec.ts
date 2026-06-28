@@ -1,10 +1,5 @@
-// spec: tests/e2e/constraints/constraints-dialog.plan.md
+// spec: plans/ui-three-section-refactor/spec.md (R4, R6b)
 // seed: tests/e2e/seed.spec.ts
-//
-// NOTE: The PartSelector only exposes parts present in factory.allParts(), which
-// for an Iron Plate factory (standard recipe) are Iron Ingot and Iron Plate.
-// Iron Ore is NOT produced or consumed by any recipe in this factory and therefore
-// does not appear in the dropdown. Iron Ingot is used here as the constrained part.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -20,28 +15,20 @@ async function seedWithIronPlate(page: Page) {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 }
 
-test.describe("Constraints Dialog", () => {
-  test("Apply saves constraint with min rate", async ({ page }) => {
-    // 1. Seed with Iron Plate factory state
+test.describe("Constraints panel", () => {
+  test("constraint with a min rate is saved on the row", async ({ page }) => {
     await seedWithIronPlate(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
-    // 2. Click "Edit constraints" button
-    await page.locator("text=Edit constraints").click();
-
-    // 3. Click "Add constraint" inside dialog
-    await page.locator("text=Add constraint").click();
-
-    // 4. Select Iron Ingot from PartSelector
+    await page.getByText("Add constraint").click();
     await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
+    const minRate = page.getByRole("textbox", { name: "Min rate" });
+    await minRate.fill("30");
+    await minRate.press("Tab");
 
-    // 5. Fill "Min rate" field with "30"
-    await page.getByRole("textbox", { name: "Min rate" }).fill("30");
-
-    // 6. Click "Apply"
-    await page.getByRole("button", { name: "Apply" }).click();
-
-    // 7. Expect sidebar shows Iron Ingot with "min 30/min"
-    await expect(page.getByText("min 30/min")).toBeVisible();
-    await expect(page.getByRole("img", { name: "Iron Ingot" })).toBeVisible();
+    await expect(minRate).toHaveValue("30");
+    await expect(
+      page.getByRole("img", { name: "Iron Ingot" }).first(),
+    ).toBeVisible();
   });
 });

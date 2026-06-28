@@ -1,6 +1,5 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   Alert,
@@ -10,6 +9,8 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Tab,
+  Tabs,
   Tooltip,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -41,22 +42,23 @@ import {
   updateFactory,
   writeAutosave,
 } from "../models/storage-service";
-import Clickable from "./Clickable";
-import { HorizontalDivider, VerticalDivider } from "./Dividers";
+import { VerticalDivider } from "./Dividers";
 import FactoryHeader from "./FactoryHeader";
 import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
 import FactoryOverviewComponent from "./FactoryOverviewComponent";
-import PartSelector from "./PartSelector";
-import ProductionLineComponent from "./ProductionLineComponent";
-import ProductionTargetsBar from "./ProductionTargetsBar";
+import LogisticsSection from "./LogisticsSection";
+import OptimizationSection from "./OptimizationSection";
+import PlanningSection from "./PlanningSection";
 import StorageConsentDialog from "./StorageConsentDialog";
+
+type Section = "planning" | "optimization" | "logistics";
 
 type PendingAction = "save" | "openLibrary" | null;
 
 const AUTOSAVE_DEBOUNCE_MS = 400;
 
 export default function FactoryComponent() {
-  const [addingProduct, setAddingProduct] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>("planning");
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
 
   const factoryRef = useRef<Factory>(new Factory());
@@ -252,7 +254,6 @@ export default function FactoryComponent() {
         ),
       );
     factory.addProductionLine(part, false, libraryProducesIt);
-    setAddingProduct(false);
   }
 
   function removeProductionLine(part: Part) {
@@ -757,57 +758,46 @@ export default function FactoryComponent() {
           productionLineCount={currentFactory.productionLines.length}
         />
 
+        <Tabs
+          value={activeSection}
+          onChange={(_, v) => setActiveSection(v as Section)}
+          className="border-b border-gray-700"
+        >
+          <Tab label="Planning" value="planning" />
+          <Tab label="Optimization" value="optimization" />
+          <Tab label="Logistics" value="logistics" />
+        </Tabs>
+
+        {currentFactory.solverError && (
+          <Alert severity="warning" className="m-2 text-sm">
+            {currentFactory.solverError}
+          </Alert>
+        )}
+
         <div className="flex flex-row grow">
-          <div className="flex flex-col grow">
-            <ProductionTargetsBar
-              factory={currentFactory}
-              library={library}
-              currentFactoryId={currentFactoryId}
-            />
-            <HorizontalDivider />
-            {currentFactory.solverError && (
-              <Alert severity="warning" className="m-2 text-sm">
-                {currentFactory.solverError}
-              </Alert>
-            )}
-            {currentFactory.productionLines.length === 0 ? (
-              <p className="p-4 pb-1 text-gray-400 text-sm">
-                Or, add a product to manually select recipes and rates
-              </p>
-            ) : (
-              currentFactory.productionLines.map((product) => (
-                <div key={product.part.slug}>
-                  <ProductionLineComponent
-                    productionLine={product}
-                    factory={currentFactory}
-                    library={library}
-                    currentFactoryId={currentFactoryId}
-                    candidateFactories={deserializedOtherFactories}
-                    onDeleteClicked={() => removeProductionLine(product.part)}
-                    forceExpanded={forceExpanded}
-                    onToggle={() => setForceExpanded(null)}
-                    onNavigateToFactory={handleNavigateToFactory}
-                  />
-                  <HorizontalDivider />
-                </div>
-              ))
-            )}
-            {addingProduct ? (
-              <PartSelector
-                existingParts={currentFactory.productionLines.map(
-                  (p) => p.part.slug,
-                )}
-                onPartSelected={addProductionLine}
-                onBlur={() => setAddingProduct(false)}
+          <div className="flex flex-col grow min-w-0">
+            {activeSection === "planning" && (
+              <PlanningSection
+                factory={currentFactory}
+                library={library}
+                currentFactoryId={currentFactoryId}
+                candidateFactories={deserializedOtherFactories}
+                forceExpanded={forceExpanded}
+                onToggle={() => setForceExpanded(null)}
+                onAddProduct={addProductionLine}
+                onRemoveProduct={removeProductionLine}
+                onNavigateToFactory={handleNavigateToFactory}
               />
-            ) : (
-              <Clickable
-                className="flex flex-row items-center p-1 mx-4 grow-x"
-                onClick={() => setAddingProduct(true)}
-              >
-                <AddIcon fontSize="small" />
-                <span className="text-sm ml-1">Add product</span>
-              </Clickable>
+            )}
+            {activeSection === "optimization" && (
+              <OptimizationSection
+                factory={currentFactory}
+                library={library}
+                currentFactoryId={currentFactoryId}
+              />
+            )}
+            {activeSection === "logistics" && (
+              <LogisticsSection factory={currentFactory} />
             )}
           </div>
           <VerticalDivider />

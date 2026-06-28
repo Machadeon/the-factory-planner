@@ -1,10 +1,5 @@
 "use client";
 
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
@@ -49,19 +44,16 @@ const RecipeToggleRow = memo(function RecipeToggleRow({
   );
 });
 
-interface RecipeListDialogProps {
-  open: boolean;
-  onClose: () => void;
+interface RecipeListPanelProps {
   enabledRecipes: string[];
   onToggle: (slug: string, enabled: boolean) => void;
 }
 
-export default function RecipeListDialog({
-  open,
-  onClose,
+// Inline, always-visible recipe enable/disable list (formerly RecipeListDialog).
+export default function RecipeListPanel({
   enabledRecipes,
   onToggle,
-}: RecipeListDialogProps) {
+}: RecipeListPanelProps) {
   const [query, setQuery] = useState("");
 
   // Keep a stable toggle handler so memoized rows don't all re-render when the
@@ -76,7 +68,6 @@ export default function RecipeListDialog({
 
   // All rows stay mounted in stable name order; search only flips each row's
   // `hidden` flag. `matched` is null when there's no query (everything shows).
-  // This avoids unmounting hundreds of MUI rows on every keystroke.
   const matched = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
@@ -95,39 +86,31 @@ export default function RecipeListDialog({
   const noMatches = matched !== null && matched.size === 0;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Manage recipes</DialogTitle>
-      <DialogContent>
-        <p className="text-xs text-gray-400 mb-2">
-          Only enabled recipes are considered by the optimizer.
-        </p>
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Search recipes"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="max-h-[60vh] overflow-y-auto mt-2">
-          {sortedRecipes.map((recipe) => (
-            <RecipeToggleRow
-              key={recipe.slug}
-              recipe={recipe}
-              enabled={enabledSet.has(recipe.slug)}
-              hidden={matched !== null && !matched.has(recipe.slug)}
-              onToggle={handleToggle}
-            />
-          ))}
-          {noMatches && (
-            <p className="text-sm text-gray-400 py-2">No matching recipes.</p>
-          )}
-        </div>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained">
-          Done
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <div>
+      <p className="text-xs text-gray-400 mb-2">
+        Only enabled recipes are considered by the optimizer.
+      </p>
+      <TextField
+        size="small"
+        fullWidth
+        placeholder="Search recipes"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="max-h-[60vh] overflow-y-auto mt-2">
+        {sortedRecipes.map((recipe) => (
+          <RecipeToggleRow
+            key={recipe.slug}
+            recipe={recipe}
+            enabled={enabledSet.has(recipe.slug)}
+            hidden={matched !== null && !matched.has(recipe.slug)}
+            onToggle={handleToggle}
+          />
+        ))}
+        {noMatches && (
+          <p className="text-sm text-gray-400 py-2">No matching recipes.</p>
+        )}
+      </div>
+    </div>
   );
 }

@@ -3,7 +3,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TuneIcon from "@mui/icons-material/Tune";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -15,23 +14,20 @@ import type { StorageLibrary } from "../models/factory-storage";
 import { partSlugLookup } from "../models/library";
 import Clickable from "./Clickable";
 import PartSelector from "./PartSelector";
-import RecipeOptimizerOptionsDialog from "./RecipeOptimizerOptionsDialog";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface ProductionTargetsBarProps {
   factory: Factory;
+  // Accepted for caller/test compatibility; targets bar no longer needs them
+  // since the optimizer config moved inline into OptimizationSection.
   library?: StorageLibrary;
   currentFactoryId?: string | null;
 }
 
 export default function ProductionTargetsBar({
   factory,
-  library,
-  currentFactoryId,
 }: ProductionTargetsBarProps) {
   const [showPartSelector, setShowPartSelector] = useState(false);
-  const [showRecipeOptimizerDialog, setShowRecipeOptimizerDialog] =
-    useState(false);
 
   const targets = factory.optimizer.targets;
 
@@ -76,13 +72,6 @@ export default function ProductionTargetsBar({
     <div className="p-4 pb-2">
       <div className="flex flex-row items-center mb-2">
         <span className="text-xl grow">Production Targets</span>
-        <Clickable
-          onClick={() => setShowRecipeOptimizerDialog(true)}
-          className="flex flex-row items-center p-1"
-        >
-          <TuneIcon fontSize="small" />
-          <span className="text-sm ml-1">Advanced options</span>
-        </Clickable>
       </div>
 
       {targets.length === 0 && (
@@ -182,15 +171,6 @@ export default function ProductionTargetsBar({
           Solve
         </Button>
       </div>
-
-      <RecipeOptimizerOptionsDialog
-        open={showRecipeOptimizerDialog}
-        onClose={() => setShowRecipeOptimizerDialog(false)}
-        factory={factory}
-        onApply={() => {}}
-        library={library}
-        currentFactoryId={currentFactoryId}
-      />
     </div>
   );
 }

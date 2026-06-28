@@ -1,10 +1,8 @@
-// spec: tests/e2e/constraints/default-limits-shown.spec.ts
+// spec: plans/ui-three-section-refactor/spec.md (R4)
 // seed: tests/e2e/seed.spec.ts
 //
-// NOTE: To get Iron Ore into factory.allParts() (needed for the default limits section),
-// we add Iron Ingot as a product with the standard Smelter recipe (Iron Ore → Iron Ingot).
-// Iron Ore has an entry in defaultResourceLimits (92100/min), so it appears in the
-// "Default limits (add to override):" section of the dialog.
+// Iron Ore enters factory.allParts() via the Iron Ingot Smelter recipe and has a
+// defaultResourceLimits entry (92100/min), so it shows in the default limits list.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -17,30 +15,21 @@ async function seedWithIronIngot(page: Page) {
   await page.reload();
   await page.getByText("Add Product").click();
   await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
-  // Click the Smelter recipe row to select it and open the sidebar
-  // (recipe row: 1x Iron Ore → 1x Iron Ingot at current rate)
   await page.getByText("Iron Ingot1x10/min1x10/min").click();
 }
 
-test.describe("Constraints Dialog", () => {
-  test("Default limits section appears when factory has parts with default resource limits", async ({
+test.describe("Constraints panel", () => {
+  test("shows default limits for parts with default resource limits", async ({
     page,
   }) => {
-    // 1. Seed with Iron Ingot factory (Smelter recipe: Iron Ore -> Iron Ingot)
     await seedWithIronIngot(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
-    // 2. Click "Edit constraints"
-    await page.getByText("Edit constraints").click();
-
-    // 3. Expect "Default limits (add to override):" text is visible
-    const dialog = page.getByRole("dialog", { name: "Resource Constraints" });
+    const panel = page.getByTestId("constraints-panel");
     await expect(
-      dialog.getByText("Default limits (add to override):"),
+      panel.getByText("Default limits (add to override):"),
     ).toBeVisible();
-
-    // 4. Expect at least one read-only part row in the default limits section
-    // (rows have no Min/Max rate input fields — just part name and "max X/min (default)" text)
-    await expect(dialog.getByText("max 92100/min (default)")).toBeVisible();
-    await expect(dialog.getByRole("img", { name: "Iron Ore" })).toBeVisible();
+    await expect(panel.getByText("max 92100/min (default)")).toBeVisible();
+    await expect(panel.getByRole("img", { name: "Iron Ore" })).toBeVisible();
   });
 });

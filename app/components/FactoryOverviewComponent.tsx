@@ -1,43 +1,20 @@
 "use client";
 
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import EditIcon from "@mui/icons-material/Edit";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import type Factory from "../models/factory";
-import type { ScoringObjective } from "../models/factory";
 import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
-import { partSlugLookup } from "../models/library";
 import { displayNum } from "../utils";
 import Clickable from "./Clickable";
-import ConstraintsDialog from "./ConstraintsDialog";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
-import RecipeOptimizerOptionsDialog from "./RecipeOptimizerOptionsDialog";
-
-const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
-  minResources: "Min resources",
-  sinkPoints: "Max sink points",
-  power: "Min power",
-  buildings: "Min buildings",
-  logistics: "Min logistics",
-  inputValue: "Min input value",
-};
 
 interface FactoryOverviewComponentProps {
   factory: Factory;
@@ -59,60 +36,6 @@ export default function FactoryOverviewComponent({
   const [showConsumers, setShowConsumers] = useState(true);
   const [showPower, setShowPower] = useState(true);
   const [showSuppliers, setShowSuppliers] = useState(true);
-  const [showConstraints, setShowConstraints] = useState(true);
-  const [showConstraintsDialog, setShowConstraintsDialog] = useState(false);
-  const [showRecipeOptimizer, setShowRecipeOptimizer] = useState(true);
-  const [showRecipeOptimizerDialog, setShowRecipeOptimizerDialog] =
-    useState(false);
-  const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
-
-  const suggestedLineCount = factory.productionLines.filter(
-    (pl) => pl.autoCreated,
-  ).length;
-  const suggestedRecipeCount = factory.productionLines.reduce(
-    (acc, pl) =>
-      acc +
-      (pl.autoCreated
-        ? 0
-        : pl.assemblyLines.filter((al) => al.autoCreated).length),
-    0,
-  );
-  const suggestionCount = suggestedLineCount + suggestedRecipeCount;
-
-  function acceptAllSuggestions() {
-    for (const pl of factory.productionLines) {
-      pl.autoCreated = false;
-      for (const al of pl.assemblyLines) al.autoCreated = false;
-    }
-    factory.update();
-  }
-
-  function rejectAllSuggestions() {
-    const slugs: string[] = [];
-    factory.productionLines = factory.productionLines.filter((pl) => {
-      if (pl.autoCreated) {
-        for (const al of pl.assemblyLines) {
-          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
-        }
-        return false;
-      }
-      pl.assemblyLines = pl.assemblyLines.filter((al) => {
-        if (al.autoCreated) {
-          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
-          return false;
-        }
-        return true;
-      });
-      return true;
-    });
-    factory.applyRejectSilent(slugs);
-    setShowRejectAllConfirm(false);
-    factory.update();
-  }
-
-  function _schedule(obj: object, fn: () => void) {
-    setTimeout(fn.bind(obj), 1);
-  }
 
   const factoryOutputs = factory.getOutputInfo().sort((a, b) => {
     const primaryDiff = (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0);
@@ -394,171 +317,6 @@ export default function FactoryOverviewComponent({
           </>
         );
       })()}
-      <HorizontalDivider />
-      <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">
-          Constraints ({factory.constraints.length})
-        </span>
-        <Clickable
-          onClick={() => setShowConstraints(!showConstraints)}
-          className="inline"
-        >
-          {showConstraints ? <VisibilityOffIcon /> : <VisibilityIcon />}
-        </Clickable>
-      </div>
-      <div
-        style={{ contentVisibility: showConstraints ? "visible" : "hidden" }}
-      >
-        {factory.constraints.length === 0 ? (
-          <p className="text-sm text-gray-400 mb-2">No constraints set.</p>
-        ) : (
-          factory.constraints
-            .sort((a, b) =>
-              partSlugLookup[a.partSlug].name.localeCompare(
-                partSlugLookup[b.partSlug].name,
-              ),
-            )
-            .map((constraint) => {
-              const part = partSlugLookup[constraint.partSlug];
-              if (!part) return null;
-              const parts: string[] = [];
-              if (constraint.min !== undefined)
-                parts.push(`min ${displayNum(constraint.min)}/min`);
-              if (constraint.max !== undefined)
-                parts.push(`max ${displayNum(constraint.max)}/min`);
-              return (
-                <div
-                  key={constraint.partSlug}
-                  className="flex flex-row items-center gap-x-2 mb-1"
-                >
-                  <Image
-                    src={part.iconSmall}
-                    alt={part.name}
-                    width={24}
-                    height={24}
-                  />
-                  <span className="text-sm grow">{part.name}</span>
-                  <span className="text-sm text-gray-400">
-                    {parts.join(", ")}
-                  </span>
-                </div>
-              );
-            })
-        )}
-        <Clickable
-          onClick={() => setShowConstraintsDialog(true)}
-          className="flex flex-row items-center p-1"
-        >
-          <EditIcon fontSize="small" />
-          <span className="text-sm ml-1">Edit constraints</span>
-        </Clickable>
-      </div>
-      <ConstraintsDialog
-        open={showConstraintsDialog}
-        onClose={() => setShowConstraintsDialog(false)}
-        factory={factory}
-        onApply={() => {}}
-      />
-      <HorizontalDivider />
-      <div className="flex flex-row items-center mb-2">
-        <span className="text-lg grow">Recipe Optimizer</span>
-        <Clickable
-          onClick={() => setShowRecipeOptimizer(!showRecipeOptimizer)}
-          className="inline"
-        >
-          {showRecipeOptimizer ? <VisibilityOffIcon /> : <VisibilityIcon />}
-        </Clickable>
-      </div>
-      <div
-        style={{
-          contentVisibility: showRecipeOptimizer ? "visible" : "hidden",
-        }}
-      >
-        <p className="text-sm text-gray-400 mb-1">
-          {OBJECTIVE_LABELS[factory.optimizer.objective]}
-          {factory.optimizer.eager ? " · eager" : ""} ·{" "}
-          {factory.optimizer.overwrite ? "overwrite" : "fill gaps"} · phase{" "}
-          {factory.optimizer.phase}
-        </p>
-        {suggestionCount > 0 && (
-          <p className="text-sm text-gray-400 mb-1">
-            {suggestionCount} suggested{" "}
-            {suggestionCount === 1 ? "recipe" : "recipes"}
-          </p>
-        )}
-        <div className="flex flex-row items-center gap-x-2">
-          <Clickable
-            onClick={() => setShowRecipeOptimizerDialog(true)}
-            className="flex flex-row items-center p-1"
-          >
-            <AutoFixHighIcon fontSize="small" />
-            <span className="text-sm ml-1">Configure</span>
-          </Clickable>
-          <Clickable
-            onClick={() => {
-              factory.optimizeRecipes();
-              factory.update();
-            }}
-            className="flex flex-row items-center p-1"
-          >
-            <PlayArrowIcon fontSize="small" />
-            <span className="text-sm ml-1">Optimize recipes</span>
-          </Clickable>
-        </div>
-        {suggestionCount > 0 && (
-          <div className="flex flex-col gap-2 mt-3">
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<DoneAllIcon />}
-              onClick={acceptAllSuggestions}
-            >
-              Accept all
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="warning"
-              startIcon={<ClearAllIcon />}
-              onClick={() => setShowRejectAllConfirm(true)}
-            >
-              Reject all
-            </Button>
-          </div>
-        )}
-      </div>
-      <RecipeOptimizerOptionsDialog
-        open={showRecipeOptimizerDialog}
-        onClose={() => setShowRecipeOptimizerDialog(false)}
-        factory={factory}
-        onApply={() => {}}
-        library={library}
-        currentFactoryId={currentFactoryId}
-      />
-      <Dialog
-        open={showRejectAllConfirm}
-        onClose={() => setShowRejectAllConfirm(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Reject all suggestions?</DialogTitle>
-        <DialogContent>
-          <p className="text-sm text-gray-400">
-            This removes all auto-suggested production lines and recipes. This
-            cannot be undone.
-          </p>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowRejectAllConfirm(false)}>Cancel</Button>
-          <Button
-            onClick={rejectAllSuggestions}
-            variant="contained"
-            color="warning"
-          >
-            Reject all
-          </Button>
-        </DialogActions>
-      </Dialog>
       {factory.supplierFactories.length > 0 && (
         <>
           <HorizontalDivider />

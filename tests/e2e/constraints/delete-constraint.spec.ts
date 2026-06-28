@@ -1,10 +1,8 @@
-// spec: tests/e2e/constraints/constraints-dialog.plan.md
+// spec: plans/ui-three-section-refactor/spec.md (R4, R6b)
 // seed: tests/e2e/seed.spec.ts
 //
-// NOTE: The PartSelector only exposes parts present in factory.allParts(), which
-// for an Iron Plate factory (standard recipe) are Iron Ingot and Iron Plate.
-// Iron Ore is NOT produced or consumed by any recipe in this factory and therefore
-// does not appear in the dropdown. Iron Ingot is used here as the constrained part.
+// Live-write: the ✕ button removes the constraint from the model immediately
+// (no Apply/Cancel).
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -20,47 +18,28 @@ async function seedWithIronPlate(page: Page) {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 }
 
-test.describe("Constraints Dialog", () => {
-  test("Delete constraint removes it from sidebar after Apply", async ({
-    page,
-  }) => {
-    // 1. Seed with Iron Plate factory state
+test.describe("Constraints panel", () => {
+  test("deleting a constraint removes it immediately", async ({ page }) => {
     await seedWithIronPlate(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
-    // 2. Click "Edit constraints", "Add constraint", select Iron Ingot, fill Max rate = 60, click Apply
-    await page.locator("text=Edit constraints").click();
-    await page.locator("text=Add constraint").click();
+    await page.getByText("Add constraint").click();
     await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
-    await page.getByRole("textbox", { name: "Max rate" }).fill("60");
-    await page.getByRole("button", { name: "Apply" }).click();
+    const maxRate = page.getByRole("textbox", { name: "Max rate" });
+    await maxRate.fill("60");
+    await maxRate.press("Tab");
+    await expect(maxRate).toHaveValue("60");
 
-    // 3. Verify sidebar shows "Constraints (1)"
-    await expect(page.getByText("Constraints (1)")).toBeVisible();
+    // Remove the row.
+    await page.getByRole("button", { name: "Remove constraint" }).click();
 
-    // 4. Click "Edit constraints" again
-    await page.locator("text=Edit constraints").click();
-
-    // 5. Click the delete (trash) icon on the Iron Ingot row
-    await page
-      .locator(".flex.flex-row.items-center.gap-x-2.mb-2 > .cursor-pointer")
-      .click();
-
-    // 6. Expect Iron Ingot constraint row disappears; default limits section still visible
-    const dialog = page.getByRole("dialog", { name: "Resource Constraints" });
+    // The editable constraint row is gone; the panel falls back to the
+    // read-only default limits + Add constraint affordance.
+    await expect(page.getByRole("textbox", { name: "Max rate" })).toHaveCount(
+      0,
+    );
     await expect(
-      dialog.getByRole("textbox", { name: "Min rate" }),
-    ).not.toBeVisible();
-    await expect(
-      dialog.getByText("Default limits (add to override):"),
-    ).toBeVisible();
-
-    // 7. Click "Apply"
-    await page.getByRole("button", { name: "Apply" }).click();
-
-    // 8. Expect sidebar shows "Constraints (0)" and "No constraints set."
-    await expect(page.getByText("Constraints (0)")).toBeVisible();
-    await expect(
-      page.getByText("No constraints set.", { exact: true }),
+      page.getByTestId("constraints-panel").getByText("Add constraint"),
     ).toBeVisible();
   });
 });

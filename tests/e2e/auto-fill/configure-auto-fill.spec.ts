@@ -1,9 +1,9 @@
-// spec: plan:auto-recipe-ui.md
+// spec: plans/ui-three-section-refactor/spec.md (R4, R6b)
 // seed: tests/e2e/seed.spec.ts
 //
-// Verifies the recipe optimizer options dialog: changing the objective + eager toggle and
-// applying persists to factory.optimizer (reflected in the sidebar summary and
-// retained across a reload).
+// The recipe optimizer config is now an inline live-write panel in the Optimization
+// tab (formerly RecipeOptimizerOptionsDialog). Changes apply immediately (no Apply)
+// and persist across a reload.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -19,52 +19,36 @@ async function seedWithIronPlate(page: Page) {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 }
 
-test.describe("Recipe Optimizer Options Dialog", () => {
+test.describe("Recipe Optimizer panel", () => {
   test("configuring objective and eager persists across reload", async ({
     page,
   }) => {
     await seedWithIronPlate(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
     // Default summary shows the min-resources objective.
     await expect(page.getByText(/Min resources · fill gaps/)).toBeVisible();
 
-    // Open the dialog.
-    await page.getByText("Configure").click();
-    const dialog = page.getByRole("dialog", {
-      name: "Recipe Optimizer Options",
-    });
-    await expect(dialog).toBeVisible();
-
-    // Switch objective to Minimum power consumption and enable eager.
-    await dialog
+    // Switch objective to Minimum power consumption and enable eager — live-write.
+    await page
       .getByRole("radio", { name: "Minimum power consumption" })
       .click();
-    await dialog
+    await page
       .getByRole("switch", { name: "Re-run on every edit (eager)" })
       .check();
 
-    await dialog.getByRole("button", { name: "Apply" }).click();
-    await expect(dialog).not.toBeVisible();
-
-    // Sidebar summary reflects the new config.
+    // Summary reflects the new config immediately.
     await expect(page.getByText(/Min power · eager · fill gaps/)).toBeVisible();
 
     // Persisted across reload.
     await page.reload();
+    await page.getByRole("tab", { name: "Optimization" }).click();
     await expect(page.getByText(/Min power · eager · fill gaps/)).toBeVisible();
-
-    // Reopening the dialog shows the retained values.
-    await page.getByText("Configure").click();
-    const reopened = page.getByRole("dialog", {
-      name: "Recipe Optimizer Options",
-    });
     await expect(
-      reopened.getByRole("radio", { name: "Minimum power consumption" }),
+      page.getByRole("radio", { name: "Minimum power consumption" }),
     ).toBeChecked();
     await expect(
-      reopened.getByRole("switch", {
-        name: "Re-run on every edit (eager)",
-      }),
+      page.getByRole("switch", { name: "Re-run on every edit (eager)" }),
     ).toBeChecked();
   });
 
@@ -72,37 +56,28 @@ test.describe("Recipe Optimizer Options Dialog", () => {
     page,
   }) => {
     await seedWithIronPlate(page);
-
-    await page.getByText("Configure").click();
-    const dialog = page.getByRole("dialog", {
-      name: "Recipe Optimizer Options",
-    });
-    await expect(dialog).toBeVisible();
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
     // Disable the Constructor building.
-    await dialog
+    await page
       .getByRole("switch", { name: "Constructor Constructor" })
       .uncheck();
 
     // Add an available part (Iron Ingot) with a supply rate.
-    await dialog.getByText("Add available part").click();
+    await page.getByText("Add available part").click();
     await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
-    await dialog.getByRole("textbox", { name: "Available /min" }).fill("120");
-
-    await dialog.getByRole("button", { name: "Apply" }).click();
-    await expect(dialog).not.toBeVisible();
+    const avail = page.getByRole("textbox", { name: "Available /min" });
+    await avail.fill("120");
+    await avail.press("Tab");
 
     await page.reload();
-    await page.getByText("Configure").click();
-    const reopened = page.getByRole("dialog", {
-      name: "Recipe Optimizer Options",
-    });
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
     await expect(
-      reopened.getByRole("switch", { name: "Constructor Constructor" }),
+      page.getByRole("switch", { name: "Constructor Constructor" }),
     ).not.toBeChecked();
     await expect(
-      reopened.getByRole("textbox", { name: "Available /min" }),
+      page.getByRole("textbox", { name: "Available /min" }),
     ).toHaveValue("120");
   });
 });
