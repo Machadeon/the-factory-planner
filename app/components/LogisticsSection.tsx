@@ -234,17 +234,14 @@ export default function LogisticsSection({
       >
         <button
           type="button"
+          aria-label={maximized ? "Exit full screen" : "Maximize"}
           onClick={() => setMaximized((m) => !m)}
           className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-xs text-gray-100 hover:bg-black/70"
         >
           {maximized ? (
-            <>
-              <CloseFullscreenIcon sx={{ fontSize: 14 }} /> Exit full screen
-            </>
+            <CloseFullscreenIcon sx={{ fontSize: 14 }} />
           ) : (
-            <>
-              <OpenInFullIcon sx={{ fontSize: 14 }} /> Maximize
-            </>
+            <OpenInFullIcon sx={{ fontSize: 14 }} />
           )}
         </button>
         <ReactFlowProvider>
