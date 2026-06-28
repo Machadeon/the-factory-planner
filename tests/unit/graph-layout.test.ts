@@ -6,17 +6,22 @@ import { describe, expect, it } from "vitest";
 const MODULE = "@/app/components/logistics/graph-layout";
 
 describe("edgeWidth (AC17)", () => {
-  it("is log-proportional: monotonic, compressed, clamped", async () => {
+  it("is linear in rate against the scale, monotonic and clamped", async () => {
     const { edgeWidth, MIN_EDGE_WIDTH, MAX_EDGE_WIDTH } = await import(MODULE);
-    const w1 = edgeWidth(1);
-    const w10 = edgeWidth(10);
-    const w1000 = edgeWidth(1000);
-    expect(w1).toBeGreaterThanOrEqual(MIN_EDGE_WIDTH);
-    expect(w1000).toBeLessThanOrEqual(MAX_EDGE_WIDTH);
-    expect(w1).toBeLessThan(w10);
-    expect(w10).toBeLessThan(w1000);
-    // log compression: a 1000x rate increase is far less than a 1000x width increase
-    expect(w1000 / w1).toBeLessThan(50);
+    // 0 → MIN, scaleRate → MAX
+    expect(edgeWidth(0, 780)).toBeCloseTo(MIN_EDGE_WIDTH);
+    expect(edgeWidth(780, 780)).toBeCloseTo(MAX_EDGE_WIDTH);
+    // clamps above the scale
+    expect(edgeWidth(2000, 780)).toBe(MAX_EDGE_WIDTH);
+    // linear midpoint
+    expect(edgeWidth(390, 780)).toBeCloseTo(
+      MIN_EDGE_WIDTH + (MAX_EDGE_WIDTH - MIN_EDGE_WIDTH) * 0.5,
+    );
+    // monotonic, and doubling the rate doubles the width above MIN
+    expect(edgeWidth(100, 780)).toBeLessThan(edgeWidth(400, 780));
+    expect(edgeWidth(200, 780) - MIN_EDGE_WIDTH).toBeCloseTo(
+      2 * (edgeWidth(100, 780) - MIN_EDGE_WIDTH),
+    );
   });
 });
 

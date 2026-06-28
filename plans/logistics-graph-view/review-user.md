@@ -21,11 +21,9 @@ These findings demonstrate how users have to fight the graph to get the informat
 pleasant UX.
 
 - Make the node icon and recipe name large and centered in the node
-- Edges currently render over source and sink components. They should render underneath them.
 - Hovering over an edge should highlight it and display its part and rate
 - Remove the little white circles where edges meet nodes. Place the part icon (circle or rounded rectangle) centered on
   the border of the node so half of it is outside the node.
-- Edges should not "turn" so quickly after they "leave" the node. They should extend almost straight out for ~50 pixels.
 - Machine count per node and per row should be displayed. Clock speed and somersloop count should be displayed on the
   node.
 - Edge width scaling is not good. Try linear scaling, and the maximum width should be based on the factory maximum or

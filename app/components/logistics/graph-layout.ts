@@ -1,15 +1,22 @@
 // Pure, framework-free helpers for the logistics graph view. Kept separate from the
 // React Flow components so they are unit-testable without a DOM.
 
-export const MIN_EDGE_WIDTH = 1.5;
-export const MAX_EDGE_WIDTH = 14;
+export const MIN_EDGE_WIDTH = 2;
+export const MAX_EDGE_WIDTH = 18;
+
+// Rate floor for the width scale: small factories don't blow every belt up to MAX.
+export const EDGE_SCALE_FLOOR = 780;
 
 /**
- * Edge stroke width, log-proportional to throughput so a 1/min belt and a 1000/min belt
- * are both visible but clearly different. Clamped to [MIN_EDGE_WIDTH, MAX_EDGE_WIDTH].
+ * Edge stroke width, linear in throughput. `scaleRate` is the rate that maps to
+ * MAX_EDGE_WIDTH — the factory's busiest belt, or EDGE_SCALE_FLOOR, whichever is
+ * greater. Clamped to [MIN_EDGE_WIDTH, MAX_EDGE_WIDTH].
  */
-export function edgeWidth(rate: number): number {
-  const w = MIN_EDGE_WIDTH + 1.6 * Math.log(Math.max(0, rate) + 1);
+export function edgeWidth(rate: number, scaleRate: number): number {
+  const denom = Math.max(scaleRate, 1);
+  const w =
+    MIN_EDGE_WIDTH +
+    (Math.max(0, rate) / denom) * (MAX_EDGE_WIDTH - MIN_EDGE_WIDTH);
   return Math.min(MAX_EDGE_WIDTH, Math.max(MIN_EDGE_WIDTH, w));
 }
 

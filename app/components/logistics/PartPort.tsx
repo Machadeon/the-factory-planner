@@ -1,6 +1,5 @@
 import { Handle, Position } from "@xyflow/react";
 import type Part from "../../models/part";
-import { displayNum } from "../../utils";
 import Icon from "../Icon";
 
 interface PartPortProps {
@@ -10,16 +9,17 @@ interface PartPortProps {
   direction: "in" | "out";
 }
 
-// A single input/output port: the part icon (rounded square for solids, circle for
-// fluids/gases) over a React Flow connection handle, with the port's flow rate.
-export default function PartPort({ part, rate, direction }: PartPortProps) {
+// A port icon that sits on the node border (half outside). Rounded square for solids,
+// circle for fluids/gases. The connection handle is invisible and fills the icon so
+// edges anchor at the icon center — no stray white dot.
+export default function PartPort({ part, direction }: PartPortProps) {
   const fluid = part.fluid || part.gas;
   const isIn = direction === "in";
-  const shapeClass = fluid ? "rounded-full" : "rounded-md";
 
   return (
     <div
-      className={`relative flex items-center gap-1 ${isIn ? "flex-row" : "flex-row-reverse"}`}
+      className={`relative flex items-center justify-center bg-[#0f1420] ring-1 ring-white/25 ${fluid ? "rounded-full" : "rounded-md"}`}
+      style={{ width: 30, height: 30, borderColor: part.color }}
       data-testid={`port-${direction}-${part.slug}`}
       data-shape={fluid ? "circle" : "square"}
     >
@@ -28,20 +28,20 @@ export default function PartPort({ part, rate, direction }: PartPortProps) {
         type={isIn ? "target" : "source"}
         position={isIn ? Position.Left : Position.Right}
         style={{
-          background: part.color || "#888",
-          width: 8,
-          height: 8,
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          minWidth: 0,
+          minHeight: 0,
+          transform: "none",
+          background: "transparent",
+          border: "none",
+          borderRadius: "inherit",
+          opacity: 0,
         }}
       />
-      <div
-        className={`flex items-center justify-center bg-black/30 p-0.5 ring-1 ring-white/20 ${shapeClass}`}
-        style={{ borderColor: part.color }}
-      >
-        <Icon src={part.iconSmall} label={part.name} size={20} />
-      </div>
-      <span className="text-[10px] tabular-nums text-gray-300 whitespace-nowrap">
-        {displayNum(rate)}
-      </span>
+      <Icon src={part.iconSmall} label={part.name} size={22} />
     </div>
   );
 }

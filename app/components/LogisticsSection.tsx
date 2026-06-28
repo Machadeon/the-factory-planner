@@ -161,7 +161,12 @@ function Graph({
         sourceHandle: e.sourceHandle,
         targetHandle: e.targetHandle,
         type: "logistic",
-        data: { rate: e.rate, fluid: e.fluid, width: e.width },
+        data: {
+          partName: e.partName,
+          rate: e.rate,
+          fluid: e.fluid,
+          width: e.width,
+        },
       })),
     [model],
   );

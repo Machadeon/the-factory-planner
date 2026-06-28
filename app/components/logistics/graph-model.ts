@@ -5,6 +5,7 @@ import { deserializeFactory } from "../../models/factory-storage";
 import type Part from "../../models/part";
 import {
   buildPartEdges,
+  EDGE_SCALE_FLOOR,
   edgeWidth,
   type FlowEndpoint,
   type LayoutEdge,
@@ -50,6 +51,7 @@ export interface GraphEdge {
   target: string;
   sourceHandle: string;
   targetHandle: string;
+  partName: string;
   rate: number;
   fluid: boolean;
   width: number;
@@ -195,7 +197,8 @@ export function buildGraphModel(
     }
   }
 
-  // Edges: match producers to consumers per part.
+  // Edges: match producers to consumers per part. Build them first, then size widths
+  // linearly against the factory's busiest belt (or EDGE_SCALE_FLOOR, whichever larger).
   const partBySlug = buildPartIndex(factory);
   const edges: GraphEdge[] = [];
   const slugs = new Set([...producers.keys(), ...consumers.keys()]);
@@ -212,12 +215,16 @@ export function buildGraphModel(
         target: e.to,
         sourceHandle: `out-${slug}`,
         targetHandle: `in-${slug}`,
+        partName: part?.name ?? slug,
         rate: e.rate,
         fluid,
-        width: edgeWidth(e.rate),
+        width: 0,
       });
     }
   }
+  const maxRate = edges.reduce((m, e) => Math.max(m, e.rate), 0);
+  const scaleRate = Math.max(maxRate, EDGE_SCALE_FLOOR);
+  for (const e of edges) e.width = edgeWidth(e.rate, scaleRate);
 
   const layoutNodes: LayoutNode[] = nodes.map((n) => ({
     id: n.id,

@@ -3,10 +3,12 @@ import type Recipe from "../../models/recipe";
 import { MIN_BODY_H, MIN_BODY_W, SCALE } from "./constants";
 import type { GraphNode } from "./graph-model";
 
-// Approximate width of one port column (icon + rate label) on each side of a node body.
-const PORT_COL_W = 92;
-const PORT_H = 30;
-const HEADER_H = 30;
+// Port icons overhang the body border (~half of a 30px icon) on each side.
+const PORT_OVERHANG = 22;
+// Vertical room each port needs so stacked ports don't collide.
+const PORT_H = 34;
+// Header = building icon + recipe name + stats row.
+const HEADER_H = 74;
 const ROWS_ROW_H = 26;
 
 export function machineCountOf(al: AssemblyLine): number {
@@ -69,7 +71,7 @@ export function nodeSize(node: GraphNode): { width: number; height: number } {
     const isFactory = al.recipe.isFactoryRecipe;
     const rowsRow = !isFactory && machineCountOf(al) > 1 ? ROWS_ROW_H : 0;
     return {
-      width: body.width + 2 * PORT_COL_W,
+      width: body.width + 2 * PORT_OVERHANG,
       height: Math.max(body.height, ports * PORT_H) + HEADER_H + rowsRow,
     };
   }

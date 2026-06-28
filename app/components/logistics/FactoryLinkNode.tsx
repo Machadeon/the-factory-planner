@@ -37,9 +37,11 @@ export default function FactoryLinkNode({ data }: NodeProps) {
               type="source"
               position={Position.Right}
               style={{
-                background: p.part.color || "#888",
-                width: 8,
-                height: 8,
+                opacity: 0,
+                width: 10,
+                height: 10,
+                background: "transparent",
+                border: "none",
               }}
             />
           ) : (
@@ -48,9 +50,11 @@ export default function FactoryLinkNode({ data }: NodeProps) {
               type="target"
               position={Position.Left}
               style={{
-                background: p.part.color || "#888",
-                width: 8,
-                height: 8,
+                opacity: 0,
+                width: 10,
+                height: 10,
+                background: "transparent",
+                border: "none",
               }}
             />
           )}
