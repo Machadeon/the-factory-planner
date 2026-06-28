@@ -1,8 +1,39 @@
 import type Factory from "./factory";
 import { partSlugLookup } from "./library";
 import type Part from "./part";
+import type Recipe from "./recipe";
 import type { RecipePart } from "./recipe";
 import type { RecipeLike } from "./recipe-like";
+
+/**
+ * Total machine floor area (m²) of a factory: footprint × machine count summed over
+ * every assembly line, recursing into nested factory-recipe lines (× their integer
+ * instance count). Depth-capped as a defensive guard; the in-memory factory graph is
+ * already acyclic (deserialize stubs cycles).
+ */
+function factoryFloorArea(factory: Factory, depth = 0): number {
+  if (depth > 32) return 0;
+  let area = 0;
+  for (const pl of factory.productionLines) {
+    for (const al of pl.assemblyLines) {
+      if (al.recipe.isFactoryRecipe) {
+        const nested = (al.recipe as unknown as FactoryRecipe)
+          .footprintAreaPerInstance;
+        area += al.rate * (nested ?? 0);
+        continue;
+      }
+      const building = (al.recipe as Recipe).building;
+      if (!building?.size) continue;
+      const count = al.getMachineCount();
+      const machines =
+        "fullMachines" in count
+          ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
+          : count.machineCount;
+      area += machines * building.size.width * building.size.length;
+    }
+  }
+  return area;
+}
 
 export default class FactoryRecipe implements RecipeLike {
   readonly isFactoryRecipe = true as const;
@@ -16,6 +47,8 @@ export default class FactoryRecipe implements RecipeLike {
   maxPowerPerInstance = 0;
   shardsPerInstance = 0;
   sloopsPerInstance = 0;
+  /** Total machine floor area (m²) of one instance of the nested factory. */
+  footprintAreaPerInstance = 0;
   private readonly _ingredientLookup: Record<string, RecipePart> = {};
   private readonly _productLookup: Record<string, RecipePart> = {};
 
@@ -49,6 +82,7 @@ export default class FactoryRecipe implements RecipeLike {
     this.maxPowerPerInstance = totalPower.max;
     this.shardsPerInstance = factory.getTotalShards();
     this.sloopsPerInstance = factory.getTotalSloops();
+    this.footprintAreaPerInstance = factoryFloorArea(factory);
   }
 
   getIngredient(part: Part | string): RecipePart | undefined {
