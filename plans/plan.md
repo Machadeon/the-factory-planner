@@ -202,12 +202,12 @@ Tasks grouped by feature area, with model and effort recommendations.
 
 ---
 
-## Group 1: UI/UX Polish
+## Group 1: UI/UX Polish ✓ COMPLETE
 
 **Model: Haiku · Effort: low–medium**
 *Targeted UI changes with low blast radius — no LP logic, no data model changes. Each task touches 1–2 component files.*
 
-### 1. Intermediate parts: show producers/consumers, remove clutter
+### 1. Intermediate parts: show producers/consumers, remove clutter ✓
 
 **Files:** `app/components/FactoryOverviewComponent.tsx`, `app/components/PartRateSummary.tsx`
 
@@ -218,7 +218,7 @@ Tasks grouped by feature area, with model and effort recommendations.
 
 Edge cases: use `displayNum()` and the same 0.0001 guard as `allIntermediateParts()`. `_assemblyLineLookup` is rebuilt on every `factory.update()` so it's always fresh.
 
-### 2. View/hide toggle on all FactoryOverview sections
+### 2. View/hide toggle on all FactoryOverview sections ✓
 
 **Files:** `app/components/FactoryOverviewComponent.tsx`
 
@@ -228,7 +228,7 @@ Edge cases: use `displayNum()` and the same 0.0001 guard as `allIntermediatePart
 
 Edge cases: Consumers and Suppliers are already conditionally rendered (only when `library` and `currentFactoryId` are present). The `content-visibility` toggle is an additional layer, not a replacement for that guard. Note: `content-visibility: hidden` removes the section from the accessibility tree while hidden — this is acceptable for a user-initiated toggle but verify with a screen reader.
 
-### 3. Move expand/collapse all to a better location
+### 3. Move expand/collapse all to a better location ✓
 
 **Files:** `app/components/FactoryComponent.tsx`
 
@@ -237,7 +237,7 @@ Edge cases: Consumers and Suppliers are already conditionally rendered (only whe
 - If moving into `FactoryHeader`: pass `onExpandAll` / `onCollapseAll` callbacks as props.
 - Disable both buttons when `factory.productionLines.length === 0`.
 
-### 4. Fix: "Set all equal" does not update clock speed slider and text input
+### 4. Fix: "Set all equal" does not update clock speed slider and text input ✓
 
 **Files:** `app/components/AssemblyLineComponent.tsx`
 
@@ -248,12 +248,12 @@ Edge cases: slider fires `onChange` on every tick — verify the existing deboun
 
 ---
 
-## Group 2: Performance
+## Group 2: Performance ✓ COMPLETE
 
 **Model: Sonnet · Effort: medium**
 *Requires understanding React's memoization APIs and the rendering lifecycle. Root causes are clear but fixes must not break reactivity.*
 
-### 5. Expand/collapse all is slow for large factories
+### 5. Expand/collapse all is slow for large factories ✓
 
 **Files:** `app/components/FactoryComponent.tsx`, `app/components/ProductionLineComponent.tsx`
 
@@ -285,7 +285,7 @@ Edge cases: slider fires `onChange` on every tick — verify the existing deboun
 
 Edge cases: `React.memo` skips re-renders when props are referentially equal. Since `factory` is the same object reference between renders, pass `version` explicitly as a prop so `React.memo` sees the change after `factory.update()`. Verify keyboard navigation still reaches off-screen rows using `content-visibility: auto` (some AT configurations may exclude them until focused).
 
-### 6. Memoize `deserializeFactory` in overview and dialogs
+### 6. Memoize `deserializeFactory` in overview and dialogs ✓
 
 **Files:** `app/components/FactoryOverviewComponent.tsx`, `app/components/FactoryPickerDialog.tsx`
 
@@ -295,12 +295,12 @@ Edge cases: `React.memo` skips re-renders when props are referentially equal. Si
 
 ---
 
-## Group 3: LP Solver / Optimization
+## Group 3: LP Solver / Optimization ✓ COMPLETE
 
 **Model: Opus · Effort: high**
 *Mistakes in constraint construction produce silently wrong results. Requires deep familiarity with the two-phase LP setup in `factory.tsx`. High blast radius — a bug affects every factory using auto-calculate.*
 
-### 7. Add per-part constraints (max throughput, resource limits)
+### 7. Add per-part constraints (max throughput, resource limits) ✓
 
 **Files:** `app/models/factory.tsx`, `app/components/FactoryOverviewComponent.tsx` (or new dialog)
 
@@ -312,7 +312,7 @@ Edge cases: `React.memo` skips re-renders when props are referentially equal. Si
 
 Edge cases: contradictory constraints make Phase 1 infeasible — Phase 2 catches it and sets `solverError`. Also fix the pre-existing bug where `solverError` is stored on `Factory` but never displayed in the UI.
 
-### 8. Add "maximize output" mode for a production line
+### 8. Add "maximize output" mode for a production line ✓
 
 **Files:** `app/models/production-line.tsx`, `app/models/factory.tsx`, `app/components/ProductionLineComponent.tsx`
 
@@ -323,18 +323,18 @@ Edge cases: contradictory constraints make Phase 1 infeasible — Phase 2 catche
 
 Edge cases: multiple `maximizeOutput` lines → LP optimizes the sum, not each individually. Switching off resets `outputRate` to the last solved value (or 0).
 
-### 9. Auto-production-line filler
+### 9. Auto-production-line filler ✓
 
 See [plan:auto-recipe.md](plan:auto-recipe.md).
 
 ---
 
-## Group 4: New Factory View Modes
+## Group 4: New Factory View Modes ✓ COMPLETE
 
 **Model: Opus · Effort: high**
 *Significant new architecture. Both items have high surface area and design decisions that ripple through the codebase.*
 
-### 10. "Auto mode" / "lazy mode" factory builder
+### 10. "Auto mode" / "lazy mode" factory builder ✓
 
 **Files:** `app/models/factory.tsx`, new `app/components/AutoFactoryComponent.tsx`
 
@@ -345,9 +345,9 @@ See [plan:auto-recipe.md](plan:auto-recipe.md).
 - Serialization: `mode` field in `SerializedFactory`; default `"manual"` for backwards compat.
 - Store recipe selections as `{ partSlug: recipeSlug }` map on the factory.
 
-### 11. Graphical view (nodes = assembly lines, edges = logistics)
+### 11. Graphical view (nodes = assembly lines, edges = logistics) ✓
 
-**Files:** new `app/components/FactoryGraphView.tsx`, `app/components/FactoryComponent.tsx`
+**Files:** new `app/components/FactoryGraphView.tsx`, `app/components/FactoryComponent.tsx` (implemented as the **Logistics tab**)
 
 - Install `@xyflow/react` (React Flow) — interactive node-graph with custom node types.
 - Map model to graph: `AssemblyLine` → node (recipe name, building icon, rate, machine count); part flows → edges (part name + rate); raw resource inputs → source nodes; factory outputs → sink nodes.
@@ -391,14 +391,14 @@ Edge cases: cycles in intermediate parts — ELK preferred. Large factories (50+
 
 ## Summary
 
-| Group | Tasks | Model | Effort |
-|-------|-------|-------|--------|
-| Testing Infrastructure | install, config, 18 test files | Sonnet | high (setup) / low–med (ongoing) |
-| UI/UX Polish | 1–4 | Haiku | low–medium |
-| Performance | 5–6 | Sonnet | medium |
-| LP Solver / Optimization | 7–9 | Opus | high |
-| New Factory View Modes | 10–11 | Opus | high |
-| Refactoring & Housekeeping | 12–14 | Haiku | low–medium |
+| Group | Tasks | Status | Model | Effort |
+|-------|-------|--------|-------|--------|
+| Testing Infrastructure | install, config, 18 test files | ✓ COMPLETE | Sonnet | high (setup) / low–med (ongoing) |
+| UI/UX Polish | 1–4 | ✓ COMPLETE | Haiku | low–medium |
+| Performance | 5–6 | ✓ COMPLETE | Sonnet | medium |
+| LP Solver / Optimization | 7–9 | ✓ COMPLETE | Opus | high |
+| New Factory View Modes | 10–11 | ✓ COMPLETE | Opus | high |
+| Refactoring & Housekeeping | 12–14 | ✓ COMPLETE | Haiku | low–medium |
 
 ## Recommended sequencing
 
