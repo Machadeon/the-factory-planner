@@ -41,7 +41,18 @@ export default function LogisticEdge({
 
   return (
     <>
-      {/* Wide transparent hit area so the thin belt is easy to hover. */}
+      <BaseEdge
+        path={path}
+        interactionWidth={0}
+        style={{
+          strokeWidth: d?.width ?? 2,
+          stroke: hovered ? "#ffffff" : color,
+          strokeLinecap: "round",
+          opacity: hovered ? 1 : 0.85,
+        }}
+      />
+      {/* Wide transparent hit area, rendered last so it sits above React Flow's own
+          edge-interaction path (which otherwise steals the hover). */}
       <path
         d={path}
         fill="none"
@@ -49,16 +60,7 @@ export default function LogisticEdge({
         strokeWidth={Math.max(16, (d?.width ?? 2) + 12)}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ pointerEvents: "stroke" }}
-      />
-      <BaseEdge
-        path={path}
-        style={{
-          strokeWidth: d?.width ?? 2,
-          stroke: hovered ? "#ffffff" : color,
-          strokeLinecap: "round",
-          opacity: hovered ? 1 : 0.85,
-        }}
+        style={{ pointerEvents: "stroke", cursor: "pointer" }}
       />
       {hovered ? (
         <EdgeLabelRenderer>
@@ -69,7 +71,8 @@ export default function LogisticEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
             }}
           >
-            {d.partName} · {displayNum(d.rate)}/min
+            {d.partName} · {displayNum(d.rate)}
+            {d.partName === "Power" ? " MW" : "/min"}
           </div>
         </EdgeLabelRenderer>
       ) : null}

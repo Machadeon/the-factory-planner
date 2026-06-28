@@ -222,7 +222,9 @@ export function buildGraphModel(
       });
     }
   }
-  const maxRate = edges.reduce((m, e) => Math.max(m, e.rate), 0);
+  const maxRate = edges
+    .filter((e) => e.partName !== "Power")
+    .reduce((m, e) => Math.max(m, e.rate), 0);
   const scaleRate = Math.max(maxRate, EDGE_SCALE_FLOOR);
   for (const e of edges) e.width = edgeWidth(e.rate, scaleRate);
 

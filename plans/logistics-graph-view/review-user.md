@@ -35,4 +35,4 @@ These items bring strong improvements to the graph.
 
 - Allow the user to resize the nodes by dragging its edges (it still must snap to an integer number of rows)
 - Individual machine footprints should be rendered within the node
-- User should be able to toggle "actual node size" - when off, all nodes are the minimum size
+- User should be able to toggle "actual node size" - when off, all nodes are the minimum size and individual machine foot prints are not rendered

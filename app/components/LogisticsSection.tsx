@@ -60,6 +60,7 @@ const GAP_Y = 28;
 function computeLayout(
   graphNodes: GraphNode[],
   cols: Map<string, number>,
+  actualSize: boolean,
 ): Map<string, { x: number; y: number }> {
   const byCol = new Map<number, GraphNode[]>();
   for (const n of graphNodes) {
@@ -73,10 +74,12 @@ function computeLayout(
   let x = 0;
   for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
     const colNodes = byCol.get(col) ?? [];
-    const colW = Math.max(...colNodes.map((n) => nodeSize(n).width));
+    const colW = Math.max(
+      ...colNodes.map((n) => nodeSize(n, actualSize).width),
+    );
     let y = 0;
     for (const n of colNodes) {
-      const s = nodeSize(n);
+      const s = nodeSize(n, actualSize);
       out.set(n.id, { x: x + (colW - s.width) / 2, y });
       y += s.height + GAP_Y;
     }
@@ -89,7 +92,10 @@ function Graph({
   factory,
   library,
   currentFactoryId,
-}: Omit<LogisticsSectionProps, "onNavigateToFactory">) {
+  actualSize,
+}: Omit<LogisticsSectionProps, "onNavigateToFactory"> & {
+  actualSize: boolean;
+}) {
   // Deserializing consumer factories is expensive; memoize it so rate edits don't
   // re-derive the whole consumer set every render (same key the overview uses).
   const outputKey = factory
@@ -112,27 +118,32 @@ function Graph({
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const lastSignature = useRef<string>("");
+  const lastMode = useRef<boolean>(actualSize);
 
-  // Rebuild React Flow nodes when the set of graph nodes changes. Positions come from
-  // the persisted layout; missing ones are auto-laid-out and written back in-memory so
-  // they stay stable (persisted on the next save) without churning autosave.
+  // Rebuild React Flow nodes when the set of graph nodes changes, or repack from scratch
+  // when the size mode is toggled (node footprints change, so saved positions no longer
+  // pack cleanly). Otherwise positions come from the persisted layout; missing ones are
+  // auto-laid-out and written back so they stay stable.
   useEffect(() => {
-    if (lastSignature.current === idSignature) return;
+    const modeChanged = lastMode.current !== actualSize;
+    if (lastSignature.current === idSignature && !modeChanged) return;
     lastSignature.current = idSignature;
+    lastMode.current = actualSize;
     const cols = assignColumns({
       nodes: model.layoutNodes,
       edges: model.layoutEdges,
     });
-    const computed = computeLayout(model.nodes, cols);
+    const computed = computeLayout(model.nodes, cols, actualSize);
     const live = new Set(model.nodes.map((n) => n.id));
     // Prune layout entries for nodes that no longer exist (deleted lines).
     for (const key of Object.keys(factory.graphLayout)) {
       if (!live.has(key)) delete factory.graphLayout[key];
     }
     const next: Node[] = model.nodes.map((n) => {
-      const saved = factory.graphLayout[n.id];
+      // On a mode switch, ignore saved positions and re-pack everything.
+      const saved = modeChanged ? undefined : factory.graphLayout[n.id];
       const pos = saved ?? computed.get(n.id) ?? { x: 0, y: 0 };
-      if (!saved) factory.graphLayout[n.id] = pos;
+      factory.graphLayout[n.id] = pos;
       return {
         id: n.id,
         type: n.data.kind,
@@ -141,7 +152,7 @@ function Graph({
       };
     });
     setNodes(next);
-  }, [idSignature, model, factory]);
+  }, [idSignature, actualSize, model, factory]);
 
   // Keep node data fresh (rates/rows) without resetting positions on every edit.
   const nodesWithData = useMemo(() => {
@@ -236,6 +247,7 @@ function Graph({
         snapGrid={[GRID, GRID]}
         minZoom={0.1}
         fitView
+        colorMode="system"
         proOptions={{ hideAttribution: true }}
       >
         <Background gap={GRID} color="#ffffff10" />
@@ -253,6 +265,7 @@ export default function LogisticsSection({
   onNavigateToFactory,
 }: LogisticsSectionProps) {
   const [maximized, setMaximized] = useState(false);
+  const [actualSize, setActualSize] = useState(true);
 
   useEffect(() => {
     if (!maximized) return;
@@ -282,7 +295,7 @@ export default function LogisticsSection({
   }
 
   return (
-    <LogisticsContext.Provider value={{ onNavigateToFactory }}>
+    <LogisticsContext.Provider value={{ onNavigateToFactory, actualSize }}>
       <div
         className={
           maximized
@@ -291,23 +304,38 @@ export default function LogisticsSection({
         }
         style={maximized ? undefined : { minHeight: 480 }}
       >
-        <button
-          type="button"
-          aria-label={maximized ? "Exit full screen" : "Maximize"}
-          onClick={() => setMaximized((m) => !m)}
-          className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-xs text-gray-100 hover:bg-black/70"
-        >
-          {maximized ? (
-            <CloseFullscreenIcon sx={{ fontSize: 14 }} />
-          ) : (
-            <OpenInFullIcon sx={{ fontSize: 14 }} />
-          )}
-        </button>
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+          <button
+            type="button"
+            aria-pressed={actualSize}
+            onClick={() => setActualSize((s) => !s)}
+            className={`rounded px-2 py-1 text-xs hover:bg-black/70 ${
+              actualSize
+                ? "bg-cyan-600/70 text-white"
+                : "bg-black/50 text-gray-100"
+            }`}
+          >
+            Actual size
+          </button>
+          <button
+            type="button"
+            aria-label={maximized ? "Exit full screen" : "Maximize"}
+            onClick={() => setMaximized((m) => !m)}
+            className="flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-xs text-gray-100 hover:bg-black/70"
+          >
+            {maximized ? (
+              <CloseFullscreenIcon sx={{ fontSize: 14 }} />
+            ) : (
+              <OpenInFullIcon sx={{ fontSize: 14 }} />
+            )}
+          </button>
+        </div>
         <ReactFlowProvider>
           <Graph
             factory={factory}
             library={library}
             currentFactoryId={currentFactoryId}
+            actualSize={actualSize}
           />
         </ReactFlowProvider>
       </div>
