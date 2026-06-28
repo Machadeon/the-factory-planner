@@ -1,52 +1,24 @@
 import type { NodeProps } from "@xyflow/react";
-import type AssemblyLine from "../../models/assembly-line";
 import type Recipe from "../../models/recipe";
 import { displayNum } from "../../utils";
 import Icon from "../Icon";
-import { MIN_BODY_H, MIN_BODY_W, SCALE } from "./constants";
 import { useLogistics } from "./context";
 import type { AssemblyNodeData } from "./graph-model";
+import { assemblyBodySize, effectiveRows, machineCountOf } from "./node-size";
 import PartPort from "./PartPort";
 
-function machineCount(al: AssemblyLine): number {
-  const count = al.getMachineCount();
-  return "fullMachines" in count
-    ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
-    : count.machineCount;
-}
-
 // One assembly line, drawn to its real factory footprint. Body size = footprint ×
-// machine count, arranged in the user's chosen number of rows. Factory-as-recipe lines
-// size from the sub-factory's total floor area and link to that factory.
+// machine count, arranged in `rows` rows. Factory-as-recipe lines size from the
+// sub-factory's total floor area and link to that factory.
 export default function AssemblyLineNode({ data }: NodeProps) {
-  const {
-    assemblyLine: al,
-    primaryPartSlug,
-    factory,
-  } = data as unknown as AssemblyNodeData;
+  const { assemblyLine: al, factory } = data as unknown as AssemblyNodeData;
   const { onNavigateToFactory } = useLogistics();
   const recipe = al.recipe;
   const isFactory = recipe.isFactoryRecipe;
-  const machines = Math.max(1, machineCount(al));
-  const rows = Math.min(al.rows, machines);
+  const machines = Math.max(1, machineCountOf(al));
+  const rows = effectiveRows(al);
 
-  let bodyW: number;
-  let bodyH: number;
-  if (isFactory) {
-    const area =
-      (recipe as unknown as { footprintAreaPerInstance: number })
-        .footprintAreaPerInstance * Math.max(1, al.rate);
-    const side = Math.sqrt(Math.max(1, area));
-    bodyW = side * SCALE;
-    bodyH = side * SCALE;
-  } else {
-    const { width, length } = (recipe as Recipe).building.size;
-    const cols = Math.ceil(machines / rows);
-    bodyW = cols * width * SCALE;
-    bodyH = rows * length * SCALE;
-  }
-  bodyW = Math.max(MIN_BODY_W, bodyW);
-  bodyH = Math.max(MIN_BODY_H, bodyH);
+  const { width: bodyW, height: bodyH } = assemblyBodySize(al);
 
   const icon = isFactory
     ? (recipe as unknown as { icon?: string }).icon
@@ -108,7 +80,6 @@ export default function AssemblyLineNode({ data }: NodeProps) {
               part={prod.part}
               rate={al.getPartProductionRate(prod.part)}
               direction="out"
-              byproduct={prod.part.slug !== primaryPartSlug}
             />
           ))}
         </div>

@@ -14,6 +14,7 @@ import {
   type NodeTypes,
   ReactFlow,
   ReactFlowProvider,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -30,6 +31,7 @@ import {
   type GraphNode,
 } from "./logistics/graph-model";
 import LogisticEdge from "./logistics/LogisticEdge";
+import { nodeSize } from "./logistics/node-size";
 import TerminalNode from "./logistics/TerminalNode";
 
 interface LogisticsSectionProps {
@@ -49,21 +51,36 @@ const nodeTypes: NodeTypes = {
 
 const edgeTypes: EdgeTypes = { logistic: LogisticEdge };
 
-const COL_WIDTH = 320;
-const ROW_HEIGHT = 150;
+const GAP_X = 72;
+const GAP_Y = 28;
 
-// Stack nodes within their assigned column for any node lacking a saved position.
+// Burndown layout: pack each column by its widest node (no giant gaps) and stack nodes
+// within a column by their real heights (no overlap). Columns come from assignColumns
+// (sources/suppliers left, sinks/consumers right, assembly lines by flow depth).
 function computeLayout(
   graphNodes: GraphNode[],
   cols: Map<string, number>,
 ): Map<string, { x: number; y: number }> {
-  const perCol = new Map<number, number>();
-  const out = new Map<string, { x: number; y: number }>();
+  const byCol = new Map<number, GraphNode[]>();
   for (const n of graphNodes) {
     const col = cols.get(n.id) ?? 0;
-    const row = perCol.get(col) ?? 0;
-    perCol.set(col, row + 1);
-    out.set(n.id, { x: col * COL_WIDTH, y: row * ROW_HEIGHT });
+    const list = byCol.get(col) ?? [];
+    list.push(n);
+    byCol.set(col, list);
+  }
+
+  const out = new Map<string, { x: number; y: number }>();
+  let x = 0;
+  for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+    const colNodes = byCol.get(col) ?? [];
+    const colW = Math.max(...colNodes.map((n) => nodeSize(n).width));
+    let y = 0;
+    for (const n of colNodes) {
+      const s = nodeSize(n);
+      out.set(n.id, { x: x + (colW - s.width) / 2, y });
+      y += s.height + GAP_Y;
+    }
+    x += colW + GAP_X;
   }
   return out;
 }
@@ -166,24 +183,61 @@ function Graph({
     [factory],
   );
 
+  // Keep the graph centered on the same flow point when the pane is resized (e.g.
+  // maximize), instead of pinning the top-left corner. Track the visible center on
+  // every move, then re-apply it after a resize.
+  const rf = useReactFlow();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const centerRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
+
+  const captureCenter = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const c = rf.screenToFlowPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    });
+    centerRef.current = { x: c.x, y: c.y, zoom: rf.getZoom() };
+  }, [rf]);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    let first = true;
+    const ro = new ResizeObserver(() => {
+      if (first) {
+        first = false;
+        return;
+      }
+      const c = centerRef.current;
+      if (c) rf.setCenter(c.x, c.y, { zoom: c.zoom });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [rf]);
+
   return (
-    <ReactFlow
-      nodes={nodesWithData}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onNodesChange={onNodesChange}
-      onNodeDragStop={onNodeDragStop}
-      snapToGrid
-      snapGrid={[GRID, GRID]}
-      minZoom={0.1}
-      fitView
-      proOptions={{ hideAttribution: true }}
-    >
-      <Background gap={GRID} color="#ffffff10" />
-      <MiniMap pannable zoomable />
-      <Controls />
-    </ReactFlow>
+    <div ref={wrapperRef} className="h-full w-full">
+      <ReactFlow
+        nodes={nodesWithData}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onNodeDragStop={onNodeDragStop}
+        onMove={captureCenter}
+        snapToGrid
+        snapGrid={[GRID, GRID]}
+        minZoom={0.1}
+        fitView
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background gap={GRID} color="#ffffff10" />
+        <MiniMap pannable zoomable />
+        <Controls />
+      </ReactFlow>
+    </div>
   );
 }
 

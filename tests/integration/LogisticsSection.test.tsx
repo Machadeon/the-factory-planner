@@ -7,8 +7,10 @@ import FactoryLinkNode from "@/app/components/logistics/FactoryLinkNode";
 import type {
   AssemblyNodeData,
   FactoryNodeData,
+  TerminalNodeData,
 } from "@/app/components/logistics/graph-model";
 import PartPort from "@/app/components/logistics/PartPort";
+import TerminalNode from "@/app/components/logistics/TerminalNode";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
@@ -75,11 +77,15 @@ describe("LogisticsSection graph view", () => {
     );
   });
 
-  it("AC11: byproduct port is marked distinct", () => {
-    render(
-      <PartPort part={ironIngotPart} rate={10} direction="out" byproduct />,
-    );
-    expect(screen.getByTestId("port-out-iron-ingot")).toHaveAttribute(
+  it("AC11: a factory-byproduct sink node is marked distinct", () => {
+    const data: TerminalNodeData = {
+      kind: "sink",
+      part: ironIngotPart,
+      rate: 10,
+      byproduct: true,
+    };
+    render(<TerminalNode {...nodeProps(data)} />);
+    expect(screen.getByTestId("terminal-sink-iron-ingot")).toHaveAttribute(
       "data-byproduct",
       "true",
     );
@@ -143,7 +149,7 @@ describe("LogisticsSection graph view", () => {
       factory,
     };
     render(<AssemblyLineNode {...nodeProps(data)} />);
-    const input = screen.getByDisplayValue("1") as HTMLInputElement;
+    const input = screen.getByRole("spinbutton") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "2" } });
     expect(al.rows).toBe(2);
     expect(update).toHaveBeenCalled();

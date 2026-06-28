@@ -86,7 +86,7 @@ describe("graph layout serialization", () => {
     ).toEqual({ x: 120, y: 40 });
   });
 
-  it("AC7: a pre-v5 factory migrates — fresh ids, rows default 1, no positions", () => {
+  it("AC7: a pre-v5 factory migrates — fresh ids, rows default 0 (auto), no positions", () => {
     const legacy = {
       schemaVersion: 4,
       id: "old",
@@ -120,6 +120,7 @@ describe("graph layout serialization", () => {
     const al = back?.productionLines[0].assemblyLines[0];
     expect(typeof (al as unknown as { id: string }).id).toBe("string");
     expect((al as unknown as { id: string }).id.length).toBeGreaterThan(0);
-    expect((al as unknown as { rows: number }).rows).toBe(1);
+    // rows defaults to 0 (auto: the graph picks an aspect-fit row count).
+    expect((al as unknown as { rows: number }).rows).toBe(0);
   });
 });

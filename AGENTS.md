@@ -52,8 +52,8 @@ Plan lives at `plans/<change name>/validation.md`.
 Same agent as spec reviewer.
 
 Checks: all spec requirements covered, correct test types, no missing edge cases, no trivially-passing tests. Output:
-concerns or approval. Unresolved concerns block implementation. Return to validation drafting and repeat review on
-unresolved concerns. Cannot move to implementation planning until a review returns clean.
+concerns or approval. Unresolved concerns block implementation. Return to validation drafting to resolve concerns then
+repeat review. Continue this loop until a review returns clean.
 
 ## Implementation Planning
 
@@ -77,8 +77,8 @@ Same agent as spec and validation reviewer.
 
 Checks: all spec and validation requirements covered, correct frontend design, no outdated patterns, no code
 anti-patterns. Use skills from modern-web-guidance@googlechrome and frontend-design@claude-plugins-official. Output:
-concerns or approval. Unresolved concerns block implementation. Return to implementation planning and repeat review on
-unresolved concerns. Cannot move to implementation loop until a review returns clean.
+concerns or approval. Unresolved concerns block implementation. Return to implementation planning to resolve concerns
+then repeat review. Continue this loop until a review returns clean.
 
 ## Implementation Loop
 
@@ -100,8 +100,8 @@ After all changes: full test suite (`npm run test:run && npm run test:e2e`), the
 
 Same agent as spec and validation drafter and implementation planner.
 
-Execute the `/caveman:caveman-review` skill on all changes. Return to implementation loop and repeat review on
-unresolved concerns. Cannot complete until a review returns clean.
+Execute the `/caveman:caveman-review` skill on all changes. Return to implementation loop to resolve concerns then
+repeat review. Continue this loop until a review returns clean.
 
 # Satisfactory Planner
 

@@ -8,31 +8,20 @@ interface PartPortProps {
   rate: number;
   /** "in" = ingredient (left, target handle); "out" = product (right, source handle). */
   direction: "in" | "out";
-  /** A product that isn't the production line's primary part. */
-  byproduct?: boolean;
 }
 
 // A single input/output port: the part icon (rounded square for solids, circle for
 // fluids/gases) over a React Flow connection handle, with the port's flow rate.
-export default function PartPort({
-  part,
-  rate,
-  direction,
-  byproduct,
-}: PartPortProps) {
+export default function PartPort({ part, rate, direction }: PartPortProps) {
   const fluid = part.fluid || part.gas;
   const isIn = direction === "in";
   const shapeClass = fluid ? "rounded-full" : "rounded-md";
-  const ringClass = byproduct
-    ? "ring-2 ring-amber-400"
-    : "ring-1 ring-white/20";
 
   return (
     <div
       className={`relative flex items-center gap-1 ${isIn ? "flex-row" : "flex-row-reverse"}`}
       data-testid={`port-${direction}-${part.slug}`}
       data-shape={fluid ? "circle" : "square"}
-      data-byproduct={byproduct ? "true" : undefined}
     >
       <Handle
         id={`${isIn ? "in" : "out"}-${part.slug}`}
@@ -45,7 +34,7 @@ export default function PartPort({
         }}
       />
       <div
-        className={`flex items-center justify-center bg-black/30 p-0.5 ${shapeClass} ${ringClass}`}
+        className={`flex items-center justify-center bg-black/30 p-0.5 ring-1 ring-white/20 ${shapeClass}`}
         style={{ borderColor: part.color }}
       >
         <Icon src={part.iconSmall} label={part.name} size={20} />

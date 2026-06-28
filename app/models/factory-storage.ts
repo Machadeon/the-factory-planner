@@ -167,7 +167,7 @@ export function serializeFactory(
           const nestedId = al.recipe.slug.slice("factory:".length);
           return {
             id: al.id,
-            rows: al.rows !== 1 ? al.rows : undefined,
+            rows: al.rows > 0 ? al.rows : undefined,
             nestedFactoryId: nestedId,
             rate: al.rate,
             sloopedSlots: 0,
@@ -178,7 +178,7 @@ export function serializeFactory(
         }
         return {
           id: al.id,
-          rows: al.rows !== 1 ? al.rows : undefined,
+          rows: al.rows > 0 ? al.rows : undefined,
           recipeSlug: al.recipe.slug,
           rate: al.rate,
           sloopedSlots: al.sloopedSlots,
@@ -249,7 +249,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
-          alData.rows ?? 1,
+          alData.rows ?? 0,
         ),
       );
     }
@@ -426,7 +426,7 @@ export function deserializeFactory(
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
-          alData.rows ?? 1,
+          alData.rows ?? 0,
         ),
       );
     }

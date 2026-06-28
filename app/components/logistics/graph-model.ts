@@ -23,6 +23,8 @@ export interface TerminalNodeData {
   kind: "source" | "sink";
   part: Part;
   rate: number;
+  /** A sink that is a factory byproduct (a net output that isn't a main product). */
+  byproduct?: boolean;
 }
 
 export interface FactoryNodeData {
@@ -182,7 +184,12 @@ export function buildGraphModel(
     } else {
       nodes.push({
         id: sinkId(part.slug),
-        data: { kind: "sink", part, rate: net },
+        data: {
+          kind: "sink",
+          part,
+          rate: net,
+          byproduct: !factory._mainOutputParts.has(part),
+        },
       });
       addConsumer(part.slug, { nodeId: sinkId(part.slug), rate: net });
     }

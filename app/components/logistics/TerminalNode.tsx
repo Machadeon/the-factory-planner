@@ -6,15 +6,20 @@ import type { TerminalNodeData } from "./graph-model";
 // A raw input (source) or net output (sink) terminal: just the part icon and its rate.
 // Lighter than a machine node — these are belt endpoints, not buildings.
 export default function TerminalNode({ data }: NodeProps) {
-  const { kind, part, rate } = data as unknown as TerminalNodeData;
+  const { kind, part, rate, byproduct } = data as unknown as TerminalNodeData;
   const fluid = part.fluid || part.gas;
   const isSource = kind === "source";
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-md border border-white/15 bg-black/40 px-2 py-1 text-gray-200"
+      className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${
+        byproduct
+          ? "border-amber-400 bg-amber-950/40 text-amber-100"
+          : "border-white/15 bg-black/40 text-gray-200"
+      }`}
       style={{ contain: "layout style paint" }}
       data-testid={`terminal-${kind}-${part.slug}`}
+      data-byproduct={byproduct ? "true" : undefined}
     >
       {!isSource ? (
         <Handle

@@ -14,8 +14,9 @@ export default class AssemblyLine {
   readonly id: string;
 
   /**
-   * Number of machine rows the bank occupies in the graph view (1..machineCount).
-   * Affects only the node's rendered footprint shape.
+   * Machine rows the bank occupies in the graph view. 0 = auto (the graph picks a
+   * row count that makes the node roughly 16:9); a positive value is a user override
+   * (clamped to 1..machineCount). Affects only the node's rendered footprint shape.
    */
   rows: number;
 
@@ -65,7 +66,7 @@ export default class AssemblyLine {
     allowRemainder: boolean,
     autoCreated = false,
     id: string = crypto.randomUUID(),
-    rows = 1,
+    rows = 0,
   ) {
     this.recipe = recipe;
     this.rate = rate;
@@ -75,7 +76,7 @@ export default class AssemblyLine {
     this.allowRemainder = allowRemainder;
     this.autoCreated = autoCreated;
     this.id = id;
-    this.rows = Math.max(1, Math.floor(rows));
+    this.rows = Math.max(0, Math.floor(rows));
   }
 
   maxSloopSlots(): number {
