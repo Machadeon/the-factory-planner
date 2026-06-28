@@ -424,9 +424,15 @@ The following items are work in addition to the plans above.
 
 ### Improvements
 
-- Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
 - Add "getFootprint()" to the main recipe interface
+- increase width of overview sidebar and make it user adjustable
+- adjust overview sidebar section headers (lighter color, click anywhere to show/hide, arrow icon on right to hint)
+- highlight "optimize for" options when hovering since they're full width (or don't make them full width)
+- allow pinning factory directory/sidebar to always show
+
+### Optimizations
+
+- Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
 - prevent occasional freeze for some optimization runs (run solver on background thread, time out, display error)
-- hide default constraints by default with toggle to show
 - make everything client-side
 - improve performance for large factories
