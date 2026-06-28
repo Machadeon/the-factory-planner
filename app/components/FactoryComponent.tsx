@@ -843,7 +843,12 @@ export default function FactoryComponent() {
                 />
               )}
               {activeSection === "logistics" && (
-                <LogisticsSection factory={currentFactory} />
+                <LogisticsSection
+                  factory={currentFactory}
+                  library={library}
+                  currentFactoryId={currentFactoryId}
+                  onNavigateToFactory={handleNavigateToFactory}
+                />
               )}
             </div>
             <div
