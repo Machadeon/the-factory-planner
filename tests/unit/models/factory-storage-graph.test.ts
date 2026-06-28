@@ -64,7 +64,10 @@ describe("graph layout serialization", () => {
     };
 
     const s = serializeFactory(factory, meta);
-    expect(s.assemblyLines === undefined).toBe(true); // sanity: lines live under productionLines
+    // sanity: lines live under productionLines, not at the top level
+    expect((s as unknown as { assemblyLines?: unknown }).assemblyLines).toBe(
+      undefined,
+    );
     expect(s.productionLines[0].assemblyLines[0].rows).toBe(2);
     expect(s.productionLines[0].assemblyLines[0].id).toBe(alId);
     expect(s.graphLayout?.[alId]).toEqual({ x: 120, y: 40 });
