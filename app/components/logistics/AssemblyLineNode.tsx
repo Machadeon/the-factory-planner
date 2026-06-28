@@ -58,6 +58,11 @@ export default function AssemblyLineNode({ data }: NodeProps) {
     factory.update();
   }
 
+  function setSpacing(next: number) {
+    al.rowSpacing = Math.max(0, next);
+    factory.update();
+  }
+
   // Drag the bottom edge to set the machine-row count: vertical travel maps to whole rows
   // (one in-game machine-length per row), so the body always lands on an integer layout.
   const resizable = actualSize && !isFactory && machines > 1;
@@ -98,10 +103,13 @@ export default function AssemblyLineNode({ data }: NodeProps) {
       >
         {showMachineCells ? (
           <div
-            className="pointer-events-none absolute inset-1 grid gap-px"
+            className="pointer-events-none absolute inset-1 grid"
             style={{
               gridTemplateColumns: `repeat(${perRow}, minmax(0, 1fr))`,
               gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+              // Row gap = the real routing space; columns stay tight.
+              rowGap: rows > 1 ? al.rowSpacing * SCALE : 0,
+              columnGap: 1,
             }}
           >
             {Array.from({ length: machines }, (_, i) => (
@@ -148,16 +156,31 @@ export default function AssemblyLineNode({ data }: NodeProps) {
         </div>
 
         {resizable ? (
-          <div className="relative flex items-center justify-center gap-1 rounded-md bg-[#1b2230]/80 px-2 pb-1 text-[10px] text-gray-300">
-            <span>Machine rows</span>
-            <input
-              type="number"
-              min={1}
-              max={machines}
-              value={rows}
-              onChange={(e) => setRows(Number(e.target.value))}
-              className="nodrag w-12 rounded bg-black/30 px-1 text-right tabular-nums"
-            />
+          <div className="relative flex items-center justify-center gap-2 rounded-md bg-[#1b2230]/80 px-2 pb-1 text-[10px] text-gray-300">
+            <label className="flex items-center gap-1">
+              <span>Rows</span>
+              <input
+                type="number"
+                min={1}
+                max={machines}
+                value={rows}
+                onChange={(e) => setRows(Number(e.target.value))}
+                className="nodrag w-12 rounded bg-black/30 px-1 text-right tabular-nums"
+              />
+            </label>
+            {rows > 1 ? (
+              <label className="flex items-center gap-1">
+                <span>Gap m</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={al.rowSpacing}
+                  onChange={(e) => setSpacing(Number(e.target.value))}
+                  className="nodrag w-12 rounded bg-black/30 px-1 text-right tabular-nums"
+                />
+              </label>
+            ) : null}
           </div>
         ) : (
           <div />

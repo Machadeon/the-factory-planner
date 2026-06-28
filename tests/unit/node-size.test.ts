@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { MIN_BODY_W } from "@/app/components/logistics/constants";
 import type { GraphNode } from "@/app/components/logistics/graph-model";
 import {
+  assemblyBodySize,
   assemblyNodeBox,
   nodeSize,
 } from "@/app/components/logistics/node-size";
@@ -40,5 +41,22 @@ describe("assemblyNodeBox actual-size toggle", () => {
     expect(nodeSize(node, false).width).toBeLessThanOrEqual(
       nodeSize(node, true).width,
     );
+  });
+});
+
+describe("rowSpacing", () => {
+  it("adds routing height between rows (n-1 gaps), none for a single row", () => {
+    const al = new AssemblyLine(ironIngotRecipe, 6000, 0, 100, 0, false);
+    al.rows = 4;
+    const base = assemblyBodySize(al, true).height;
+    al.rowSpacing += 10;
+    const taller = assemblyBodySize(al, true).height;
+    expect(taller).toBeGreaterThan(base);
+
+    // One row → no inter-row gap, so spacing doesn't change height.
+    al.rows = 1;
+    const oneRow = assemblyBodySize(al, true).height;
+    al.rowSpacing += 50;
+    expect(assemblyBodySize(al, true).height).toBe(oneRow);
   });
 });

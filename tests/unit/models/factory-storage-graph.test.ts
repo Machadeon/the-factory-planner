@@ -86,6 +86,30 @@ describe("graph layout serialization", () => {
     ).toEqual({ x: 120, y: 40 });
   });
 
+  it("round-trips a per-line rowSpacing override; default stays out of the payload", () => {
+    const factory = buildFactory();
+    const al = factory.productionLines[0].assemblyLines[0];
+    // Default isn't serialized (keeps payloads lean).
+    expect(
+      serializeFactory(factory, meta).productionLines[0].assemblyLines[0]
+        .rowSpacing,
+    ).toBe(undefined);
+
+    (al as unknown as { rowSpacing: number }).rowSpacing = 12;
+    const s = serializeFactory(factory, meta);
+    expect(s.productionLines[0].assemblyLines[0].rowSpacing).toBe(12);
+
+    const back = deserializeFactory(s);
+    const backAl = back?.productionLines[0].assemblyLines[0];
+    expect((backAl as unknown as { rowSpacing: number }).rowSpacing).toBe(12);
+  });
+
+  it("a pre-rowSpacing line deserializes to the 8 m default", () => {
+    const back = deserializeFactory(serializeFactory(buildFactory(), meta));
+    const al = back?.productionLines[0].assemblyLines[0];
+    expect((al as unknown as { rowSpacing: number }).rowSpacing).toBe(8);
+  });
+
   it("AC7: a pre-v5 factory migrates — fresh ids, rows default 0 (auto), no positions", () => {
     const legacy = {
       schemaVersion: 4,

@@ -61,9 +61,11 @@ export function assemblyBodySize(
   const rows = effectiveRows(al);
   const machines = Math.max(1, machineCountOf(al));
   const cols = Math.ceil(machines / rows);
+  // Reserve routing space between adjacent rows (none after the last row).
+  const gaps = (rows - 1) * al.rowSpacing * SCALE;
   return {
     width: Math.max(MIN_BODY_W, cols * width * SCALE),
-    height: Math.max(MIN_BODY_H, rows * length * SCALE),
+    height: Math.max(MIN_BODY_H, rows * length * SCALE + gaps),
   };
 }
 

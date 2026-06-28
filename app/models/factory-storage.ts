@@ -1,4 +1,4 @@
-import AssemblyLine from "./assembly-line";
+import AssemblyLine, { DEFAULT_ROW_SPACING } from "./assembly-line";
 import Factory, {
   type AvailablePart,
   defaultRecipeOptimizerConfig,
@@ -12,6 +12,7 @@ import ProductionLine from "./production-line";
 export interface SerializedAssemblyLine {
   id?: string;
   rows?: number;
+  rowSpacing?: number;
   recipeSlug?: string;
   nestedFactoryId?: string;
   /**
@@ -179,6 +180,8 @@ export function serializeFactory(
         return {
           id: al.id,
           rows: al.rows > 0 ? al.rows : undefined,
+          rowSpacing:
+            al.rowSpacing !== DEFAULT_ROW_SPACING ? al.rowSpacing : undefined,
           recipeSlug: al.recipe.slug,
           rate: al.rate,
           sloopedSlots: al.sloopedSlots,
@@ -250,6 +253,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
           alData.rows ?? 0,
+          alData.rowSpacing ?? DEFAULT_ROW_SPACING,
         ),
       );
     }
@@ -398,6 +402,7 @@ export function deserializeFactory(
             alData.autoCreated ?? false,
             alData.id ?? generateId(),
             alData.rows ?? 1,
+            alData.rowSpacing ?? DEFAULT_ROW_SPACING,
           ),
         );
         continue;
@@ -427,6 +432,7 @@ export function deserializeFactory(
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
           alData.rows ?? 0,
+          alData.rowSpacing ?? DEFAULT_ROW_SPACING,
         ),
       );
     }

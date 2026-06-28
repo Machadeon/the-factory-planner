@@ -6,6 +6,9 @@ function shardsForClock(clock: number): number {
   return Math.max(0, Math.ceil((clock - 100) / 50));
 }
 
+/** Default routing space (metres) between machine rows in the graph view. */
+export const DEFAULT_ROW_SPACING = 8;
+
 export default class AssemblyLine {
   /**
    * Stable unique id, used as the graph-view node key (recipe slug is not unique
@@ -19,6 +22,14 @@ export default class AssemblyLine {
    * (clamped to 1..machineCount). Affects only the node's rendered footprint shape.
    */
   rows: number;
+
+  /**
+   * Routing space, in metres, left between adjacent machine rows in the graph view so
+   * belts/pipes for inputs and outputs can be drawn. Defaults to {@link DEFAULT_ROW_SPACING};
+   * a per-line override lets dense banks claim more room. Affects only the rendered
+   * footprint, never throughput.
+   */
+  rowSpacing: number;
 
   /**
    * The {@link RecipeLike} used in this assembly line.
@@ -67,6 +78,7 @@ export default class AssemblyLine {
     autoCreated = false,
     id: string = crypto.randomUUID(),
     rows = 0,
+    rowSpacing = DEFAULT_ROW_SPACING,
   ) {
     this.recipe = recipe;
     this.rate = rate;
@@ -77,6 +89,7 @@ export default class AssemblyLine {
     this.autoCreated = autoCreated;
     this.id = id;
     this.rows = Math.max(0, Math.floor(rows));
+    this.rowSpacing = Math.max(0, rowSpacing);
   }
 
   maxSloopSlots(): number {
