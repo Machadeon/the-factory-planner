@@ -67,7 +67,7 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
   }
 
   return (
-    <div>
+    <div data-testid="constraints-panel">
       <p className="text-lg mb-2">Resource Constraints</p>
       {constraints.length === 0 && rawDefaults.length === 0 && (
         <p className="text-sm text-gray-400 mb-3">

@@ -1,5 +1,8 @@
-// spec: tests/e2e/constraints/constraints-dialog.plan.md
+// spec: plans/ui-three-section-refactor/spec.md (R4, R6, R6b)
 // seed: tests/e2e/seed.spec.ts
+//
+// Constraints are now an inline live-write panel inside the Optimization tab,
+// not a modal dialog.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -15,26 +18,15 @@ async function seedWithIronPlate(page: Page) {
   await page.getByText("Iron Plate3x15/min2x10/min").click();
 }
 
-test.describe("Constraints Dialog", () => {
-  test("Open dialog shows Resource Constraints title", async ({ page }) => {
-    // 1. Seed with Iron Plate factory state
+test.describe("Constraints panel", () => {
+  test("renders inline in the Optimization tab (no dialog)", async ({
+    page,
+  }) => {
     await seedWithIronPlate(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
-    // 2. Click "Edit constraints" button
-    await page.getByText("Edit constraints").click();
-
-    // 3. Expect dialog with title "Resource Constraints" is visible
-    await expect(
-      page.getByRole("dialog", { name: "Resource Constraints" }),
-    ).toBeVisible();
-
-    // 4. Expect "Cancel" and "Apply" buttons in dialog
-    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Apply" })).toBeVisible();
-
-    // 5. Expect default limits section is shown (no user constraints set yet)
-    await expect(
-      page.getByText("Default limits (add to override):"),
-    ).toBeVisible();
+    await expect(page.getByText("Resource Constraints")).toBeVisible();
+    await expect(page.getByText("Add constraint")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 });

@@ -1,10 +1,8 @@
-// spec: tests/e2e/constraints/constraint-hides-default.spec.ts
+// spec: plans/ui-three-section-refactor/spec.md (R4, R6b)
 // seed: tests/e2e/seed.spec.ts
 //
-// NOTE: Iron Ore appears in the default limits section because the Iron Ingot Smelter
-// recipe includes Iron Ore in factory.allParts(), and Iron Ore has a defaultResourceLimits
-// entry. Adding Iron Ore as a constraint moves it from the read-only defaults section
-// into an editable constraint row.
+// Adding a part as a constraint moves it from the read-only defaults list into an
+// editable constraint row. Live-write: no Apply needed.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -17,47 +15,33 @@ async function seedWithIronIngot(page: Page) {
   await page.reload();
   await page.getByText("Add Product").click();
   await page.getByRole("option", { name: "Iron Ingot Iron Ingot" }).click();
-  // Click the Smelter recipe row to select it and open the sidebar
-  // (recipe row: 1x Iron Ore → 1x Iron Ingot at current rate)
   await page.getByText("Iron Ingot1x10/min1x10/min").click();
 }
 
-test.describe("Constraints Dialog", () => {
-  test("Adding a constraint removes that part from the default limits list", async ({
+test.describe("Constraints panel", () => {
+  test("adding a constraint removes that part from the default limits list", async ({
     page,
   }) => {
-    // 1. Seed with Iron Ingot factory (Smelter: Iron Ore -> Iron Ingot)
     await seedWithIronIngot(page);
+    await page.getByRole("tab", { name: "Optimization" }).click();
 
-    // 2. Click "Edit constraints"
-    await page.getByText("Edit constraints").click();
-
-    const dialog = page.getByRole("dialog", { name: "Resource Constraints" });
-
-    // 3. Note Iron Ore appears in "Default limits (add to override):" section
+    const panel = page.getByTestId("constraints-panel");
     await expect(
-      dialog.getByText("Default limits (add to override):"),
+      panel.getByText("Default limits (add to override):"),
     ).toBeVisible();
-    await expect(dialog.getByText("max 92100/min (default)")).toBeVisible();
+    await expect(panel.getByText("max 92100/min (default)")).toBeVisible();
 
-    // 4. Click "Add constraint" and select Iron Ore (a part from the default limits list)
-    await page
-      .locator("div")
-      .filter({ hasText: /^Add constraint$/ })
-      .click();
+    await panel.getByText("Add constraint").click();
     await page.getByRole("option", { name: "Iron Ore Iron Ore" }).click();
 
-    // 5. Expect Iron Ore no longer appears in the "Default limits (add to override):" section
-    //    (other resources remain, so the section header itself stays visible)
-    await expect(dialog.getByText("max 92100/min (default)")).not.toBeVisible();
-
-    // 6. Expect Iron Ore now appears as an editable constraint row with Min/Max rate inputs
-    await expect(dialog.getByRole("img", { name: "Iron Ore" })).toBeVisible();
+    // Iron Ore leaves the defaults list and becomes an editable row.
+    await expect(panel.getByText("max 92100/min (default)")).not.toBeVisible();
+    await expect(panel.getByRole("img", { name: "Iron Ore" })).toBeVisible();
     await expect(
-      dialog.getByRole("textbox", { name: "Max rate" }),
+      panel.getByRole("textbox", { name: "Max rate" }),
     ).toBeVisible();
     await expect(
-      dialog.getByRole("textbox", { name: "Min rate" }),
+      panel.getByRole("textbox", { name: "Min rate" }),
     ).toBeVisible();
   });
 });
