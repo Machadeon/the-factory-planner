@@ -74,7 +74,13 @@ const consumerId = (id: string) => `_consumer_${id}`;
  */
 export function buildGraphModel(
   factory: Factory,
-  opts: { library?: StorageLibrary; currentFactoryId?: string | null } = {},
+  opts: {
+    library?: StorageLibrary;
+    currentFactoryId?: string | null;
+    /** Precomputed consumers (memoized by the caller to avoid re-deserializing
+     * library factories every render). Derived internally when omitted. */
+    consumersByPart?: Map<string, { id: string; name: string; rate: number }[]>;
+  } = {},
 ): GraphModel {
   const nodes: GraphNode[] = [];
   const producers = new Map<string, FlowEndpoint[]>();
@@ -146,7 +152,8 @@ export function buildGraphModel(
   }
 
   // Consumer factories (library factories that list this one as a supplier).
-  const consumersByPart = deriveConsumers(factory, opts);
+  const consumersByPart =
+    opts.consumersByPart ?? deriveConsumers(factory, opts);
 
   // Net output → consumer factory nodes if any consume it, else a sink node.
   for (const part of factory.allOutputs()) {
@@ -182,13 +189,14 @@ export function buildGraphModel(
   }
 
   // Edges: match producers to consumers per part.
+  const partBySlug = buildPartIndex(factory);
   const edges: GraphEdge[] = [];
   const slugs = new Set([...producers.keys(), ...consumers.keys()]);
   for (const slug of slugs) {
     const prod = producers.get(slug);
     const cons = consumers.get(slug);
     if (!prod || !cons) continue;
-    const part = prod[0] && cons[0] ? lookupPart(factory, slug) : undefined;
+    const part = partBySlug.get(slug);
     const fluid = part ? part.fluid || part.gas : false;
     for (const e of buildPartEdges({ producers: prod, consumers: cons })) {
       edges.push({
@@ -216,16 +224,15 @@ export function buildGraphModel(
   return { nodes, edges, layoutNodes, layoutEdges };
 }
 
-function lookupPart(factory: Factory, slug: string): Part | undefined {
+function buildPartIndex(factory: Factory): Map<string, Part> {
+  const map = new Map<string, Part>();
   for (const pl of factory.productionLines) {
     for (const al of pl.assemblyLines) {
-      for (const p of al.recipe.products)
-        if (p.part.slug === slug) return p.part;
-      for (const i of al.recipe.ingredients)
-        if (i.part.slug === slug) return i.part;
+      for (const p of al.recipe.products) map.set(p.part.slug, p.part);
+      for (const i of al.recipe.ingredients) map.set(i.part.slug, i.part);
     }
   }
-  return undefined;
+  return map;
 }
 
 /**
@@ -233,7 +240,7 @@ function lookupPart(factory: Factory, slug: string): Part | undefined {
  * section: library factories whose supplierIds include this factory, net-consuming one
  * of its outputs.
  */
-function deriveConsumers(
+export function deriveConsumers(
   factory: Factory,
   opts: { library?: StorageLibrary; currentFactoryId?: string | null },
 ): Map<string, { id: string; name: string; rate: number }[]> {

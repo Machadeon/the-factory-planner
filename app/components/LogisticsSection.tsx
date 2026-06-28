@@ -24,7 +24,11 @@ import { GRID } from "./logistics/constants";
 import { LogisticsContext } from "./logistics/context";
 import FactoryLinkNode from "./logistics/FactoryLinkNode";
 import { assignColumns } from "./logistics/graph-layout";
-import { buildGraphModel, type GraphNode } from "./logistics/graph-model";
+import {
+  buildGraphModel,
+  deriveConsumers,
+  type GraphNode,
+} from "./logistics/graph-model";
 import LogisticEdge from "./logistics/LogisticEdge";
 import TerminalNode from "./logistics/TerminalNode";
 
@@ -69,7 +73,23 @@ function Graph({
   library,
   currentFactoryId,
 }: Omit<LogisticsSectionProps, "onNavigateToFactory">) {
-  const model = buildGraphModel(factory, { library, currentFactoryId });
+  // Deserializing consumer factories is expensive; memoize it so rate edits don't
+  // re-derive the whole consumer set every render (same key the overview uses).
+  const outputKey = factory
+    .allOutputs()
+    .map((p) => p.slug)
+    .join(",");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: outputs tracked via outputKey, not array identity
+  const consumersByPart = useMemo(
+    () => deriveConsumers(factory, { library, currentFactoryId }),
+    [library, currentFactoryId, outputKey],
+  );
+
+  const model = buildGraphModel(factory, {
+    library,
+    currentFactoryId,
+    consumersByPart,
+  });
 
   const idSignature = model.nodes.map((n) => n.id).join("|");
 
@@ -87,6 +107,11 @@ function Graph({
       edges: model.layoutEdges,
     });
     const computed = computeLayout(model.nodes, cols);
+    const live = new Set(model.nodes.map((n) => n.id));
+    // Prune layout entries for nodes that no longer exist (deleted lines).
+    for (const key of Object.keys(factory.graphLayout)) {
+      if (!live.has(key)) delete factory.graphLayout[key];
+    }
     const next: Node[] = model.nodes.map((n) => {
       const saved = factory.graphLayout[n.id];
       const pos = saved ?? computed.get(n.id) ?? { x: 0, y: 0 };
