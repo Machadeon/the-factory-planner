@@ -7,10 +7,12 @@ Agentic dev happens in six phases:
 3. Validation drafting
 4. Validation review
 5. Implementation planning
-6. Implementation loop
+6. Implementation review
+7. Implementation loop
+8. Final review
 
 All phase artifacts go under `plans/`. No session plan — artifacts live at `plans/<change name>`. Minor changes may
-streamline each phase but must still run all six.
+minimize each phase but must still run all eight.
 
 ## Spec Drafting
 
@@ -52,6 +54,8 @@ unresolved concerns. Cannot move to implementation planning until a review retur
 
 ## Implementation Planning
 
+Same agent as spec and validation drafter.
+
 Write concrete plan of required code changes. Lives at `plans/<change name>/implementation.md`.
 
 Include:
@@ -64,7 +68,7 @@ Include:
 
 No coding. Enough detail another agent could execute. Minor changes: one-paragraph plan.
 
-## Validation Review
+## Implementation Review
 
 Same agent as spec and validation reviewer.
 
@@ -88,6 +92,13 @@ Execute plan iteratively:
 If major issues arise, hand off knowledge to planning agent to determine which phase to return to.
 
 After all changes: full test suite (`npm run test:run && npm run test:e2e`), then `lighthouse_audit` if any UI changed.
+
+## Final Review
+
+Same agent as spec and validation drafter and implementation planner.
+
+Execute the `/caveman:caveman-review` skill on all changes. Return to implementation loop and repeat review on
+unresolved concerns. Cannot complete until a review returns clean.
 
 # Satisfactory Planner
 
