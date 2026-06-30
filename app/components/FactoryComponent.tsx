@@ -13,13 +13,14 @@ import {
   Tabs,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Factory from "../models/factory";
 import {
   CURRENT_SCHEMA_VERSION,
   collectFactoryBundle,
   deserializeFactory,
   generateId,
+  generateSlug,
   migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
@@ -58,6 +59,21 @@ const AUTOSAVE_DEBOUNCE_MS = 400;
 
 export default function FactoryComponent() {
   const [activeSection, setActiveSection] = useState<Section>("planning");
+  const hashSyncInitialized = useRef(false);
+  // Captured during render, before any layout effects can overwrite window.location.
+  const initialHashRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.hash.slice(1) : "",
+  );
+  // Same reason: the factory URL layout effect fires on mount (currentFactoryId=null)
+  // and pushes "/" before restoreFactory can read window.location.search.
+  const initialSearchRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.search : "",
+  );
+  // Always-current ref so the factory URL layout effect can include the active
+  // section hash without adding activeSection to its dependency array (which
+  // would create a history entry on every tab switch).
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
   const [libraryPinned, setLibraryPinned] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(380);
@@ -71,9 +87,14 @@ export default function FactoryComponent() {
 
   const [factoryName, setFactoryName] = useState("Unnamed Factory");
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
+  const [currentSlug, setCurrentSlug] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [isDirty, setIsDirty] = useState(false);
+
+  // Set true in popstate handler to stop URL-sync effect from pushing a new
+  // history entry (which would destroy the forward stack).
+  const suppressNextUrlPush = useRef(false);
 
   const [autosaveEnabled, setAutosaveEnabled] = useState(true);
   const autosaveEnabledRef = useRef(true);
@@ -142,6 +163,7 @@ export default function FactoryComponent() {
     const now = new Date().toISOString();
     return serializeFactory(factory, {
       id: currentFactoryId ?? generateId(),
+      slug: currentSlug ?? undefined,
       name: overrideName ?? factoryName,
       folderId: currentFolderId,
       createdAt: createdAt || now,
@@ -179,22 +201,66 @@ export default function FactoryComponent() {
     }, AUTOSAVE_DEBOUNCE_MS);
   }
 
-  // On mount: load library and restore session if consent given
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
-  useEffect(() => {
-    if (hasConsent()) {
-      const pref = getAutosavePref();
-      setAutosaveEnabled(pref);
-      autosaveEnabledRef.current = pref;
+  // If a saved factory has no slug, generate one and persist it so the URL
+  // immediately shows a human-readable slug instead of the raw UUID.
+  function ensureSlug(
+    sf: SerializedFactory,
+    lib: StorageLibrary,
+  ): { slug: string; lib: StorageLibrary } {
+    if (sf.slug) return { slug: sf.slug, lib };
+    const existingSlugs = lib.factories.flatMap((f) =>
+      f.slug && f.id !== sf.id ? [f.slug] : [],
+    );
+    const slug = generateSlug(sf.name, existingSlugs);
+    const withSlug = { ...sf, slug };
+    const updatedLib = updateFactory(lib, withSlug);
+    saveLibrary(updatedLib);
+    return { slug, lib: updatedLib };
+  }
+
+  // Load a factory from a serialized entry, falling back to autosave then lastId.
+  // Priority: ?factory= (slug) or ?factoryId= URL param → autosave → localStorage last factory.
+  function restoreFactory(lib: StorageLibrary) {
+    // Priority 1: URL param — ?factory=<slug> (new) or ?factoryId=<id> (legacy)
+    const urlParams =
+      typeof window !== "undefined"
+        ? new URLSearchParams(initialSearchRef.current)
+        : null;
+    const urlSlug = urlParams?.get("factory");
+    const urlFactoryId = urlParams?.get("factoryId");
+    const saved = urlSlug
+      ? lib.factories.find((f) => f.slug === urlSlug)
+      : urlFactoryId
+        ? lib.factories.find((f) => f.id === urlFactoryId)
+        : null;
+    if (saved) {
+      const restored = deserializeFactory(saved, lib);
+      if (restored) {
+        const { slug, lib: updatedLib } = ensureSlug(saved, lib);
+        factoryRef.current = restored;
+        restored.update = factory.update;
+        setFactoryName(saved.name);
+        setCurrentFactoryId(saved.id);
+        setCurrentSlug(slug);
+        setCurrentFolderId(saved.folderId);
+        setCreatedAt(saved.createdAt);
+        setIsDirty(false);
+        setVersion((v) => v + 1);
+        setLibrary(updatedLib);
+        persistCurrentFactoryId(saved.id);
+        // Stamp history state so popstate carries the factoryId
+        window.history.replaceState(
+          { factoryId: saved.id, slug },
+          "",
+          window.location.href,
+        );
+        return;
+      }
     }
 
-    if (!hasConsent()) return;
-    const lib = loadLibrary();
-    setLibrary(lib);
-
+    // Priority 2: unsaved autosave
     const autosaved = readAutosave();
     if (autosaved) {
-      // Unsaved changes take priority
       const restored = deserializeFactory(autosaved, lib);
       if (restored) {
         factoryRef.current = restored;
@@ -213,24 +279,182 @@ export default function FactoryComponent() {
       }
     }
 
-    // No autosave — reload last saved factory from library
+    // Priority 3: last saved factory from localStorage
     const lastId = getCurrentFactoryId();
     if (lastId) {
       const saved = lib.factories.find((f) => f.id === lastId);
       if (saved) {
         const restored = deserializeFactory(saved, lib);
         if (restored) {
+          const { slug, lib: updatedLib } = ensureSlug(saved, lib);
           factoryRef.current = restored;
           restored.update = factory.update;
           setFactoryName(saved.name);
           setCurrentFactoryId(saved.id);
+          setCurrentSlug(slug);
           setCurrentFolderId(saved.folderId);
           setCreatedAt(saved.createdAt);
           setIsDirty(false);
           setVersion((v) => v + 1);
+          setLibrary(updatedLib);
         }
       }
     }
+  }
+
+  // On mount: load library and restore session if consent given.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  useEffect(() => {
+    if (hasConsent()) {
+      const pref = getAutosavePref();
+      setAutosaveEnabled(pref);
+      autosaveEnabledRef.current = pref;
+    }
+
+    if (!hasConsent()) return;
+    const lib = loadLibrary();
+    setLibrary(lib);
+
+    // Restore from URL or session. Extracted so the popstate handler can reuse it.
+    restoreFactory(lib);
+  }, []);
+
+  // Read initial tab from hash on mount. Uses initialHashRef (captured at render
+  // time) because layout effects have already overwritten window.location by now.
+  useEffect(() => {
+    const hash = initialHashRef.current;
+    const validSections: Section[] = ["planning", "optimization", "logistics"];
+    if (validSections.includes(hash as Section)) {
+      setActiveSection(hash as Section);
+    }
+    hashSyncInitialized.current = true;
+  }, []);
+
+  // Sync activeSection to URL hash via replaceState (no new history entry).
+  // Skip first render so the mount effect above can read the existing hash
+  // before we overwrite it.
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!hashSyncInitialized.current) return;
+    const withoutHash = window.location.href.split("#")[0];
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${withoutHash}#${activeSection}`,
+    );
+  }, [activeSection]);
+
+  // Update URL when the active factory changes so every factory has a
+  // bookmarkable address. Uses pushState (not Next.js router) — no server
+  // round-trip, no dynamic rendering, fully client-side.
+  // useLayoutEffect (not useEffect) so this runs before rAF — the popstate
+  // handler sets suppressNextUrlPush then queues a rAF reset; the layout
+  // effect must read the flag before rAF clears it.
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (suppressNextUrlPush.current) {
+      suppressNextUrlPush.current = false;
+      return;
+    }
+    const hash = `#${activeSectionRef.current}`;
+    if (!currentFactoryId) {
+      window.history.pushState({ factoryId: null }, "", "/");
+    } else {
+      const base = currentSlug
+        ? `/?factory=${encodeURIComponent(currentSlug)}`
+        : `/?factoryId=${encodeURIComponent(currentFactoryId)}`;
+      window.history.pushState(
+        { factoryId: currentFactoryId, slug: currentSlug },
+        "",
+        `${base}${hash}`,
+      );
+    }
+  }, [currentFactoryId, currentSlug]);
+
+  // Listen for back/forward navigation and switch to the factory in the URL.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: library captured by ref
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const id = e.state?.factoryId as string | null | undefined;
+      const lib = loadLibrary();
+      setLibrary(lib);
+      const target = id ? lib.factories.find((f) => f.id === id) : null;
+      // Suppress URL-sync effect: popstate already updated the URL, we must
+      // not pushState again or the forward history stack gets destroyed.
+      suppressNextUrlPush.current = true;
+      // Safety: if state doesn't change (same factory navigated to), the
+      // URL-sync effect won't fire and won't reset the flag. rAF clears it.
+      requestAnimationFrame(() => {
+        suppressNextUrlPush.current = false;
+      });
+      const sectionHash = window.location.hash.slice(1);
+      const validSections: Section[] = [
+        "planning",
+        "optimization",
+        "logistics",
+      ];
+      setActiveSection(
+        validSections.includes(sectionHash as Section)
+          ? (sectionHash as Section)
+          : "planning",
+      );
+
+      if (target) {
+        const restored = deserializeFactory(target, lib);
+        if (restored) {
+          factoryRef.current = restored;
+          setFactoryName(target.name);
+          setCurrentFactoryId(target.id);
+          setCurrentSlug(target.slug ?? null);
+          setCurrentFolderId(target.folderId);
+          setCreatedAt(target.createdAt);
+          setIsDirty(false);
+          setVersion((v) => v + 1);
+          persistCurrentFactoryId(target.id);
+        }
+      } else if (!id) {
+        // No factoryId in history state — could be a hash-only navigation (e.g. Playwright
+        // page.goto, browser address bar) that didn't carry our pushState payload. Check
+        // URL params before resetting so bookmarked factory URLs still load correctly.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSlug = urlParams.get("factory");
+        const urlFactoryId = urlParams.get("factoryId");
+        const savedByUrl = urlSlug
+          ? lib.factories.find((f) => f.slug === urlSlug)
+          : urlFactoryId
+            ? lib.factories.find((f) => f.id === urlFactoryId)
+            : null;
+        if (savedByUrl) {
+          const restored = deserializeFactory(savedByUrl, lib);
+          if (restored) {
+            const { slug, lib: updatedLib } = ensureSlug(savedByUrl, lib);
+            factoryRef.current = restored;
+            setFactoryName(savedByUrl.name);
+            setCurrentFactoryId(savedByUrl.id);
+            setCurrentSlug(slug);
+            setCurrentFolderId(savedByUrl.folderId);
+            setCreatedAt(savedByUrl.createdAt);
+            setIsDirty(false);
+            setVersion((v) => v + 1);
+            setLibrary(updatedLib);
+            persistCurrentFactoryId(savedByUrl.id);
+            return;
+          }
+        }
+        // Navigated back to clean URL — treat as a new empty factory
+        factoryRef.current = new Factory();
+        setFactoryName("Unnamed Factory");
+        setCurrentFactoryId(null);
+        setCurrentSlug(null);
+        setCurrentFolderId(null);
+        setCreatedAt("");
+        setIsDirty(false);
+        setVersion((v) => v + 1);
+        clearCurrentFactoryId();
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   // Flush any pending debounced autosave before the tab closes or the component
@@ -336,22 +560,29 @@ export default function FactoryComponent() {
       setCreatedAt(now);
     }
 
-    const serialized = serializeFactory(factory, {
-      id,
-      name: factoryName,
-      folderId: currentFolderId,
-      createdAt: currentFactoryId ? createdAt : now,
-      updatedAt: now,
-    });
+    // Assign a slug on first save (or if the loaded factory predates slugs).
+    // Slug is stable: never regenerated on rename so bookmarks don't break.
+    const existingSlugs = library.factories
+      .filter((f) => f.id !== id)
+      .flatMap((f) => (f.slug ? [f.slug] : []));
+    const slug = currentSlug ?? generateSlug(factoryName, existingSlugs);
+    if (!currentSlug) setCurrentSlug(slug);
 
     const existingEntry = library.factories.find((f) => f.id === id);
+
     if (currentFactoryId && !existingEntry) {
       // Factory was deleted from the library while loaded — save as a new entry
       const newId = generateId();
+      const newSlug = generateSlug(
+        factoryName,
+        library.factories.flatMap((f) => (f.slug ? [f.slug] : [])),
+      );
       setCurrentFactoryId(newId);
+      setCurrentSlug(newSlug);
       setCreatedAt(now);
       const reserialised = serializeFactory(factory, {
         id: newId,
+        slug: newSlug,
         name: factoryName,
         folderId: currentFolderId,
         createdAt: now,
@@ -366,6 +597,15 @@ export default function FactoryComponent() {
       if (isFirstSave) enableAutosave();
       return;
     }
+
+    const serialized = serializeFactory(factory, {
+      id,
+      slug,
+      name: factoryName,
+      folderId: currentFolderId,
+      createdAt: currentFactoryId ? createdAt : now,
+      updatedAt: now,
+    });
     const updatedLib = existingEntry
       ? updateFactory(library, serialized)
       : addFactory(library, serialized);
@@ -541,13 +781,16 @@ export default function FactoryComponent() {
       );
       return;
     }
+    const { slug, lib: updatedLib } = ensureSlug(serialized, lib);
     factoryRef.current = loaded;
     setFactoryName(serialized.name);
     setCurrentFactoryId(serialized.id);
+    setCurrentSlug(slug);
     setCurrentFolderId(serialized.folderId);
     setCreatedAt(serialized.createdAt);
     setIsDirty(false);
     setVersion((v) => v + 1);
+    setLibrary(updatedLib);
     persistCurrentFactoryId(serialized.id);
   }
 
@@ -591,6 +834,7 @@ export default function FactoryComponent() {
     factoryRef.current = new Factory();
     setFactoryName("Unnamed Factory");
     setCurrentFactoryId(null);
+    setCurrentSlug(null);
     setCurrentFolderId(folderId);
     setCreatedAt("");
     setIsDirty(false);

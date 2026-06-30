@@ -42,6 +42,7 @@ export interface SerializedProductionLine {
 export interface SerializedFactory {
   schemaVersion: number;
   id: string;
+  slug?: string;
   name: string;
   folderId: string | null;
   icon?: string;
@@ -122,10 +123,23 @@ export function collectFactoryBundle(
   return [...out.values()];
 }
 
+export function generateSlug(name: string, existingSlugs: string[]): string {
+  const base =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "factory";
+  if (!existingSlugs.includes(base)) return base;
+  let i = 2;
+  while (existingSlugs.includes(`${base}-${i}`)) i++;
+  return `${base}-${i}`;
+}
+
 export function serializeFactory(
   factory: Factory,
   meta: {
     id: string;
+    slug?: string;
     name: string;
     folderId: string | null;
     createdAt: string;
@@ -135,6 +149,7 @@ export function serializeFactory(
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id: meta.id,
+    slug: meta.slug,
     name: meta.name,
     folderId: meta.folderId,
     icon: factory.icon,
