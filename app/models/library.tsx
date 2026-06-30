@@ -203,7 +203,7 @@ interface Generator {
   fuel: string[];
   powerProduction: number;
   powerProductionExponent: number;
-  waterToPowerRatio: number;
+  waterPerMinute: number;
 }
 
 const generatorLookup: { [className: string]: Generator } = {};
@@ -217,17 +217,19 @@ for (const fuel of parts.filter((p) => p.fuelValue > 0)) {
   const generator = generatorLookup[fuel.className];
   if (!generator) continue;
 
-  const recipeTime = fuel.fuelValue / generator.powerProduction;
-  const recipesPerMinute = 60 / recipeTime;
+  const powerPerMinute = generator.powerProduction * 60; // MJ/min
+  const fuelPerMinute = powerPerMinute / fuel.fuelValue; // fuel/min = MJ/min / MJ/fuel
+
+  const recipeTime = 60 / fuelPerMinute; // sec/fuel
   const ingredients = [
     {
       part: fuel,
-      quantity: recipesPerMinute,
+      quantity: 1,
     },
   ];
 
-  if (generator.waterToPowerRatio > 0) {
-    const waterNeeds = generator.powerProduction * generator.waterToPowerRatio;
+  if (generator.waterPerMinute > 0) {
+    const waterNeeds = generator.waterPerMinute / fuelPerMinute;
 
     ingredients.push({
       part: partSlugLookup.water,
@@ -243,19 +245,19 @@ for (const fuel of parts.filter((p) => p.fuelValue > 0)) {
   const products = [
     {
       part: powerPart,
-      quantity: generator.powerProduction,
+      quantity: fuel.fuelValue / 60, // convert from MJ/min to MW
     },
   ];
 
   if (fuel.slug === "uranium-fuel-rod") {
     products.push({
       part: partSlugLookup["uranium-waste"],
-      quantity: 10, // per minute
+      quantity: 50,
     });
   } else if (fuel.slug === "plutonium-fuel-rod") {
     products.push({
       part: partSlugLookup["plutonium-waste"],
-      quantity: 1, // per minute
+      quantity: 5,
     });
   }
 
