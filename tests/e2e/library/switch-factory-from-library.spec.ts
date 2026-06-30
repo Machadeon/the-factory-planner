@@ -15,7 +15,7 @@ test.describe("Factory Library", () => {
 
     // Rename factory
     const factoryNameInput = page.getByRole("textbox", {
-      name: "Unnamed Factory",
+      name: "Factory name",
     });
     await factoryNameInput.clear();
     await factoryNameInput.fill("Factory A");
@@ -54,7 +54,7 @@ test.describe("Factory Library", () => {
 
     // expect: factory name shows 'Factory A'
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
+      page.getByRole("textbox", { name: "Factory name" }),
     ).toHaveValue("Factory A");
   });
 });

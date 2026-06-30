@@ -16,8 +16,8 @@ Satisfactory Planner is a single-page Next.js app for planning production factor
 
 **Steps:**
   1. Navigate to http://localhost:3000 with the seed state applied (consent pre-set in localStorage)
-    - expect: The page loads and the factory header shows the placeholder name 'Unnamed Factory' in the name text field
-  2. Click the factory name text field labeled 'Unnamed Factory' in the header
+    - expect: The page loads and the factory header shows the name text field labeled 'Factory name'
+  2. Click the factory name text field labeled 'Factory name' in the header
     - expect: The text field becomes focused
   3. Clear the existing text and type 'Iron Works'
     - expect: The text field now shows 'Iron Works'

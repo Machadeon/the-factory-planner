@@ -43,7 +43,7 @@ test.describe("bookmarkable URL", () => {
     // Wait for the app to detect the legacy URL, generate a slug, and redirect
     await page.waitForURL(/factory=copper-works/);
 
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     await expect(nameInput).toHaveValue("Copper Works");
 
     const params = new URL(page.url()).searchParams;

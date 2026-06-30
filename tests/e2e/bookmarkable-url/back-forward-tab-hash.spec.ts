@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Back/forward navigation preserves factory and tab hash", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
     await nameInput.fill("Iron Works");

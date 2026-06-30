@@ -29,6 +29,10 @@ test.describe("Factory Toolbar Actions", () => {
     // expect: sidebar resets to Outputs (0), Inputs (0)
     await expect(page.getByText("Outputs (0)")).toBeVisible();
     await expect(page.getByText("Inputs (0)")).toBeVisible();
+    // expect: cleared factory gets a generated "<Adjective> <Noun>" name
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
+    await expect(nameInput).toHaveValue(/^[A-Za-z-]+ [A-Za-z]+$/);
+    await expect(nameInput).not.toHaveValue("Unnamed Factory");
   });
 
   test("Show confirmation dialog when clearing factory with unsaved changes", async ({

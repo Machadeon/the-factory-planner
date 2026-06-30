@@ -11,7 +11,7 @@ test.describe("bookmarkable URL", () => {
   });
 
   test("URL hash reflects the active tab", async ({ page }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name, press Tab, click Save, wait for URL to contain factory=
     await nameInput.fill("Test Factory");

@@ -16,7 +16,7 @@ test.describe("bookmarkable URL", () => {
   test("Legacy ?factoryId=<uuid> URL still loads the factory", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name "Iron Works", press Tab, click Save, wait for URL to contain factory=
     await nameInput.fill("Iron Works");

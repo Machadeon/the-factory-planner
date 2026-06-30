@@ -16,9 +16,7 @@ test.describe("bookmarkable URL", () => {
 
     // 1. Fill factory name "Factory A", press Tab. Click Save.
     //    Wait for URL to contain `factory=`. Capture `factory` URL param as `slugA`. Assert `slugA === 'factory-a'`.
-    await page
-      .getByRole("textbox", { name: "Unnamed Factory" })
-      .fill("Factory A");
+    await page.getByRole("textbox", { name: "Factory name" }).fill("Factory A");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await expect(page).toHaveURL(/factory=/);
@@ -37,9 +35,7 @@ test.describe("bookmarkable URL", () => {
 
     // 3. Fill factory name "Factory B", press Tab. Click Save.
     //    Wait for URL to contain `factory=`. Capture `factory` URL param as `slugB`. Assert `slugB !== slugA`.
-    await page
-      .getByRole("textbox", { name: "Unnamed Factory" })
-      .fill("Factory B");
+    await page.getByRole("textbox", { name: "Factory name" }).fill("Factory B");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await expect(page).toHaveURL(/factory=/);
@@ -57,7 +53,7 @@ test.describe("bookmarkable URL", () => {
     await page.getByRole("dialog").getByText("Factory A").click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
+      page.getByRole("textbox", { name: "Factory name" }),
     ).toHaveValue("Factory A");
     await expect(page).toHaveURL(new RegExp(`factory=${slugA}`));
 

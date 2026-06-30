@@ -11,7 +11,7 @@ test.describe("bookmarkable URL", () => {
   });
 
   test("URL uses human-readable slug after first save", async ({ page }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     expect(new URL(page.url()).searchParams.get("factory")).toBeNull();
 

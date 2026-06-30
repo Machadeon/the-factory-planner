@@ -16,7 +16,7 @@ test.describe("bookmarkable URL", () => {
   test("Direct load of /?factory=slug#logistics opens on the Logistics tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name input with "Iron Works", press Tab, click Save, wait for URL factory=iron-works
     await nameInput.fill("Iron Works");
@@ -36,7 +36,7 @@ test.describe("bookmarkable URL", () => {
 
     // 4. Assert factory name input shows "Iron Works"
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
+      page.getByRole("textbox", { name: "Factory name" }),
     ).toHaveValue("Iron Works");
 
     // 5. Assert URL hash is #logistics

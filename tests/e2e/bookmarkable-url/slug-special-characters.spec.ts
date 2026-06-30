@@ -19,7 +19,7 @@ test.describe("bookmarkable URL", () => {
     const jsErrors: string[] = [];
     page.on("pageerror", (err) => jsErrors.push(err.message));
 
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name input with "Oil & Gas Processing #1!", press Tab
     await nameInput.fill("Oil & Gas Processing #1!");

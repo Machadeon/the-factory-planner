@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Two factories with the same name get unique slugs", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
     await nameInput.fill("Iron Works");

@@ -13,12 +13,12 @@ test.describe("Factory Name and Icon", () => {
     });
     await page.reload();
 
-    const nameField = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameField = page.getByRole("textbox", { name: "Factory name" });
 
-    // expect: The page loads and the factory header shows the placeholder name 'Unnamed Factory' in the name text field
+    // expect: The page loads and the factory header shows the name text field labeled 'Factory name'
     await expect(nameField).toBeVisible();
 
-    // 2. Click the factory name text field labeled 'Unnamed Factory' in the header
+    // 2. Click the factory name text field labeled 'Factory name' in the header
     await nameField.click();
 
     // expect: The text field becomes focused

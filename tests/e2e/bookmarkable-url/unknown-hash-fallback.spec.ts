@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Unknown hash value falls back to the default Planning tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     await nameInput.fill("Iron Works");
     await page.keyboard.press("Tab");

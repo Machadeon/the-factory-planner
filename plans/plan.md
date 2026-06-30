@@ -6,7 +6,6 @@ Planned major changes, with notes on how each fits the existing domain model (`F
 
 ### Features
 
-- auto-generate new factory names based on bank of adjectives and nouns (see @app/models/factory-names.ts).
 - enable the user to create "worlds/saves" which are effectively folders of factories
 - add the ability to set default constraints for a folder/world/save
 - support custom game modes such as randomized resource nodes, recipe cost, power usage, etc.

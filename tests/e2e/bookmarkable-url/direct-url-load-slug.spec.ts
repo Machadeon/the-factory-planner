@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("?factory=<slug> URL loads the correct factory on direct navigation", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
     await nameInput.fill("Iron Works");

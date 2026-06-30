@@ -32,9 +32,9 @@ test.describe("Factory Library", () => {
       page.getByText("add a product to manually select recipes and rates"),
     ).toBeVisible();
 
-    // expect: factory name resets to 'Unnamed Factory'
+    // expect: factory name field is present (new factory gets a generated name)
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
+      page.getByRole("textbox", { name: "Factory name" }),
     ).toBeVisible();
   });
 });

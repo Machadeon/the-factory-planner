@@ -16,7 +16,7 @@ test.describe("bookmarkable URL", () => {
   test("Copying /?factory=slug#logistics and reloading loads correct factory on Logistics tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name "Iron Works", press Tab, click Save, wait for URL factory=iron-works
     await nameInput.fill("Iron Works");

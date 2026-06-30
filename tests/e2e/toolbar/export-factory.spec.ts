@@ -15,7 +15,7 @@ test.describe("Factory Toolbar Actions", () => {
 
     // Rename factory
     const factoryNameInput = page.getByRole("textbox", {
-      name: "Unnamed Factory",
+      name: "Factory name",
     });
     await factoryNameInput.clear();
     await factoryNameInput.fill("Export Test");

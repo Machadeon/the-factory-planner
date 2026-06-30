@@ -25,13 +25,16 @@ test.describe("bookmarkable URL", () => {
     // 3. Wait for page to finish loading (networkidle)
     await expect(page.locator("main")).toBeVisible();
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
+      page.getByRole("textbox", { name: "Factory name" }),
     ).toBeVisible();
 
-    // 4. Assert factory name input shows "Unnamed Factory"
+    // 4. Assert factory name input shows a generated "<Adjective> <Noun>" name
     await expect(
-      page.getByRole("textbox", { name: "Unnamed Factory" }),
-    ).toHaveValue("Unnamed Factory");
+      page.getByRole("textbox", { name: "Factory name" }),
+    ).toHaveValue(/^[A-Za-z-]+ [A-Za-z]+$/);
+    await expect(
+      page.getByRole("textbox", { name: "Factory name" }),
+    ).not.toHaveValue("Unnamed Factory");
 
     // 5. Assert URL factory param is null/absent
     await expect

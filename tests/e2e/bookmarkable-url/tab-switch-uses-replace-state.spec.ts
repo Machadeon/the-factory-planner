@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Switching tabs uses replaceState and does not add history entries", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     await nameInput.fill("Test Factory");
     await page.keyboard.press("Tab");

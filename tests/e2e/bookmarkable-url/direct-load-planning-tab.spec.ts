@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Direct load of /?factory=<slug>#planning opens on the Planning tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     await nameInput.fill("Iron Works");
     await page.keyboard.press("Tab");

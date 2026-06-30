@@ -13,14 +13,15 @@ test.describe("bookmarkable URL", () => {
   test("Unknown slug in URL falls back gracefully and URL resets to /", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
 
     await page.goto("/?factory=nonexistent-slug-xyz");
     await page.waitForLoadState("networkidle");
 
-    await expect(nameInput).toHaveValue("Unnamed Factory");
+    await expect(nameInput).toHaveValue(/^[A-Za-z-]+ [A-Za-z]+$/);
+    await expect(nameInput).not.toHaveValue("Unnamed Factory");
     await expect
       .poll(() => new URL(page.url()).searchParams.get("factory"))
       .toBeNull();

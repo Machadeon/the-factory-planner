@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Browser back button loads the previously viewed factory", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
     // Save "Factory A", capture slugA

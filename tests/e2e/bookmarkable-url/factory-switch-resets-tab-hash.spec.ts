@@ -13,7 +13,7 @@ test.describe("bookmarkable URL", () => {
   test("Switching factories via the library updates hash to current active tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Unnamed Factory" });
+    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
     await nameInput.fill("Iron Works");

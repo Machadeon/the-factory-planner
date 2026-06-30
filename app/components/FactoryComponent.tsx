@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Factory from "../models/factory";
+import { generateFactoryName } from "../models/factory-names";
 import {
   CURRENT_SCHEMA_VERSION,
   collectFactoryBundle,
@@ -85,7 +86,7 @@ export default function FactoryComponent() {
   const factory = factoryRef.current;
   const [, setVersion] = useState(0);
 
-  const [factoryName, setFactoryName] = useState("Unnamed Factory");
+  const [factoryName, setFactoryName] = useState("");
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -220,7 +221,7 @@ export default function FactoryComponent() {
 
   // Load a factory from a serialized entry, falling back to autosave then lastId.
   // Priority: ?factory= (slug) or ?factoryId= URL param → autosave → localStorage last factory.
-  function restoreFactory(lib: StorageLibrary) {
+  function restoreFactory(lib: StorageLibrary): boolean {
     // Priority 1: URL param — ?factory=<slug> (new) or ?factoryId=<id> (legacy)
     const urlParams =
       typeof window !== "undefined"
@@ -254,7 +255,7 @@ export default function FactoryComponent() {
           "",
           window.location.href,
         );
-        return;
+        return true;
       }
     }
 
@@ -275,7 +276,7 @@ export default function FactoryComponent() {
           setAutosaveEnabled(false);
           autosaveEnabledRef.current = false;
         }
-        return;
+        return true;
       }
     }
 
@@ -297,9 +298,11 @@ export default function FactoryComponent() {
           setIsDirty(false);
           setVersion((v) => v + 1);
           setLibrary(updatedLib);
+          return true;
         }
       }
     }
+    return false;
   }
 
   // On mount: load library and restore session if consent given.
@@ -311,12 +314,16 @@ export default function FactoryComponent() {
       autosaveEnabledRef.current = pref;
     }
 
-    if (!hasConsent()) return;
+    if (!hasConsent()) {
+      setFactoryName(generateFactoryName());
+      return;
+    }
     const lib = loadLibrary();
     setLibrary(lib);
 
     // Restore from URL or session. Extracted so the popstate handler can reuse it.
-    restoreFactory(lib);
+    // Nothing to restore → fresh factory gets a generated name.
+    if (!restoreFactory(lib)) setFactoryName(generateFactoryName());
   }, []);
 
   // Read initial tab from hash on mount. Uses initialHashRef (captured at render
@@ -443,7 +450,7 @@ export default function FactoryComponent() {
         }
         // Navigated back to clean URL — treat as a new empty factory
         factoryRef.current = new Factory();
-        setFactoryName("Unnamed Factory");
+        setFactoryName(generateFactoryName());
         setCurrentFactoryId(null);
         setCurrentSlug(null);
         setCurrentFolderId(null);
@@ -832,7 +839,7 @@ export default function FactoryComponent() {
 
   function performClearFactory(folderId: string | null) {
     factoryRef.current = new Factory();
-    setFactoryName("Unnamed Factory");
+    setFactoryName(generateFactoryName());
     setCurrentFactoryId(null);
     setCurrentSlug(null);
     setCurrentFolderId(folderId);
