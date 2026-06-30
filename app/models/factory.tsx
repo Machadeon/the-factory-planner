@@ -1290,13 +1290,15 @@ export default class Factory {
           const partSlug = constraintEntry[0];
           const constraint = constraintEntry[1] as ConstraintBound;
 
+          // A `_raw_` constraint bounds net consumption of a raw resource, so its
+          // net is measured consumption-first. Compute it into a local — never
+          // mutate the shared rateLookup entry, or the part's net flips sign and
+          // raw inputs get misclassified as byproducts on the next render.
+          let isRaw = false;
           if (partSlug.indexOf("_raw_") === 0) {
+            isRaw = true;
             const realPartSlug = partSlug.substring(5);
             rate = this.rateLookup[realPartSlug];
-            if (!rate) continue;
-            rate.consumptionRate = -rate.consumptionRate;
-            rate.productionRate = -rate.productionRate;
-
             part = partSlugLookup[realPartSlug];
           } else {
             rate = this.rateLookup[partSlug];
@@ -1309,7 +1311,9 @@ export default class Factory {
             continue;
           }
 
-          const netRate = rate.productionRate - rate.consumptionRate;
+          const netRate = isRaw
+            ? rate.consumptionRate - rate.productionRate
+            : rate.productionRate - rate.consumptionRate;
           if (constraint.min && constraint.min - netRate > 0.0001) {
             errors.push(
               `${part.name} must be ${constraint.min}/min or greater, but is ${netRate}/min`,

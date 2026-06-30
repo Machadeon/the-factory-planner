@@ -194,8 +194,9 @@ export default function FactoryComponent() {
     if (autosaveTimerRef.current !== null) {
       clearTimeout(autosaveTimerRef.current);
     }
+    // Let flushAutosave clear the ref — nulling it here first would make
+    // flushAutosave's "nothing pending" guard short-circuit and never save.
     autosaveTimerRef.current = setTimeout(() => {
-      autosaveTimerRef.current = null;
       flushAutosaveRef.current();
     }, AUTOSAVE_DEBOUNCE_MS);
   }

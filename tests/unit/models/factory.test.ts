@@ -382,6 +382,37 @@ describe("autoCalculateRates() — constraints (Item 7)", () => {
   });
 });
 
+describe("autoCalculateRates() — deferred constraint verification", () => {
+  // Regression: the deferred verify loop used to negate the rateLookup entry for
+  // each `_raw_` resource in place to measure net consumption. The negation was
+  // never restored, so a raw input's net flipped sign and it was reclassified as
+  // a byproduct output on the next render (e.g. after a manual save).
+  it("does not mutate rateLookup, so raw inputs stay inputs", async () => {
+    const factory = makeFactory();
+    const pl = addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      30, // 30 ingots/min → consumes 30 iron-ore/min
+    );
+    pl.autoCalculateRate = true;
+
+    factory.autoCalculateRates();
+    // Let the deferred (setTimeout) constraint-verification pass run.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const oreRate = factory.rateLookup["iron-ore"];
+    expect(oreRate.consumptionRate).toBeCloseTo(30);
+    expect(oreRate.productionRate).toBeCloseTo(0);
+
+    const inputSlugs = factory.allInputs().map((p) => p.slug);
+    const outputSlugs = factory.allOutputs().map((p) => p.slug);
+    expect(inputSlugs).toContain("iron-ore");
+    expect(outputSlugs).not.toContain("iron-ore");
+  });
+});
+
 describe("autoCalculateRates() — maximize output (Item 8)", () => {
   it("maximizeOutput finds rate bounded by user constraint", () => {
     const factory = makeFactory();
