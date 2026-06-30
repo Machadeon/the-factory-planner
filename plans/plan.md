@@ -418,13 +418,12 @@ The following items are work in addition to the plans above.
 ### Features
 
 - add the ability to set default constraints for a folder
-- update page URL to enable bookmarks for specific factories and forward/back functionality
 - support custom game modes such as randomized resource nodes, recipe cost, power usage, etc.
 - implement custom part point values
 
 ### Improvements
 
-- Enable computing the footprint of a factory as a recipe
+- _(none identified)_
 
 ### Optimizations
 

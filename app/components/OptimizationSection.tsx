@@ -29,12 +29,14 @@ interface OptimizationSectionProps {
   factory: Factory;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
+  onUpdateLibrary?: (overrides: Record<string, number>) => void;
 }
 
 export default function OptimizationSection({
   factory,
   library,
   currentFactoryId,
+  onUpdateLibrary,
 }: OptimizationSectionProps) {
   const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
@@ -136,6 +138,7 @@ export default function OptimizationSection({
         factory={factory}
         library={library}
         currentFactoryId={currentFactoryId}
+        onUpdateLibrary={onUpdateLibrary}
       />
 
       <Dialog

@@ -16,6 +16,7 @@ import { displayNum } from "../utils";
 import AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
+import { resolveEffectivePointValues } from "./point-values";
 import ProductionLine from "./production-line";
 import type Recipe from "./recipe";
 import type { RecipeLike } from "./recipe-like";
@@ -207,6 +208,7 @@ export default class Factory {
   /** Persisted graph-view node positions, keyed by node id (assembly-line id,
    * or `_src_/_sink_/_supplier_/_consumer_` terminal keys). */
   graphLayout: { [nodeId: string]: { x: number; y: number } };
+  partPointOverrides: Record<string, number>;
   rateLookup: { [partSlug: string]: Rate };
 
   _productionLineLookup: { [partSlug: string]: ProductionLine };
@@ -230,6 +232,7 @@ export default class Factory {
     this.constraints = oldFactory?.constraints ?? [];
     this.optimizer = oldFactory?.optimizer ?? defaultRecipeOptimizerConfig();
     this.graphLayout = oldFactory?.graphLayout ?? {};
+    this.partPointOverrides = oldFactory?.partPointOverrides ?? {};
 
     this.rateLookup = {};
     this._productionLineLookup = {};
@@ -322,7 +325,7 @@ export default class Factory {
    * algorithm is implemented separately (see plan:auto-recipe-ui.md); this is
    * the entry point the UI invokes.
    */
-  optimizeRecipes() {
+  optimizeRecipes(globalPointOverrides: Record<string, number> = {}) {
     // LP-based recipe selection. One variable per candidate recipe holds that
     // recipe's completions/min (matching AssemblyLine.rate). Net part flow forms
     // the balance rows; the ScoringObjective becomes a single linear `_obj` row.
@@ -568,7 +571,12 @@ export default class Factory {
     // ====================================================================================================
     // Set optimization targets
 
-    this._buildScoringObjective(config.objective, model, candidates);
+    this._buildScoringObjective(
+      config.objective,
+      model,
+      candidates,
+      globalPointOverrides,
+    );
 
     // ====================================================================================================
     // Run solver
@@ -683,6 +691,7 @@ export default class Factory {
     objective: ScoringObjective,
     model: ModelDefinition,
     recipes: RecipeLike[],
+    globalPointOverrides: Record<string, number> = {},
   ) {
     // all objectives aim to minimize the score
     model.opType = "min";
@@ -701,16 +710,29 @@ export default class Factory {
       return;
     }
 
+    if (objective === "inputValue") {
+      const pv = resolveEffectivePointValues(
+        globalPointOverrides,
+        this.partPointOverrides,
+      );
+      for (const [varName, coefficients] of Object.entries(model.variables)) {
+        let slug: string | null = null;
+        if (varName.startsWith("_raw_")) slug = varName.substring(5);
+        else if (varName.startsWith("_supply_")) slug = varName.substring(8);
+        else continue;
+        const v = pv[slug] ?? 0;
+        if (v !== 0) coefficients._obj = v;
+      }
+      return;
+    }
+
     for (const recipe of recipes) {
       let v = 0;
       if (recipe.isFactoryRecipe) {
         const fr = recipe as unknown as { avgPowerPerInstance: number };
         if (objective === "power") v = fr.avgPowerPerInstance ?? 0;
         else if (objective === "logistics") v = recipeFlow(recipe);
-        else if (
-          objective === "minResources" ||
-          objective === "inputValue" // TODO: custom point values; fall back to raw resource minimization.
-        ) {
+        else if (objective === "minResources") {
           for (const ing of recipe.ingredients) {
             if (defaultResourceLimits[ing.part.slug]) {
               v += ing.quantity;
@@ -742,7 +764,6 @@ export default class Factory {
               r.building.size.width *
               r.building.size.length;
             break;
-          case "inputValue": // TODO: custom point values; fall back to raw resource minimization.
           case "minResources":
             for (const ing of recipe.ingredients) {
               if (defaultResourceLimits[ing.part.slug]) {

@@ -33,6 +33,7 @@ import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
+import PointValuesPanel from "./PointValuesPanel";
 import RecipeListPanel from "./RecipeListPanel";
 import TextCalculatorField from "./TextCalculatorField";
 
@@ -111,6 +112,7 @@ interface RecipeOptimizerPanelProps {
   factory: Factory;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
+  onUpdateLibrary?: (overrides: Record<string, number>) => void;
 }
 
 // Inline, always-visible optimizer config (formerly RecipeOptimizerOptionsDialog).
@@ -120,10 +122,12 @@ export default function RecipeOptimizerPanel({
   factory,
   library,
   currentFactoryId,
+  onUpdateLibrary,
 }: RecipeOptimizerPanelProps) {
   const [showPartSelector, setShowPartSelector] = useState(false);
   const [showFactorySelector, setShowFactorySelector] = useState(false);
   const [showRecipeList, setShowRecipeList] = useState(false);
+  const [showPointValues, setShowPointValues] = useState(false);
 
   const config = factory.optimizer;
 
@@ -323,13 +327,25 @@ export default function RecipeOptimizerPanel({
               }
             />
             {o.value === "inputValue" && (
-              <Button variant="contained" size="small">
-                Customize Point Values
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => setShowPointValues((v) => !v)}
+              >
+                {showPointValues ? "Hide Values" : "Customize Point Values"}
               </Button>
             )}
           </div>
         ))}
       </RadioGroup>
+
+      {showPointValues && (
+        <PointValuesPanel
+          factory={factory}
+          library={library}
+          onUpdateLibrary={onUpdateLibrary ?? (() => {})}
+        />
+      )}
 
       <HorizontalDivider />
 

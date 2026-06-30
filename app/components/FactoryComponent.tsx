@@ -177,10 +177,9 @@ export default function FactoryComponent() {
   buildSerializedRef.current = buildSerialized;
 
   function flushAutosave() {
-    if (autosaveTimerRef.current !== null) {
-      clearTimeout(autosaveTimerRef.current);
-      autosaveTimerRef.current = null;
-    }
+    if (autosaveTimerRef.current === null) return;
+    clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = null;
     if (!hasConsent()) return;
     if (autosaveEnabledRef.current) {
       doSaveRef.current();
@@ -911,6 +910,13 @@ export default function FactoryComponent() {
     factory.update();
   }
 
+  function handleUpdateGlobalPointOverrides(overrides: Record<string, number>) {
+    if (!library) return;
+    const updatedLib = { ...library, partPointOverrides: overrides };
+    setLibrary(updatedLib);
+    saveLibrary(updatedLib);
+  }
+
   const currentFactory = factoryRef.current;
 
   return (
@@ -1084,6 +1090,7 @@ export default function FactoryComponent() {
                   factory={currentFactory}
                   library={library}
                   currentFactoryId={currentFactoryId}
+                  onUpdateLibrary={handleUpdateGlobalPointOverrides}
                 />
               )}
               {activeSection === "logistics" && (

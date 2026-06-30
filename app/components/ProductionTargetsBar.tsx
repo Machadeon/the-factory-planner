@@ -27,6 +27,7 @@ interface ProductionTargetsBarProps {
 
 export default function ProductionTargetsBar({
   factory,
+  library,
 }: ProductionTargetsBarProps) {
   const [showPartSelector, setShowPartSelector] = useState(false);
 
@@ -65,7 +66,7 @@ export default function ProductionTargetsBar({
   }
 
   function solve() {
-    factory.optimizeRecipes();
+    factory.optimizeRecipes(library?.partPointOverrides ?? {});
     factory.update();
   }
 

@@ -52,6 +52,7 @@ export interface SerializedFactory {
   constraints?: PartConstraint[];
   optimizer?: RecipeOptimizerConfig;
   graphLayout?: Record<string, { x: number; y: number }>;
+  partPointOverrides?: Record<string, number>;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +68,7 @@ export interface StorageLibrary {
   schemaVersion: number;
   folders: FactoryFolder[];
   factories: SerializedFactory[];
+  partPointOverrides?: Record<string, number>;
   /**
    * Only set on exported bundles: the id of the factory the bundle was exported
    * for. Lets import auto-load that factory instead of just opening the library.
@@ -169,6 +171,10 @@ export function serializeFactory(
       Object.keys(factory.graphLayout).length > 0
         ? factory.graphLayout
         : undefined,
+    partPointOverrides:
+      Object.keys(factory.partPointOverrides).length > 0
+        ? factory.partPointOverrides
+        : undefined,
     productionLines: factory.productionLines.map((pl) => ({
       partSlug: pl.part.slug,
       rate: pl.rate,
@@ -241,6 +247,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
   factory.constraints = data.constraints ?? [];
   factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
   factory.graphLayout = data.graphLayout ?? {};
+  factory.partPointOverrides = data.partPointOverrides ?? {};
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
     if (!part) continue;
@@ -359,6 +366,7 @@ export function deserializeFactory(
   factory.constraints = data.constraints ?? [];
   factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
   factory.graphLayout = data.graphLayout ?? {};
+  factory.partPointOverrides = data.partPointOverrides ?? {};
 
   for (const plData of data.productionLines) {
     const part = partSlugLookup[plData.partSlug];
