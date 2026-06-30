@@ -26,9 +26,9 @@ describe("computeDefaultPointValues", () => {
       // Verify at minimum that the limited resources are above 0.
       expect(values[slug]).toBeGreaterThan(0);
     }
-    // A resource with no limit and no meaningful recipe should have value 0.
-    // Blue power slug: not in defaultResourceLimits, not produced by any recipe.
-    expect(values["blue-power-slug"] ?? 0).toBe(0);
+    // A part that appears in no recipe at all (neither ingredient nor product)
+    // is never solvable, so it stays unset. bacon-agaric is such a part.
+    expect(values["bacon-agaric"] ?? 0).toBe(0);
   });
 
   it("U4: iron ingot value > 0 (derived from iron ore cost)", () => {

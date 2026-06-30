@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
@@ -335,12 +335,11 @@ describe("autoCalculateRates()", () => {
 
     expect(factory._hasRecycledRubberPlasticLoop()).toBe(true);
 
-    const consoleSpy = vi.spyOn(console, "debug");
-    factory.autoSetPartRate(rubberPart);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("recycled rubber"),
-    );
-    consoleSpy.mockRestore();
+    // Loop is detected, so autoSetPartRate returns early without touching the
+    // production line rate (and without recursing into a stack overflow).
+    const rateBefore = rubberPl.rate;
+    expect(() => factory.autoSetPartRate(rubberPart)).not.toThrow();
+    expect(rubberPl.rate).toBe(rateBefore);
   });
 });
 

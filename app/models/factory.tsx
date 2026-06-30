@@ -1057,9 +1057,7 @@ export default class Factory {
       (part.slug === "rubber" || part.slug === "plastic") &&
       this._hasRecycledRubberPlasticLoop()
     ) {
-      console.debug(
-        "Handling recycled rubber and plastic loop is not implemented in this loop",
-      );
+      // Handling recycled rubber and plastic loop is not implemented here
       return;
     }
 
