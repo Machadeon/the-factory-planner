@@ -1,0 +1,13 @@
+schema: spec-driven
+
+context: |
+  Tech stack: TypeScript, React, Node.js, Next.js
+  Testing: unit/integration: vitest, e2e: playwright
+
+rules:
+  proposal: []
+  specs:
+    - Each requirement and scenario has a unique identifier of the format R1, R1.S1
+  design: []
+  tasks: []
+  apply: []

@@ -100,6 +100,16 @@ Never mutate `Factory` directly without `factory.update()` after — shallow-clo
   - **Integration** (`tests/integration/`): component behavior, user interactions, React state (button didn't update UI)
   - **E2E** (`tests/e2e/`): multi-step flows, localStorage persistence, drawer/dialog lifecycle, real browser needs.
 
+## Test selectors
+
+Every interactable UI element must have a stable handle for Playwright:
+
+- Prefer `aria-label` on semantic elements (buttons, inputs, checkboxes) where the label is descriptive and stable.
+- Use `data-testid` for elements that lack meaningful ARIA semantics or where the aria-label would be awkward.
+- Never select by CSS class, element tag, or visible text in Playwright tests — these break on style/copy changes.
+
+All Playwright tests must locate elements exclusively via these handles (e.g. `page.getByRole('button', { name: '...' })` or `page.getByTestId('...')`).
+
 ## MCP Servers & Performance Profiling
 
 Two MCP servers in `.mcp.json`:

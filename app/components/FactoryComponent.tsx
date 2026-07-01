@@ -13,7 +13,14 @@ import {
   Tabs,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
 import {
@@ -35,9 +42,13 @@ import {
   downloadJson,
   getAutosavePref,
   getCurrentFactoryId,
+  getLibraryPinned,
+  getSidebarWidth,
   hasConsent,
   loadLibrary,
   setCurrentFactoryId as persistCurrentFactoryId,
+  setLibraryPinned as persistLibraryPinned,
+  setSidebarWidth as persistSidebarWidth,
   readAutosave,
   saveLibrary,
   setAutosavePref,
@@ -78,6 +89,8 @@ export default function FactoryComponent() {
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
   const [libraryPinned, setLibraryPinned] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(380);
+  const sidebarWidthRef = useRef<number>(380);
+  sidebarWidthRef.current = sidebarWidth;
   const dragStateRef = useRef<{ startX: number; startWidth: number } | null>(
     null,
   );
@@ -308,6 +321,9 @@ export default function FactoryComponent() {
   // On mount: load library and restore session if consent given.
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
+    setLibraryPinned(getLibraryPinned());
+    setSidebarWidth(getSidebarWidth());
+
     if (hasConsent()) {
       const pref = getAutosavePref();
       setAutosaveEnabled(pref);
@@ -520,6 +536,11 @@ export default function FactoryComponent() {
       previousFocusRef.current?.focus();
     });
   }
+
+  const handlePinChange = useCallback((pinned: boolean) => {
+    setLibraryPinned(pinned);
+    persistLibraryPinned(pinned);
+  }, []);
 
   function executePendingAction(action: PendingAction) {
     if (action === "save") {
@@ -891,8 +912,10 @@ export default function FactoryComponent() {
         Math.min(700, dragStateRef.current.startWidth + delta),
       );
       setSidebarWidth(newWidth);
+      sidebarWidthRef.current = newWidth;
     };
     const onMouseUp = () => {
+      persistSidebarWidth(sidebarWidthRef.current);
       dragStateRef.current = null;
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
@@ -946,7 +969,7 @@ export default function FactoryComponent() {
           onNewFactory={handleNewFactory}
           onImport={handleImport}
           pinned={false}
-          onPinChange={setLibraryPinned}
+          onPinChange={handlePinChange}
         />
       )}
 
@@ -1037,7 +1060,7 @@ export default function FactoryComponent() {
             onNewFactory={handleNewFactory}
             onImport={handleImport}
             pinned={true}
-            onPinChange={setLibraryPinned}
+            onPinChange={handlePinChange}
           />
         )}
         <div

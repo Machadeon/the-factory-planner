@@ -18,6 +18,7 @@ Planned major changes, with notes on how each fits the existing domain model (`F
 ### Improvements
 
 - Logistics auto-layout is still bad. Need an algorithm that minimizes crossing edges and keeps edges from going behind nodes.
+- The library button should be hidden if the library drawer is pinned open
 
 ### Optimizations
 

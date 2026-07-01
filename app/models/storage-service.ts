@@ -13,6 +13,8 @@ const KEY_LIBRARY = "sfp:library";
 const KEY_AUTOSAVE = "sfp:autosave";
 const KEY_CURRENT = "sfp:current";
 const KEY_AUTOSAVE_PREF = "sfp:autosave-pref";
+const KEY_LIBRARY_PINNED = "sfp:library-pinned";
+const KEY_SIDEBAR_WIDTH = "sfp:sidebar-width";
 
 export function hasConsent(): boolean {
   try {
@@ -98,6 +100,35 @@ export function getAutosavePref(): boolean {
 
 export function setAutosavePref(enabled: boolean): void {
   localStorage.setItem(KEY_AUTOSAVE_PREF, String(enabled));
+}
+
+export function getLibraryPinned(): boolean {
+  try {
+    const val = localStorage.getItem(KEY_LIBRARY_PINNED);
+    return val === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setLibraryPinned(v: boolean): void {
+  localStorage.setItem(KEY_LIBRARY_PINNED, String(v));
+}
+
+export function getSidebarWidth(): number {
+  try {
+    const val = localStorage.getItem(KEY_SIDEBAR_WIDTH);
+    if (val === null) return 380;
+    const parsed = Number(val);
+    if (Number.isNaN(parsed)) return 380;
+    return Math.max(200, Math.min(700, parsed));
+  } catch {
+    return 380;
+  }
+}
+
+export function setSidebarWidth(v: number): void {
+  localStorage.setItem(KEY_SIDEBAR_WIDTH, String(v));
 }
 
 // --- Library CRUD helpers (pure — callers must call saveLibrary) ---
