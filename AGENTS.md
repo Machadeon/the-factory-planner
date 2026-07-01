@@ -6,7 +6,7 @@ Next.js web app for planning factories in [Satisfactory](https://www.satisfactor
 
 ## ⚠ Development Process Required
 
-The [Agentic Development Cycle](plans/agentic-dev-cycle.md) is **mandatory** for any material change:
+The OpenSpec `spec-driven-reviewed` schema is **mandatory** for any material change:
 
 - Feature development
 - Bug fixes
@@ -17,18 +17,22 @@ The [Agentic Development Cycle](plans/agentic-dev-cycle.md) is **mandatory** for
 
 **If unsure** whether a prompt will lead to material changes, ask the user: *"Should I follow the development process for this?"* before proceeding.
 
-Eight mandatory phases — all artifacts under `plans/<change-name>/`:
+### Artifact sequence — all artifacts under `openspec/changes/<change-name>/`
 
-1. **Spec drafting** → `spec.md` (interview user, define scope)
-2. **Spec review** → subagent cold-reads, blocks on unresolved concerns
-3. **Validation drafting** → `validation.md` + failing test stubs in `tests/`
-4. **Validation review** → subagent checks coverage, blocks on gaps
-5. **Implementation planning** → `implementation.md` (files, order, risks — no code yet)
-6. **Implementation review** → subagent checks plan; run `modern-web-guidance` + `frontend-design` skills
-7. **Implementation loop** → new git branch; smallest change → test → fix → repeat; full suite before commit
-8. **Final review** → `/caveman:caveman-review` on all changes; fix concerns; repeat until clean
+| Command | Artifact | Gate |
+|---|---|---|
+| `/opsx:new` | `proposal.md` | `/grill-me` before drafting |
+| `/opsx:continue` | `specs/**/*.md` | `/grill-me` before drafting |
+| `/opsx:continue` | `spec-review.md` | Subagent cold-read loop; BLOCKS until APPROVED |
+| `/opsx:continue` | `design.md` | — |
+| `/opsx:continue` | `design-review.md` | Subagent + `modern-web-guidance` + `frontend-design` + `caveman-review`; BLOCKS |
+| `/opsx:continue` | `tasks.md` | Test stubs in Group 1 |
+| `/opsx:continue` | `tasks-review.md` | Subagent + `caveman-review`; BLOCKS |
+| `/opsx:apply` | *(implementation)* | Run stubs first, confirm failure; then implement |
+| `/opsx:continue` | `review.md` | `caveman-review` on full diff; BLOCKS until APPROVED |
+| `/opsx:archive` | *(archive)* | — |
 
-Full test suite (`npm run test:run && npm run test:e2e`) and `lighthouse_audit` before calling any UI change done.
+All review artifacts are **append-only** — each pass adds a new section recording what was resolved and how. opsx:continue MUST NOT advance past a review artifact while its latest pass shows Status: CONCERNS.
 
 ---
 

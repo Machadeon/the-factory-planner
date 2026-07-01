@@ -1,4 +1,4 @@
-schema: spec-driven
+schema: spec-driven-reviewed
 
 context: |
   Tech stack: TypeScript, React, Node.js, Next.js
@@ -8,6 +8,10 @@ rules:
   proposal: []
   specs:
     - Each requirement and scenario has a unique identifier of the format R1, R1.S1
+  spec-review: []
   design: []
+  design-review: []
   tasks: []
+  tasks-review: []
   apply: []
+  review: []

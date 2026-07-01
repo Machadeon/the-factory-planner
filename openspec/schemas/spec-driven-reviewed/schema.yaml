@@ -1,0 +1,359 @@
+name: spec-driven-reviewed
+version: 1
+description: spec-driven with subagent review gates — proposal → specs → spec-review → design → design-review → tasks → tasks-review → [apply] → review
+
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal document outlining the change
+    template: proposal.md
+    instruction: |
+      Before writing, use the /grill-me skill to interview the user until the change is
+      fully understood. Grill on: motivation, problem being solved, who it affects, what
+      changes, what stays the same, scope boundaries, and success criteria. Do not begin
+      drafting until grill-me ends with a clear goal, constraints, and capability list.
+
+      Then create the proposal document that establishes WHY this change is needed.
+
+      Sections:
+      - **Why**: 1-2 sentences on the problem or opportunity. What problem does this solve? Why now?
+      - **What Changes**: Bullet list of changes. Be specific about new capabilities, modifications, or removals. Mark breaking changes with **BREAKING**.
+      - **Capabilities**: Identify which specs will be created or modified:
+        - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<name>/spec.md`. Use kebab-case names (e.g., `user-auth`, `data-export`).
+        - **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Only include if spec-level behavior changes (not just implementation details). Each needs a delta spec file. Check `openspec/specs/` for existing spec names. Leave empty if no requirement changes.
+      - **Impact**: Affected code, APIs, dependencies, or systems.
+
+      IMPORTANT: The Capabilities section is critical. It creates the contract between
+      proposal and specs phases. Research existing specs before filling this in.
+      Each capability listed here will need a corresponding spec file.
+
+      Keep it concise (1-2 pages). Focus on the "why" not the "how" -
+      implementation details belong in design.md.
+
+      This is the foundation - specs, design, and tasks all build on this.
+    requires: []
+
+  - id: specs
+    generates: "specs/**/*.md"
+    description: Detailed specifications for the change
+    template: spec.md
+    instruction: |
+      Before writing, use the /grill-me skill to stress-test each capability from the
+      proposal. Grill on: exact behavior per scenario, edge cases, what happens on failure,
+      which behaviors are normative (SHALL/MUST) vs. advisory, and whether each scenario
+      is independently testable. Do not begin drafting until every capability has clear,
+      unambiguous requirements with at least one concrete scenario.
+
+      Then create specification files that define WHAT the system should do.
+
+      Create one spec file per capability listed in the proposal's Capabilities section.
+      - New capabilities: use the exact kebab-case name from the proposal (specs/<capability>/spec.md).
+      - Modified capabilities: use the existing spec folder name from openspec/specs/<capability>/ when creating the delta spec at specs/<capability>/spec.md.
+
+      Delta operations (use ## headers):
+      - **ADDED Requirements**: New capabilities
+      - **MODIFIED Requirements**: Changed behavior - MUST include full updated content
+      - **REMOVED Requirements**: Deprecated features - MUST include **Reason** and **Migration**
+      - **RENAMED Requirements**: Name changes only - use FROM:/TO: format
+
+      Format requirements:
+      - Each requirement: `### Requirement: <name>` followed by description
+      - Use SHALL/MUST for normative requirements (avoid should/may)
+      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format
+      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3 hashtags or bullets will fail silently.
+      - Every requirement MUST have at least one scenario.
+
+      MODIFIED requirements workflow:
+      1. Locate the existing requirement in openspec/specs/<capability>/spec.md
+      2. Copy the ENTIRE requirement block (from `### Requirement:` through all scenarios)
+      3. Paste under `## MODIFIED Requirements` and edit to reflect new behavior
+      4. Ensure header text matches exactly (whitespace-insensitive)
+
+      Common pitfall: Using MODIFIED with partial content loses detail at archive time.
+      If adding new concerns without changing existing behavior, use ADDED instead.
+
+      Specs should be testable - each scenario is a potential test case.
+    requires:
+      - proposal
+
+  - id: spec-review
+    generates: spec-review.md
+    description: Subagent cold-read review of specs — loops until all concerns resolved
+    template: spec-review.md
+    instruction: |
+      Run a subagent review of all spec files generated in the specs phase.
+
+      BLOCKING GATE: spec-review.md MUST show Status: APPROVED before opsx:continue
+      may advance to the design artifact. If Status is CONCERNS or PENDING, this
+      phase is not complete — loop until clean.
+
+      ## Loop protocol
+
+      1. Spawn a reviewer subagent named "spec-driven-reviewer" (fresh, cold read).
+         Save the agent name to `.reviewer-id` in the current change directory.
+         Prompt: "Cold-read these spec files: [list paths]. Run /caveman:caveman-review on
+         each spec file. Write Pass 1 to spec-review.md immediately using the template —
+         do not buffer findings, write to disk before returning. Check only: ambiguity
+         in requirements, missing edge-case scenarios, requirements that exceed proposal
+         scope. No praise. One concern per line."
+
+      2. If the latest pass in spec-review.md shows Status: CONCERNS:
+         a. Main agent revises the affected spec files to address each concern.
+         b. Resume the SAME subagent (do not spawn fresh) by continuing "spec-driven-reviewer".
+            Prompt MUST include: "Read spec-review.md at [path] in full before reviewing —
+            it contains all previous passes including any user-raised concerns. Then re-read
+            the updated spec files: [list paths]. Run /caveman:caveman-review on each."
+         c. Reviewer APPENDS a new ## Pass N section to spec-review.md immediately —
+            writes to disk before returning. Lists which concerns from the previous pass
+            were resolved and how, then lists any remaining or new findings.
+            Never edits or deletes previous pass sections.
+
+      3. Repeat step 2 until the latest pass shows Status: APPROVED with no open findings.
+
+      ## User-raised concerns
+
+      If the user raises concerns about the specs via chat at any point during this phase:
+      append a new ## Pass N section to spec-review.md immediately with `Source: User`
+      and `Status: CONCERNS`, recording the user's concerns verbatim. Then continue the
+      loop from step 2a as if the subagent had returned those concerns.
+
+      The reviewer subagent MUST be the same instance across all passes of this loop.
+      It MUST read the spec files cold on each pass — give the reviewer file paths, not
+      summaries or paraphrases.
+    requires:
+      - specs
+
+  - id: design
+    generates: design.md
+    description: Technical design document with implementation details
+    template: design.md
+    instruction: |
+      Create the design document that explains HOW to implement the change.
+
+      When to include design.md (create only if any apply):
+      - Cross-cutting change (multiple services/modules) or new architectural pattern
+      - New external dependency or significant data model changes
+      - Security, performance, or migration complexity
+      - Ambiguity that benefits from technical decisions before coding
+
+      Sections:
+      - **Context**: Background, current state, constraints, stakeholders
+      - **Goals / Non-Goals**: What this design achieves and explicitly excludes
+      - **Decisions**: Key technical choices with rationale (why X over Y?). Include alternatives considered for each decision.
+      - **Risks / Trade-offs**: Known limitations, things that could go wrong. Format: [Risk] → Mitigation
+      - **Migration Plan**: Steps to deploy, rollback strategy (if applicable)
+      - **Open Questions**: Outstanding decisions or unknowns to resolve
+
+      Focus on architecture and approach, not line-by-line implementation.
+      Reference the proposal for motivation and specs for requirements.
+
+      Good design docs explain the "why" behind technical decisions.
+    requires:
+      - spec-review
+
+  - id: design-review
+    generates: design-review.md
+    description: Subagent cold-read review of design — always invokes modern-web-guidance + frontend-design + caveman-review; loops until clean
+    template: design-review.md
+    instruction: |
+      Run a subagent review of design.md.
+
+      BLOCKING GATE: design-review.md MUST show Status: APPROVED before opsx:continue
+      may advance to the tasks artifact. If Status is CONCERNS or PENDING, this
+      phase is not complete — loop until clean.
+
+      ## Loop protocol
+
+      1. Resume the reviewer subagent "spec-driven-reviewer" saved in `.reviewer-id`
+         (do NOT spawn a new agent — continue the same instance from spec-review).
+         Prompt: "Cold-read design.md at [path]. Before reviewing, invoke the
+         modern-web-guidance and frontend-design skills to load current guidance.
+         Then run /caveman:caveman-review on design.md. Write Pass 1 to design-review.md
+         immediately using the template — do not buffer findings, write to disk before
+         returning. Check only: conflicts with existing architecture patterns in this
+         codebase, code anti-patterns, gaps vs. modern web standards, frontend design
+         misses. No praise."
+
+      2. The reviewer MUST invoke modern-web-guidance@googlechrome, frontend-design,
+         and /caveman:caveman-review on every pass — not optional, even for non-UI changes.
+
+      3. If the latest pass in design-review.md shows Status: CONCERNS:
+         a. Main agent revises design.md to address each concern.
+         b. Resume the SAME subagent. Prompt MUST include: "Read design-review.md at [path]
+            in full before reviewing — it contains all previous passes including any
+            user-raised concerns. Then re-read the updated design.md. Invoke
+            modern-web-guidance, frontend-design, and /caveman:caveman-review."
+            Reviewer APPENDS a new ## Pass N section to design-review.md immediately —
+            writes to disk before returning. Lists which concerns from the previous pass
+            were resolved and how, then lists any remaining or new findings.
+            Never edits previous pass sections.
+
+      4. Repeat until the latest pass shows Status: APPROVED with no open findings.
+
+      ## User-raised concerns
+
+      If the user raises concerns about the design via chat at any point during this phase:
+      append a new ## Pass N section to design-review.md immediately with `Source: User`
+      and `Status: CONCERNS`, recording the user's concerns verbatim. Then continue the
+      loop from step 3a as if the subagent had returned those concerns.
+    requires:
+      - design
+
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist — test stubs first, then implementation tasks
+    template: tasks.md
+    instruction: |
+      Create the task list that breaks down the implementation work.
+
+      **IMPORTANT: Follow the template below exactly.** The apply phase parses
+      checkbox format to track progress. Tasks not using `- [ ]` won't be tracked.
+
+      ## Required structure
+
+      **Group 1 MUST be test stubs.** Write failing test stubs before any implementation
+      tasks. Each spec scenario should have a corresponding test task. Reference the
+      test type guidance:
+      - Unit (tests/unit/): model/utility logic
+      - Integration (tests/integration/): component behavior, React state
+      - E2E (tests/e2e/): multi-step flows, localStorage, real browser needs
+
+      After test stubs, add implementation task groups in dependency order.
+
+      Final group MUST be: full test suite pass + lighthouse audit (if UI changed).
+
+      ## Guidelines
+      - Group related tasks under ## numbered headings
+      - Each task MUST be a checkbox: `- [ ] X.Y Task description`
+      - Tasks should be small enough to complete in one session
+      - Order tasks by dependency (what must be done first?)
+
+      Example:
+      ```
+      ## 1. Test Stubs
+
+      - [ ] 1.1 Write unit test stub: <scenario from spec>
+      - [ ] 1.2 Write E2E test stub: <scenario from spec>
+
+      ## 2. Core Implementation
+
+      - [ ] 2.1 Implement data export function
+      - [ ] 2.2 Add CSV formatting utilities
+
+      ## 3. Verification
+
+      - [ ] 3.1 All unit/integration tests pass (npm run test:run)
+      - [ ] 3.2 All E2E tests pass (npm run test:e2e)
+      - [ ] 3.3 Lighthouse audit (if UI changed)
+      ```
+
+      Reference specs for what needs to be built, design for how to build it.
+    requires:
+      - specs
+      - design-review
+
+  - id: tasks-review
+    generates: tasks-review.md
+    description: Subagent cold-read review of tasks — runs caveman-review + checks test coverage and ordering; loops until clean
+    template: tasks-review.md
+    instruction: |
+      Run a subagent review of tasks.md.
+
+      BLOCKING GATE: tasks-review.md MUST show Status: APPROVED before opsx:continue
+      may begin the apply phase. If Status is CONCERNS or PENDING, this phase is not
+      complete — loop until clean.
+
+      ## Loop protocol
+
+      1. Resume the reviewer subagent "spec-driven-reviewer" saved in `.reviewer-id`
+         (do NOT spawn a new agent — continue the same instance from spec-review and
+         design-review).
+         Prompt: "Cold-read tasks.md at [path] and the spec files at [paths]. Run
+         /caveman:caveman-review on tasks.md. Write Pass 1 to tasks-review.md immediately
+         using the template — do not buffer findings, write to disk before returning.
+         Check only: every spec scenario has a corresponding test task in Group 1, Group 1
+         test tasks come before any implementation tasks, tasks are in correct dependency
+         order, no spec requirement is left without implementation tasks. No praise."
+
+      2. The reviewer MUST run /caveman:caveman-review on tasks.md on every pass.
+
+      3. If the latest pass in tasks-review.md shows Status: CONCERNS:
+         a. Main agent revises tasks.md to address each concern.
+         b. Resume the SAME subagent. Prompt MUST include: "Read tasks-review.md at [path]
+            in full before reviewing — it contains all previous passes including any
+            user-raised concerns. Then re-read the updated tasks.md and spec files.
+            Run /caveman:caveman-review on tasks.md."
+            Reviewer APPENDS a new ## Pass N section to tasks-review.md immediately —
+            writes to disk before returning. Lists which concerns from the previous pass
+            were resolved and how, then lists any remaining or new findings.
+            Never edits previous pass sections.
+
+      4. Repeat until the latest pass shows Status: APPROVED with no open findings.
+
+      ## User-raised concerns
+
+      If the user raises concerns about the tasks via chat at any point during this phase:
+      append a new ## Pass N section to tasks-review.md immediately with `Source: User`
+      and `Status: CONCERNS`, recording the user's concerns verbatim. Then continue the
+      loop from step 3a as if the subagent had returned those concerns.
+    requires:
+      - tasks
+
+  - id: review
+    generates: review.md
+    description: Final code review using caveman-review after apply — loops until no open findings
+    template: review.md
+    instruction: |
+      Run a final code review of all implemented changes. This artifact MUST be created
+      AFTER the apply phase is complete — do not run this before implementation exists.
+
+      ## Loop protocol
+
+      1. Run the /caveman:caveman-review skill on the full diff of implemented changes
+         (all changes vs. main branch).
+
+      2. Write Pass 1 to review.md immediately using the template — do not buffer findings,
+         write to disk before proceeding. Format each finding as:
+         `file:line: ⚠ SEVERITY: problem. fix.`
+         Severity levels: CRITICAL / HIGH / MED / LOW
+
+      3. If the latest pass in review.md shows Status: CONCERNS (any CRITICAL or HIGH findings):
+         a. Main agent addresses each finding in the affected files.
+         b. Run npm run test:run && npm run test:e2e to confirm no regressions.
+         c. Re-run /caveman:caveman-review on the updated diff. Read review.md at [path]
+            in full before writing — it contains all previous passes including any
+            user-raised concerns.
+         d. APPEND a new ## Pass N section to review.md immediately — write to disk before
+            proceeding. Lists which findings from the previous pass were resolved and how,
+            then lists any remaining or new findings. Never edits previous pass sections.
+
+      4. Repeat until the latest pass shows Status: APPROVED (no open CRITICAL or HIGH findings).
+         MED/LOW findings may be noted in the final pass and left for follow-up.
+
+      5. Only call the change done when the latest pass returns APPROVED.
+
+      ## User-raised concerns
+
+      If the user raises concerns about the implementation via chat at any point during this phase:
+      append a new ## Pass N section to review.md immediately with `Source: User`
+      and `Status: CONCERNS`, recording the user's concerns verbatim. Then continue the
+      loop from step 3a as if the reviewer had returned those findings.
+    requires:
+      - tasks-review
+
+apply:
+  requires: [tasks-review]
+  tracks: tasks.md
+  instruction: |
+    Read context files, work through pending tasks in order, mark complete as you go.
+    Pause if you hit blockers or need clarification.
+
+    Implementation rules:
+    - Complete ALL test stub tasks (Group 1) first — write stubs, then run them to confirm
+      they FAIL. A stub that passes without implementation is testing nothing; fix the stub
+      before proceeding. Only advance to implementation tasks once all stubs fail correctly.
+    - Smallest verifiable change per task — no broken state accumulation
+    - Run relevant tests after each implementation task: npx vitest run <file> or npx playwright test <file>
+    - Full suite before any commit: npm run test:run && npm run test:e2e
+    - Commit at logical checkpoints, not just at the end
+    - After all tasks: run lighthouse_audit if any UI changed

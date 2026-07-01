@@ -1073,7 +1073,9 @@ export default function FactoryComponent() {
             autosaveEnabled={autosaveEnabled}
             onNameChange={handleFactoryNameChange}
             onIconChange={handleIconChange}
-            onOpenLibrary={() => requireConsent("openLibrary")}
+            onOpenLibrary={
+              libraryPinned ? undefined : () => requireConsent("openLibrary")
+            }
             onSave={handleSave}
             onToggleAutosave={handleToggleAutosave}
             onExport={handleExportCurrent}
