@@ -1,4 +1,5 @@
 import { Tooltip } from "@mui/material";
+import { withBasePath } from "@/app/utils";
 
 interface IconProps {
   src: string;
@@ -23,7 +24,7 @@ export default function Icon({ src, label, size, className }: IconProps) {
     <Tooltip title={label}>
       {/* biome-ignore lint/performance/noImgElement: next/image overhead is wasted on these tiny static icons rendered hundreds at a time */}
       <img
-        src={src}
+        src={withBasePath(src)}
         alt={label}
         width={size}
         height={size}
@@ -35,7 +36,7 @@ export default function Icon({ src, label, size, className }: IconProps) {
   ) : (
     // biome-ignore lint/performance/noImgElement: next/image overhead is wasted on these tiny static icons rendered hundreds at a time
     <img
-      src={src}
+      src={withBasePath(src)}
       alt={label}
       width={size}
       height={size}
