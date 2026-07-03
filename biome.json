@@ -9,10 +9,5 @@
   },
   "formatter": {
     "indentStyle": "space"
-  },
-  "linter": {
-    "rules": {
-      "a11y": "off"
-    }
   }
 }
