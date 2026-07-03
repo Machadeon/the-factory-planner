@@ -55,6 +55,7 @@ import {
   updateFactory,
   writeAutosave,
 } from "../models/storage-service";
+import { withBasePath } from "../utils";
 import FactoryHeader from "./FactoryHeader";
 import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
 import FactoryOverviewComponent from "./FactoryOverviewComponent";
@@ -381,7 +382,7 @@ export default function FactoryComponent() {
     }
     const hash = `#${activeSectionRef.current}`;
     if (!currentFactoryId) {
-      window.history.pushState({ factoryId: null }, "", "/");
+      window.history.pushState({ factoryId: null }, "", withBasePath("/"));
     } else {
       const base = currentSlug
         ? `/?factory=${encodeURIComponent(currentSlug)}`
@@ -389,7 +390,7 @@ export default function FactoryComponent() {
       window.history.pushState(
         { factoryId: currentFactoryId, slug: currentSlug },
         "",
-        `${base}${hash}`,
+        withBasePath(`${base}${hash}`),
       );
     }
   }, [currentFactoryId, currentSlug]);

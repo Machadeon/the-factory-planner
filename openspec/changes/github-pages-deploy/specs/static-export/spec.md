@@ -12,9 +12,11 @@ The build SHALL produce a fully static site (Next.js `output: "export"`) in `out
 - **THEN** the app loads and runs with no requests to Next.js server endpoints (no `/_next/image` optimizer URLs, no API routes)
 
 ### Requirement: R2 — Subpath correctness
-All app-generated URLs (page assets, `next/image` sources, plain `<img>` sources, font files) SHALL resolve correctly when the site is served from the configured base path. The base path MUST appear exactly once in any given URL.
+All app-generated URLs (page assets, `next/image` sources, plain `<img>` sources, font files, and client-side history/`pushState` URLs) SHALL resolve correctly when the site is served from the configured base path. The base path MUST appear exactly once in any given URL.
 
-A single helper function SHALL be the only mechanism for applying the base path to plain `<img>` sources. Its contract: input is a root-relative path beginning with `/` that does not already contain the base path (e.g. `/images/items/foo_64.png`); output is the input prefixed with the build-time base path (or the input unchanged when no base path is configured). Paths passed to `next/image` SHALL NOT go through the helper, because `next/image` applies `basePath` itself.
+A single helper function SHALL be the only mechanism for applying the base path to plain `<img>` sources and to client-side history/`pushState` URLs. Its contract: input is a root-relative path beginning with `/` that does not already contain the base path (e.g. `/images/items/foo_64.png`); output is the input prefixed with the build-time base path (or the input unchanged when no base path is configured).
+
+Paths passed to `next/image` SHALL have the base path applied by a custom image loader (`images.loader: "custom"` + `loaderFile`). The `images.unoptimized` option MUST NOT be used: it makes `next/image` emit the raw `src` and skip the loader, so the base path is never applied. `next/image` does not apply `basePath` to sources on its own under static export.
 
 #### Scenario: R2.S1 — Plain img elements respect base path
 - **WHEN** the app is built with `NEXT_PUBLIC_BASE_PATH=/the-factory-planner` and a component renders a plain `<img>` (e.g. `Icon`) for a game icon
@@ -27,6 +29,14 @@ A single helper function SHALL be the only mechanism for applying the base path 
 #### Scenario: R2.S3 — Root serving unaffected
 - **WHEN** the app is built or run in dev with `NEXT_PUBLIC_BASE_PATH` unset
 - **THEN** the helper returns its input unchanged and all asset URLs resolve from `/` exactly as they do today
+
+#### Scenario: R2.S4 — Client history URLs respect base path
+- **WHEN** the app is served under `/the-factory-planner` and it writes the browser URL via `history.pushState`/`replaceState` (e.g. on mount with no factory, or when the active factory changes)
+- **THEN** the resulting URL stays under `/the-factory-planner/` (it is not rewritten to root `/`), so a subsequent reload of that URL still resolves to the app
+
+#### Scenario: R2.S5 — Custom image loader applies base path
+- **WHEN** the app is built with `NEXT_PUBLIC_BASE_PATH=/the-factory-planner` and the custom image loader receives a root-relative `src`
+- **THEN** it returns the `src` prefixed with `/the-factory-planner` exactly once; with the env unset it returns the `src` unchanged
 
 ### Requirement: R3 — Full client functionality from static hosting
 When served statically under the base path, the exported app SHALL support the core user-facing behaviors: creating factories and production lines with rate auto-calculation (LP solver), rendering part/recipe icons, opening the factory library drawer and recipe dialogs, and persisting state to localStorage across reloads.
