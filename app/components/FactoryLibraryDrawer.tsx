@@ -46,6 +46,7 @@ import {
   renameFolder,
   saveLibrary,
 } from "../models/storage-service";
+import { withBasePath } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 
@@ -218,7 +219,7 @@ export default function FactoryLibraryDrawer({
           {factory.icon ? (
             // biome-ignore lint/performance/noImgElement: local game asset path
             <img
-              src={factory.icon}
+              src={withBasePath(factory.icon)}
               alt=""
               width={20}
               height={20}
