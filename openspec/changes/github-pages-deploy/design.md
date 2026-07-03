@@ -5,8 +5,8 @@ The app is a pure client-side Next.js 16 (App Router) single-page tool: one rout
 Current obstacles:
 
 - No `output: "export"`; build assumes a Node server.
-- `next/image` is used in ~15 components; the default loader requires the `/_next/image` server endpoint.
-- Game icon paths are built root-relative in `app/models/library.tsx` (`/images/items/...`) and consumed by both `next/image` (which auto-prefixes `basePath`) and plain `<img>` (`Icon.tsx`, `FactoryLibraryDrawer.tsx` — which do not).
+- `next/image` is used in ~15 components; the default loader requires the `/_next/image` server endpoint. Under static export, `next/image` does **not** apply `basePath` to sources itself — that is done by a custom image loader (see D3).
+- Game icon paths are built root-relative in `app/models/library.tsx` (`/images/items/...`) and consumed by both `next/image` (base path applied by the custom loader) and plain `<img>` (`Icon.tsx`, `FactoryLibraryDrawer.tsx` — via the `withBasePath` helper).
 - `factory.icon` values are serialized into localStorage, so whatever path shape is stored must remain valid regardless of where the app is hosted.
 
 ## Goals / Non-Goals
@@ -21,7 +21,7 @@ Current obstacles:
 
 - Custom domain, CDN, or non-GitHub hosting.
 - Multi-page routing, SPA fallback (404.html rewrite tricks) — single route today.
-- Changing the Icon/`next/image` split or image optimization strategy.
+- Changing the Icon/`next/image` split. (The image *loader* strategy is in scope — see D3 — but the plain-`<img>` vs `next/image` split is not.)
 - PR preview deployments.
 
 ## Decisions
@@ -42,9 +42,21 @@ One existing script is affected: `npm start` (`next start`) errors under export 
 
 **Trailing slash / entry URLs (spec R3.S3):** `trailingSlash` stays at its default. The exported single route is `out/index.html`; GitHub Pages serves it at `/the-factory-planner/` and issues its standard directory redirect for the slash-less `/the-factory-planner` entry URL. No SPA fallback or `404.html` rewrite is needed because the app has exactly one route.
 
-### D3 — `images.unoptimized: true`
+### D3 — Custom `next/image` loader (not `images.unoptimized`)
 
-Required for static export; the default loader needs a server. Icons are small pre-sized PNGs shipped in `public/`, so optimization adds nothing here. All existing `next/image` call sites keep working unmodified (they render plain `src` URLs with `basePath` applied).
+> **Revised after deploy.** The original design set `images.unoptimized: true` on the claim that `next/image` renders `src` URLs "with `basePath` applied". That is false: `unoptimized` makes `next/image` emit the **raw** `src` and skip the loader entirely, so under a subpath deploy every `next/image` source pointed at root (`/satisfactory_logo…`, `/images/…`) and 404'd. Verified in the base-path export: `<img src="/satisfactory_logo_full_color_small.png">` with no base path, while `_next/` assets (which Next bakes at build) were correctly prefixed.
+
+Static export forbids the default server optimizer, so a loader is still required — but it must be a **custom** loader, which is the only mechanism that both satisfies export and lets us prefix the base path:
+
+```ts
+// image-loader.ts
+export default function imageLoader({ src }: { src: string }): string {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  return src.startsWith("/") ? `${basePath}${src}` : src;
+}
+```
+
+`next.config.ts` sets `images: { loader: "custom", loaderFile: "./image-loader.ts" }` and does **not** set `unoptimized` (which would bypass the loader). Icons remain small pre-sized PNGs shipped in `public/`; the loader ignores width and returns one URL, so there is no real optimization, exactly as before — the only change is that the base path is now applied. All existing `next/image` call sites keep working unmodified.
 
 ### D4 — One helper, applied at render time, inside the plain-`<img>` components
 
@@ -58,7 +70,9 @@ export function withBasePath(path: string): string {
 
 The env read is inline (not hoisted to a module-level const) so vitest can exercise both modes with `vi.stubEnv` without module-cache gymnastics; Next's build-time inlining of `NEXT_PUBLIC_*` works identically either way.
 
-Applied in exactly two places: `Icon.tsx` (choke point for nearly all plain `<img>` icons) and the plain `<img>` in `FactoryLibraryDrawer.tsx`. Everything else — `library.tsx` path construction, localStorage serialization, `next/image` call sites — is untouched.
+Applied in three places: `Icon.tsx` (choke point for nearly all plain `<img>` icons), the plain `<img>` in `FactoryLibraryDrawer.tsx`, and the client-side `history.pushState` URLs in `FactoryComponent.tsx` (see the D3-style correction below). Everything else — `library.tsx` path construction, localStorage serialization, `next/image` call sites (now handled by the custom loader) — is untouched.
+
+> **Added after deploy — history/`pushState` URLs.** `FactoryComponent` writes the browser URL directly via `history.pushState` (`"/"` when no factory, `"/?factory=…"` otherwise) to give each factory a bookmarkable address without a router round-trip. These are app-generated URLs (spec R2) and were **not** base-path-aware: on mount with no factory the effect pushed root `"/"`, rewriting `/the-factory-planner/` → `/`. A reload then hit the origin root (a different/empty Pages site) — the "redirects to `/`, breaks refresh" symptom. Fix: wrap both pushed paths with `withBasePath(...)`. The `replaceState` calls that reuse `window.location.href` already preserve the base path and are left unchanged; `restoreFactory` reads `window.location.search`, which is base-path-independent.
 
 - *Why render-time, not in `library.tsx`*: (1) `next/image` consumers of the same library paths would get the base path applied twice (spec R2 forbids double-prefixing); (2) `factory.icon` is persisted to localStorage — prefixed stored paths would go stale if the base path ever changes and would differ between dev-saved and prod-saved data. Root-relative paths stay the canonical stored/in-memory form; the base path is a presentation concern.
 - *Alternative — replace plain `<img>` with `next/image` everywhere*: rejected; `Icon.tsx` documents the deliberate perf choice (hundreds of tiny icons per dialog).
@@ -79,6 +93,8 @@ Static export copies `public/` into `out/`, so a committed `public/.nojekyll` la
 
 - **Unit (vitest)**: `withBasePath` contract — prefixing when `NEXT_PUBLIC_BASE_PATH` is set, identity when unset (R2), via `vi.stubEnv` (works because the helper reads the env var inline per D4).
 - **Integration (RTL)**: `Icon` renders `src` with base path exactly once.
+- **Unit (vitest)**: custom `imageLoader` prefixes a root-relative `src` with the base path exactly once when set, returns it unchanged when unset, and leaves absolute URLs alone (R2.S5). *(regression — caught the `unoptimized` image bug)*
+- **Integration (RTL)**: `FactoryComponent` mounted with `NEXT_PUBLIC_BASE_PATH` set keeps the URL under `/the-factory-planner/` after its mount `pushState`, and pushes `/` when unset (R2.S4). *(regression — caught the redirect-to-root bug)*
 - **Build verification (CI + local script)**: after `NEXT_PUBLIC_BASE_PATH=/the-factory-planner next build`, assert `out/index.html`, `out/.nojekyll`, `out/images/` exist and `out/index.html` references `/the-factory-planner/_next/` (R1.S1, R3.S2).
 - **Manual/one-time (documented in tasks)**: serve `out/` under a subpath locally (`npx serve`) and click through the core flow (R3.S1–S3); post-merge, verify the live Pages URL. These are inherently environment-level checks; automating them in Playwright would require a parallel base-path test config, violating R4's "test config unchanged".
 
