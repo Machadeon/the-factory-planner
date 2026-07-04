@@ -410,6 +410,58 @@ describe("autoCalculateRates() — deferred constraint verification", () => {
     expect(inputSlugs).toContain("iron-ore");
     expect(outputSlugs).not.toContain("iron-ore");
   });
+
+  // Regression: the equal-constraint violation message interpolated `constraint.min`
+  // instead of `constraint.equal`, so it always read "must be exactly undefined/min".
+  // These tests force each branch to fire by mutating rateLookup after the solve —
+  // the deferred verify closure reads `this.rateLookup` live when the setTimeout
+  // fires (per the test above), so this reliably targets one specific branch
+  // without depending on the LP solver producing an out-of-tolerance result.
+  it("equal-constraint violation message names the equal target, not min", async () => {
+    const factory = makeFactory();
+    addManualProductionLine(
+      factory,
+      ironIngotPart,
+      ironIngotRecipe,
+      1,
+      30, // fixed-rate target → { equal: 30 } constraint on iron-ingot
+    );
+
+    factory.autoCalculateRates();
+    // Force the solved net rate away from the equal target before verification runs.
+    factory.rateLookup["iron-ingot"].productionRate = 25;
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(factory.solverError).toContain("exactly 30/min");
+    expect(factory.solverError).not.toContain("undefined");
+  });
+
+  it("min-constraint violation message is unaffected by the equal-message fix", async () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1);
+    factory.constraints = [{ partSlug: "iron-ingot", min: 20 }];
+
+    factory.autoCalculateRates();
+    factory.rateLookup["iron-ingot"].productionRate = 10;
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(factory.solverError).toContain("20/min or greater");
+  });
+
+  it("max-constraint violation message is unaffected by the equal-message fix", async () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1);
+    factory.constraints = [{ partSlug: "iron-ingot", max: 40 }];
+
+    factory.autoCalculateRates();
+    factory.rateLookup["iron-ingot"].productionRate = 50;
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(factory.solverError).toContain("40/min or less");
+  });
 });
 
 describe("autoCalculateRates() — maximize output (Item 8)", () => {
