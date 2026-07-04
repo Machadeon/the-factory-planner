@@ -73,9 +73,9 @@ Stub lifecycle (reconciles Group 1 stubs with design D9's green-per-commit invar
 
 ## 7. Verification
 
-- [ ] 7.1 All unit/integration tests pass (`npm run test:run`)
-- [ ] 7.2 All E2E tests pass (`npm run test:e2e`)
-- [ ] 7.3 Production build clean (`npm run build`), `npm run lint-fix` no diffs
-- [ ] 7.4 ui/ domain-free import audit (R9.S1); `@/app/utils` gone (lib R1.S1)
-- [ ] 7.5 Lighthouse audit (UI changed) — no regression vs baseline; confirm logo LCP unharmed
-- [ ] 7.6 Visual spot-check migrated screens vs main (zero visual change contract; new focus rings keyboard-only)
+- [x] 7.1 All unit/integration tests pass (`npm run test:run`)
+- [x] 7.2 All E2E tests pass (`npm run test:e2e`)
+- [x] 7.3 Production build clean (`npm run build`), `npm run lint-fix` no diffs
+- [x] 7.4 ui/ domain-free import audit (R9.S1); `@/app/utils` gone (lib R1.S1)
+- [x] 7.5 Lighthouse audit (UI changed) — no regression vs baseline; confirm logo LCP unharmed
+- [x] 7.6 Visual spot-check migrated screens vs main (zero visual change contract; new focus rings keyboard-only)
