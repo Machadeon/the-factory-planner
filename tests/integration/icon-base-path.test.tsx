@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Icon from "@/app/components/Icon";
+import Icon from "@/app/components/ui/Icon";
 
 describe("Icon base path handling", () => {
   afterEach(() => {

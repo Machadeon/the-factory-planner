@@ -5,7 +5,6 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
 import { Fragment, useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
@@ -16,6 +15,7 @@ import {
   resolveEffectivePointValues,
 } from "../models/point-values";
 import TextCalculatorField from "./TextCalculatorField";
+import Icon from "./ui/Icon";
 
 interface PointValuesPanelProps {
   factory: Factory;
@@ -118,11 +118,10 @@ export default function PointValuesPanel({
           return (
             <Fragment key={part.slug}>
               <div className="flex items-center pr-1">
-                <Image
+                <Icon
                   src={part.iconSmall}
-                  alt=""
-                  width={20}
-                  height={20}
+                  label=""
+                  size={20}
                   className="rounded"
                 />
               </div>

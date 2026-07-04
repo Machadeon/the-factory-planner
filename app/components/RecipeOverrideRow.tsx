@@ -5,7 +5,7 @@ import { memo, type ReactNode } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
-import Icon from "./Icon";
+import Icon from "./ui/Icon";
 
 /** Recipe name with any leading "Alternate:" prefix removed. */
 export function displayRecipeName(recipe: Recipe): string {

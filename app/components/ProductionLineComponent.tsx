@@ -24,12 +24,12 @@ import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
 import AssemblyLine from "./AssemblyLineComponent";
 import FactoryPickerDialog from "./FactoryPickerDialog";
-import Icon from "./Icon";
 import RecipeComponent from "./RecipeComponent";
 import RecipeRejectDialog, { type RejectChoice } from "./RecipeRejectDialog";
 import SuggestedActions from "./SuggestedActions";
 import TextCalculatorField from "./TextCalculatorField";
 import ActionRow from "./ui/ActionRow";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 import {
   type InteractiveVariant,

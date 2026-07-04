@@ -13,7 +13,6 @@ import Select from "@mui/material/Select";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
 import { useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
@@ -36,6 +35,7 @@ import RecipeListPanel from "./RecipeListPanel";
 import TextCalculatorField from "./TextCalculatorField";
 import ActionRow from "./ui/ActionRow";
 import AddItemControl from "./ui/AddItemControl";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 const OBJECTIVE_OPTIONS: {
@@ -442,11 +442,10 @@ export default function RecipeOptimizerPanel({
                 }
                 label={
                   <span className="flex flex-row items-center gap-x-1">
-                    <Image
+                    <Icon
                       src={building.iconSmall}
                       alt={building.name}
-                      width={20}
-                      height={20}
+                      size={20}
                     />
                     <span className="text-sm">{building.name}</span>
                   </span>
@@ -498,12 +497,7 @@ export default function RecipeOptimizerPanel({
             key={ap.partSlug}
             className="flex flex-row items-center gap-x-2 mb-2"
           >
-            <Image
-              src={part.iconSmall}
-              alt={part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="text-sm grow">{part.name}</span>
             <TextCalculatorField
               variant="outlined"
@@ -582,12 +576,7 @@ export default function RecipeOptimizerPanel({
               key={o.part.slug}
               className="flex flex-row items-center gap-x-2 ml-2"
             >
-              <Image
-                src={o.part.iconSmall}
-                alt={o.part.name}
-                width={20}
-                height={20}
-              />
+              <Icon src={o.part.iconSmall} alt={o.part.name} size={20} />
               <span className="text-xs text-gray-400 grow">{o.part.name}</span>
               <span className="text-xs text-gray-400">
                 {displayNum(o.rate)}/min

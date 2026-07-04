@@ -8,6 +8,12 @@ interface IconProps {
    * decorative icons — no tooltip is rendered and the image is hidden from a11y.
    */
   label?: string;
+  /**
+   * Accessible name without a tooltip — for informative icons whose former
+   * next/image rendering had alt text but no hover tooltip. Ignored when a
+   * non-empty `label` is set.
+   */
+  alt?: string;
   size: number;
   className?: string;
 }
@@ -19,7 +25,7 @@ interface IconProps {
  * gain nothing from srcset/lazy-observer/optimization and the per-instance
  * overhead is significant when hundreds render at once (e.g. RecipeListDialog).
  */
-export default function Icon({ src, label, size, className }: IconProps) {
+export default function Icon({ src, label, alt, size, className }: IconProps) {
   return label ? (
     <Tooltip title={label}>
       {/* biome-ignore lint/performance/noImgElement: next/image overhead is wasted on these tiny static icons rendered hundreds at a time */}
@@ -37,7 +43,7 @@ export default function Icon({ src, label, size, className }: IconProps) {
     // biome-ignore lint/performance/noImgElement: next/image overhead is wasted on these tiny static icons rendered hundreds at a time
     <img
       src={withBasePath(src)}
-      alt={label}
+      alt={label ?? alt ?? ""}
       width={size}
       height={size}
       loading="lazy"

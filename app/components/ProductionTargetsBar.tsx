@@ -5,7 +5,6 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import Image from "next/image";
 import { rateUnit } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { Target } from "../models/factory";
@@ -14,6 +13,7 @@ import { partSlugLookup } from "../models/library";
 import PartSelector from "./PartSelector";
 import TextCalculatorField from "./TextCalculatorField";
 import AddItemControl from "./ui/AddItemControl";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 interface ProductionTargetsBarProps {
@@ -87,12 +87,7 @@ export default function ProductionTargetsBar({
             key={t.partSlug}
             className="flex flex-row items-center gap-x-2 mb-2"
           >
-            <Image
-              src={part.iconSmall}
-              alt={part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="text-sm grow">{part.name}</span>
             {t.maximize ? (
               <TextField

@@ -4,7 +4,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import { Popover, TextField } from "@mui/material";
 import { useRef, useState } from "react";
 import { parts } from "../models/library";
-import Icon from "./Icon";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 interface Props {

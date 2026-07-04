@@ -24,7 +24,6 @@ import {
   TextField,
 } from "@mui/material";
 import { useState } from "react";
-import { withBasePath } from "@/app/lib/base-path";
 import type {
   FactoryFolder,
   SerializedFactory,
@@ -45,6 +44,7 @@ import { HorizontalDivider } from "./Dividers";
 import ActionRow from "./ui/ActionRow";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import FileImportButton from "./ui/FileImportButton";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 import InlineEditText from "./ui/InlineEditText";
 import { rowVisualClasses } from "./ui/interactive-styles";
@@ -195,14 +195,7 @@ export default function FactoryLibraryDrawer({
     const isMoving = moveMenuFactory === factory.id;
 
     const factoryIcon = factory.icon ? (
-      // biome-ignore lint/performance/noImgElement: local game asset path
-      <img
-        src={withBasePath(factory.icon)}
-        alt=""
-        width={20}
-        height={20}
-        className="flex-none"
-      />
+      <Icon src={factory.icon} label="" size={20} className="flex-none" />
     ) : (
       <div className="w-5 flex-none" />
     );

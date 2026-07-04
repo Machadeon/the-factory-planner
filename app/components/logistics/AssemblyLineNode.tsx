@@ -1,7 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { displayNum } from "@/app/lib/format";
 import type Recipe from "../../models/recipe";
-import Icon from "../Icon";
+import Icon from "../ui/Icon";
 import { SCALE } from "./constants";
 import { useLogistics } from "./context";
 import type { AssemblyNodeData } from "./graph-model";

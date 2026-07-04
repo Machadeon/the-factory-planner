@@ -2,7 +2,6 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
-import Image from "next/image";
 import { useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
@@ -11,6 +10,7 @@ import FactoryRecipe from "../models/factory-recipe";
 import type { StorageLibrary } from "../models/factory-storage";
 import type Part from "../models/part";
 import FactoryPickerDialog from "./FactoryPickerDialog";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 import RateDisplay from "./ui/RateDisplay";
 
@@ -64,11 +64,10 @@ export default function PartRateSummary({
       <div
         className={`items-center flex flex-row gap-x-1 py-0.5 ${highlight ? "text-amber-500" : ""}`}
       >
-        <Image
+        <Icon
           src={part.iconSmall}
           alt={part.name}
-          width={24}
-          height={24}
+          size={24}
           className="inline flex-none"
         />
         <span className="grow text-sm">{part.name}</span>

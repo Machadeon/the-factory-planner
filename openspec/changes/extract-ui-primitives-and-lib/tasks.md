@@ -64,12 +64,12 @@ Stub lifecycle (reconciles Group 1 stubs with design D9's green-per-commit invar
 
 ## 6. Icon standardization + loader removal (commit 4)
 
-- [ ] 6.1 `git mv app/components/Icon.tsx app/components/ui/Icon.tsx`; update importers; stub 1.14 now passes
-- [ ] 6.2 Migrate 7 feature files off `next/image` to `ui/Icon` (`label=""` at currently-tooltip-free sites per D7 caveat)
-- [ ] 6.3 `page.tsx` logo → plain `<img>` with withBasePath, eager, `fetchPriority="high"` (camelCase)
-- [ ] 6.4 Delete `image-loader.ts`, `next.config.ts` `images` block, `tests/unit/image-loader.test.ts`
-- [ ] 6.5 Grep-verify: zero `next/image` imports in `app/` (icon-rendering R3.S1); no game-asset `<img>` outside ui/Icon (R1.S1); no `"MW" : "/min"` ternaries outside lib (lib R3.S2)
-- [ ] 6.6 Subpath build check: `NEXT_PUBLIC_BASE_PATH=/the-factory-planner npm run build` succeeds; spot-check logo + icon srcs in `out/` contain base path exactly once (static-export R2.S1, icon-rendering R2.S2/R3.S2)
+- [x] 6.1 `git mv app/components/Icon.tsx app/components/ui/Icon.tsx`; update importers; stub 1.14 now passes
+- [x] 6.2 Migrate 7 feature files off `next/image` to `ui/Icon` (`label=""` at currently-tooltip-free sites per D7 caveat)
+- [x] 6.3 `page.tsx` logo → plain `<img>` with withBasePath, eager, `fetchPriority="high"` (camelCase)
+- [x] 6.4 Delete `image-loader.ts`, `next.config.ts` `images` block, `tests/unit/image-loader.test.ts`
+- [x] 6.5 Grep-verify: zero `next/image` imports in `app/` (icon-rendering R3.S1); no game-asset `<img>` outside ui/Icon (R1.S1); no `"MW" : "/min"` ternaries outside lib (lib R3.S2)
+- [x] 6.6 Subpath build check: `NEXT_PUBLIC_BASE_PATH=/the-factory-planner npm run build` succeeds; spot-check logo + icon srcs in `out/` contain base path exactly once (static-export R2.S1, icon-rendering R2.S2/R3.S2)
 
 ## 7. Verification
 

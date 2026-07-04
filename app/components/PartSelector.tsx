@@ -5,7 +5,7 @@ import TextField from "@mui/material/TextField";
 import type { SyntheticEvent } from "react";
 import { parts } from "../models/library";
 import type Part from "../models/part";
-import Icon from "./Icon";
+import Icon from "./ui/Icon";
 
 interface PartSelectorProps {
   existingParts: string[];

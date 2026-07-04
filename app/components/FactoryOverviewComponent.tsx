@@ -1,7 +1,6 @@
 "use client";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import Image from "next/image";
 import { useMemo } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
@@ -12,6 +11,7 @@ import {
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
 import CollapsibleSection from "./ui/CollapsibleSection";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 interface FactoryOverviewComponentProps {
@@ -114,11 +114,10 @@ export default function FactoryOverviewComponent({
                 return (
                   <div key={output.part.slug} className="mb-3">
                     <div className="flex flex-row items-center gap-x-1 mb-1">
-                      <Image
+                      <Icon
                         src={output.part.iconSmall}
                         alt={output.part.name}
-                        width={24}
-                        height={24}
+                        size={24}
                       />
                       <span className="grow font-medium text-sm">
                         {output.part.name}
@@ -231,11 +230,10 @@ export default function FactoryOverviewComponent({
             <CollapsibleSection label="Power & Modules" defaultExpanded>
               <div>
                 <div className="flex flex-row items-center gap-x-2 mb-1">
-                  <Image
+                  <Icon
                     src="/images/items/power_192.png"
                     alt="Power"
-                    width={24}
-                    height={24}
+                    size={24}
                   />
                   {variable ? (
                     <span className="text-sm">
@@ -253,21 +251,15 @@ export default function FactoryOverviewComponent({
                   )}
                 </div>
                 <div className="flex flex-row items-center gap-x-2 mb-1">
-                  <Image
+                  <Icon
                     src="/images/items/desc-crystalshard-c_64.png"
-                    alt=""
-                    width={24}
-                    height={24}
+                    label=""
+                    size={24}
                   />
                   <span className="text-sm">{totalShards} Power Shards</span>
                 </div>
                 <div className="flex flex-row items-center gap-x-2 mb-2">
-                  <Image
-                    src="/images/items/Somersloop.png"
-                    alt=""
-                    width={24}
-                    height={24}
-                  />
+                  <Icon src="/images/items/Somersloop.png" label="" size={24} />
                   <span className="text-sm">{totalSloops} Somersloops</span>
                 </div>
               </div>
@@ -294,12 +286,7 @@ export default function FactoryOverviewComponent({
                   <div key={fr.slug} className="mb-3">
                     <div className="flex flex-row items-center gap-x-1 mb-1">
                       {fr.icon && (
-                        <Image
-                          src={fr.icon}
-                          alt={fr.name}
-                          width={24}
-                          height={24}
-                        />
+                        <Icon src={fr.icon} alt={fr.name} size={24} />
                       )}
                       {onNavigateToFactory ? (
                         <button
@@ -340,11 +327,10 @@ export default function FactoryOverviewComponent({
                             key={rp.part.slug}
                             className="flex flex-row items-center gap-x-1 pl-4 py-0.5"
                           >
-                            <Image
+                            <Icon
                               src={rp.part.iconSmall}
                               alt={rp.part.name}
-                              width={24}
-                              height={24}
+                              size={24}
                               className="shrink-0"
                             />
                             <span className="grow text-sm">{rp.part.name}</span>

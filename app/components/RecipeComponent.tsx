@@ -10,9 +10,9 @@ import type Factory from "../models/factory";
 import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
-import Icon from "./Icon";
 import TextCalculatorField from "./TextCalculatorField";
 import ActionRow from "./ui/ActionRow";
+import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 interface RecipeComponentProps {

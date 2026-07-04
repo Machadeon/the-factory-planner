@@ -6,11 +6,11 @@ import DialogTitle from "@mui/material/DialogTitle";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import Image from "next/image";
 import { useMemo } from "react";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import { deserializeFactory } from "../models/factory-storage";
+import Icon from "./ui/Icon";
 
 interface FactoryPickerDialogProps {
   open: boolean;
@@ -59,11 +59,10 @@ export default function FactoryPickerDialog({
                 onClick={() => onPick(sf.id, sf.name, factory)}
               >
                 {sf.icon && (
-                  <Image
+                  <Icon
                     src={sf.icon}
                     alt={sf.name}
-                    width={32}
-                    height={32}
+                    size={32}
                     className="mr-2"
                   />
                 )}

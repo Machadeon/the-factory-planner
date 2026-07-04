@@ -1,6 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 import type Part from "../../models/part";
-import Icon from "../Icon";
+import Icon from "../ui/Icon";
 
 interface PartPortProps {
   part: Part;

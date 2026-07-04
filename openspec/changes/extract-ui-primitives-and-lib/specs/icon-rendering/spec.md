@@ -10,7 +10,11 @@ All game-asset images in feature components SHALL render through `ui/Icon` (relo
 - **THEN** none render game-asset images; the only `<img>` for game assets lives in `ui/Icon`
 
 ### Requirement: R2 — Icon behavior preserved
-`ui/Icon` SHALL keep its current contract: plain `<img>` with `withBasePath`-prefixed `src`, fixed square `size`, `loading="lazy"`, `decoding="async"`; a non-empty `label` renders an MUI Tooltip and `alt`; `label=""` renders a decorative image with no tooltip.
+`ui/Icon` SHALL keep its current contract: plain `<img>` with `withBasePath`-prefixed `src`, fixed square `size`, `loading="lazy"`, `decoding="async"`; a non-empty `label` renders an MUI Tooltip and `alt`; `label=""` renders a decorative image with no tooltip. *(Amended during implementation)*: an additive `alt` prop provides an accessible name **without** a tooltip — required so migrated `next/image` sites keep their former alt texts (the frozen a11y-tree contract; e2e queries by `role: img` + name) without gaining tooltips they never had. Non-empty `label` takes precedence over `alt`.
+
+#### Scenario: R2.S3 — Informative icon without tooltip
+- **WHEN** `Icon` renders with `alt="Iron Ore"` and no `label`
+- **THEN** the image has accessible name "Iron Ore" and hovering renders no tooltip
 
 #### Scenario: R2.S1 — Labeled vs decorative
 - **WHEN** `Icon` renders with `label="Iron Plate"` vs `label=""`
