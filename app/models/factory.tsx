@@ -1245,7 +1245,7 @@ export default class Factory {
         for (const coefficients of Object.values(model.variables)) {
           if (coefficients[rawPartSlug] && coefficients[rawPartSlug] !== 0) {
             coefficients._obj =
-              (coefficients.obj ?? 0) + coefficients[rawPartSlug];
+              (coefficients._obj ?? 0) + coefficients[rawPartSlug];
           }
         }
       }
