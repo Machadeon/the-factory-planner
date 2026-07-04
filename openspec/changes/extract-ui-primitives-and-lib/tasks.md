@@ -35,32 +35,32 @@ Stub lifecycle (reconciles Group 1 stubs with design D9's green-per-commit invar
 
 ## 3. lib/ split (commit 1)
 
-- [ ] 3.1 Create `app/lib/format.ts` (displayNum, rateUnit, formatRate), `app/lib/rate-status.ts` (`rateStatusColor(rate, { surplusIsGood })`), `app/lib/base-path.ts` (withBasePath)
-- [ ] 3.2 Create `app/lib/expression/` — `operators.ts` (tables + minus0Hack), `tokenize.ts`, `shunting-yard.ts`, `rpn.ts`, `index.ts` (calculate); mechanical move per design D6
-- [ ] 3.3 Update all importers of `@/app/utils` to new lib paths; replace `getColorClassForProductionRate1` call site with `rateStatusColor(rate, { surplusIsGood: false })`
-- [ ] 3.4 Delete `app/utils.tsx`; migrate/retire `tests/unit/utils.test.ts` (cases live in 1.1–1.4 files); delete old `tests/unit/base-path.test.ts` if superseded
-- [ ] 3.5 Green gate: `npm run test:run` + `npm run build` + `npm run lint-fix`
+- [x] 3.1 Create `app/lib/format.ts` (displayNum, rateUnit, formatRate), `app/lib/rate-status.ts` (`rateStatusColor(rate, { surplusIsGood })`), `app/lib/base-path.ts` (withBasePath)
+- [x] 3.2 Create `app/lib/expression/` — `operators.ts` (tables + minus0Hack), `tokenize.ts`, `shunting-yard.ts`, `rpn.ts`, `index.ts` (calculate); mechanical move per design D6
+- [x] 3.3 Update all importers of `@/app/utils` to new lib paths; replace `getColorClassForProductionRate1` call site with `rateStatusColor(rate, { surplusIsGood: false })`
+- [x] 3.4 Delete `app/utils.tsx`; migrate/retire `tests/unit/utils.test.ts` (cases live in 1.1–1.4 files); delete old `tests/unit/base-path.test.ts` if superseded
+- [x] 3.5 Green gate: `npm run test:run` + `npm run build` + `npm run lint-fix`
 
 ## 4. ui/ primitives (commit 2)
 
-- [ ] 4.1 Create `ui/IconButton.tsx` + `ui/ActionRow.tsx` — button reset + shared focus-visible class + Clickable class constants (design D1/D2; `variant` prop, `type="button"`)
-- [ ] 4.2 Create `ui/ConfirmDialog.tsx` (cancel autoFocus, onClose→onCancel, danger styling)
-- [ ] 4.3 Create `ui/InlineEditText.tsx` (cancelledRef lifecycle per D4)
-- [ ] 4.4 Create `ui/AddItemControl.tsx` (focusout containment per D5, closeOnBlur prop)
-- [ ] 4.5 Create `ui/CollapsibleSection.tsx` (locked markup per R6), `ui/FileImportButton.tsx`, `ui/RateDisplay.tsx`
-- [ ] 4.6 Green gate: stubs 1.5–1.12 now pass; `npm run test:run` + `npm run build`
+- [x] 4.1 Create `ui/IconButton.tsx` + `ui/ActionRow.tsx` — button reset + shared focus-visible class + Clickable class constants (design D1/D2; `variant` prop, `type="button"`)
+- [x] 4.2 Create `ui/ConfirmDialog.tsx` (cancel autoFocus, onClose→onCancel, danger styling)
+- [x] 4.3 Create `ui/InlineEditText.tsx` (cancelledRef lifecycle per D4)
+- [x] 4.4 Create `ui/AddItemControl.tsx` (focusout containment per D5, closeOnBlur prop)
+- [x] 4.5 Create `ui/CollapsibleSection.tsx` (locked markup per R6), `ui/FileImportButton.tsx`, `ui/RateDisplay.tsx`
+- [x] 4.6 Green gate: stubs 1.5–1.12 now pass; `npm run test:run` + `npm run build`
 
 ## 5. Call-site migration + Clickable deletion (commit 3)
 
-- [ ] 5.1 Migrate ~30 icon-button sites across 12 files to `IconButton` (aria-label = former Tooltip title verbatim, R2.S2)
-- [ ] 5.2 Migrate 5 confirm dialogs (unsaved-load, clear-confirm, delete-factory, delete-folder, reject-all) to `ConfirmDialog`
-- [ ] 5.3 Migrate FactoryLibraryDrawer folder/factory rows to split-row pattern (design D1: inner ActionRow wraps indent+icon+label; trailing controls siblings); rename fields → `InlineEditText`
-- [ ] 5.4 Migrate 5 "Add X" reveals to `AddItemControl` (ConstraintsPanel with `closeOnBlur={false}`)
-- [ ] 5.5 Migrate remaining non-icon Clickable uses to `ActionRow` (RecipeComponent, ProductionLineComponent, PartRateSummary, FactoryOverviewComponent SectionHeader → CollapsibleSection, etc.)
-- [ ] 5.6 Migrate FactoryHeader + FactoryLibraryDrawer imports to `FileImportButton`; value+unit sites to `RateDisplay`; standalone unit spans to `rateUnit`
-- [ ] 5.7 Delete `app/components/Clickable.tsx`; grep-verify zero imports (R1.S2)
-- [ ] 5.8 E2E selector audit: run `npm run test:e2e`; enumerate any forced selector change in ui-primitives R10 before proceeding
-- [ ] 5.9 Green gate: `npm run test:run` + `npm run test:e2e` + `npm run build`; stub 1.13 passes
+- [x] 5.1 Migrate ~30 icon-button sites across 12 files to `IconButton` (aria-label = former Tooltip title verbatim, R2.S2)
+- [x] 5.2 Migrate 5 confirm dialogs (unsaved-load, clear-confirm, delete-factory, delete-folder, reject-all) to `ConfirmDialog`
+- [x] 5.3 Migrate FactoryLibraryDrawer folder/factory rows to split-row pattern (design D1: inner ActionRow wraps indent+icon+label; trailing controls siblings); rename fields → `InlineEditText`
+- [x] 5.4 Migrate 5 "Add X" reveals to `AddItemControl` (ConstraintsPanel with `closeOnBlur={false}`)
+- [x] 5.5 Migrate remaining non-icon Clickable uses to `ActionRow` (RecipeComponent, ProductionLineComponent, PartRateSummary, FactoryOverviewComponent SectionHeader → CollapsibleSection, etc.)
+- [x] 5.6 Migrate FactoryHeader + FactoryLibraryDrawer imports to `FileImportButton`; value+unit sites to `RateDisplay`; standalone unit spans to `rateUnit`
+- [x] 5.7 Delete `app/components/Clickable.tsx`; grep-verify zero imports (R1.S2)
+- [x] 5.8 E2E selector audit: run `npm run test:e2e`; enumerate any forced selector change in ui-primitives R10 before proceeding
+- [x] 5.9 Green gate: `npm run test:run` + `npm run test:e2e` + `npm run build`; stub 1.13 passes
 
 ## 6. Icon standardization + loader removal (commit 4)
 

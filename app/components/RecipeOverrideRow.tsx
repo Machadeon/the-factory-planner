@@ -60,7 +60,22 @@ function RecipeOverrideRow({
   hidden,
 }: RecipeOverrideRowProps) {
   return (
+    // Not a <button>: the row embeds a form control (the read-only Switch),
+    // which HTML forbids inside buttons — role+keyboard make it equivalent.
+    // biome-ignore lint/a11y/noStaticElementInteractions: role="button"+tabIndex+keydown are applied whenever onClick exists
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       // content-visibility lets the browser skip layout/paint for rows scrolled
       // out of the dialog's viewport; contain-intrinsic-size reserves the height.
       style={{
@@ -70,7 +85,7 @@ function RecipeOverrideRow({
       }}
       className={`flex flex-row items-center gap-x-2 py-1 px-1${
         onClick
-          ? " cursor-pointer rounded hover:bg-black/5 dark:hover:bg-white/10"
+          ? " cursor-pointer rounded hover:bg-black/5 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-amber-500"
           : ""
       }`}
       onClick={onClick}

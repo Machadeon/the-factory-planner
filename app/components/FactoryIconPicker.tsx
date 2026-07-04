@@ -1,11 +1,11 @@
 "use client";
 
 import ImageIcon from "@mui/icons-material/Image";
-import { Popover, TextField, Tooltip } from "@mui/material";
+import { Popover, TextField } from "@mui/material";
 import { useRef, useState } from "react";
 import { parts } from "../models/library";
-import Clickable from "./Clickable";
 import Icon from "./Icon";
+import IconButton from "./ui/IconButton";
 
 interface Props {
   icon?: string;
@@ -28,17 +28,19 @@ export default function FactoryIconPicker({ icon, onChange }: Props) {
 
   return (
     <>
-      <Tooltip title="Set factory icon">
-        <div ref={anchorRef}>
-          <Clickable className="p-1" onClick={() => setOpen(true)}>
-            {icon ? (
-              <Icon src={icon} label="Factory icon" size={36} />
-            ) : (
-              <ImageIcon sx={{ fontSize: "2.25rem", opacity: 0.4 }} />
-            )}
-          </Clickable>
-        </div>
-      </Tooltip>
+      <div ref={anchorRef}>
+        <IconButton
+          aria-label="Set factory icon"
+          className="p-1"
+          onClick={() => setOpen(true)}
+        >
+          {icon ? (
+            <Icon src={icon} label="Factory icon" size={36} />
+          ) : (
+            <ImageIcon sx={{ fontSize: "2.25rem", opacity: 0.4 }} />
+          )}
+        </IconButton>
+      </div>
       <Popover
         open={open}
         anchorEl={anchorRef.current}

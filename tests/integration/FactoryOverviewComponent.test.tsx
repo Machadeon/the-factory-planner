@@ -210,4 +210,26 @@ describe("FactoryOverviewComponent", () => {
     expect(screen.getByText(/Power & Modules/i)).toBeInTheDocument();
     expect(screen.getByText(/Power Shards/i)).toBeInTheDocument();
   });
+
+  it("starts with Intermediates collapsed and the other sections expanded", () => {
+    const factory = buildFactory();
+    render(
+      <FactoryOverviewComponent
+        factory={factory}
+        library={emptyLibrary()}
+        currentFactoryId={null}
+      />,
+    );
+
+    const expectExpanded = (name: RegExp, expanded: boolean) =>
+      expect(screen.getByRole("button", { name })).toHaveAttribute(
+        "aria-expanded",
+        String(expanded),
+      );
+
+    expectExpanded(/^Outputs/i, true);
+    expectExpanded(/^Inputs/i, true);
+    expectExpanded(/^Intermediate/i, false);
+    expectExpanded(/^Power & Modules/i, true);
+  });
 });

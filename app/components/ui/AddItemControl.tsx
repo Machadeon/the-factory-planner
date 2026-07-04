@@ -8,6 +8,8 @@ export interface AddItemControlProps {
   /** Collapse when focus leaves the revealed child. ConstraintsPanel keeps its current stay-open behavior with false. */
   closeOnBlur?: boolean;
   triggerClassName?: string;
+  /** Classes for the wrapper around the revealed child. */
+  className?: string;
 }
 
 export default function AddItemControl({
@@ -15,6 +17,7 @@ export default function AddItemControl({
   children,
   closeOnBlur = true,
   triggerClassName,
+  className,
 }: AddItemControlProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -52,7 +55,7 @@ export default function AddItemControl({
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: onBlur is focus containment for the revealed child, not an interactive handler
-    <div ref={wrapperRef} onBlur={handleBlur}>
+    <div ref={wrapperRef} onBlur={handleBlur} className={className}>
       {children(close)}
     </div>
   );

@@ -2,7 +2,6 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
-import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useState } from "react";
 import { displayNum } from "@/app/lib/format";
@@ -11,8 +10,9 @@ import type { Rate } from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
 import type { StorageLibrary } from "../models/factory-storage";
 import type Part from "../models/part";
-import Clickable from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
+import IconButton from "./ui/IconButton";
+import RateDisplay from "./ui/RateDisplay";
 
 interface PartRateSummaryProps {
   part: Part;
@@ -72,34 +72,30 @@ export default function PartRateSummary({
           className="inline flex-none"
         />
         <span className="grow text-sm">{part.name}</span>
-        <span className="text-sm text-right min-w-16">
-          {part.slug === "power"
-            ? `${netRateDisplay} MW`
-            : `${netRateDisplay}/min`}
-        </span>
+        <RateDisplay
+          part={part}
+          rate={
+            Math.abs(netRate) < 0.0001 ? rate.productionRate : Math.abs(netRate)
+          }
+          className="text-sm text-right min-w-16"
+        />
         {netRate < 0 && !hideActions && !showDetail && (
           <>
-            <Tooltip title="Add production line">
-              <span>
-                <Clickable
-                  onClick={() => factory.addProductionLine(part)}
-                  className="inline p-0.5"
-                >
-                  <AddIcon fontSize="small" />
-                </Clickable>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label="Add production line"
+              onClick={() => factory.addProductionLine(part)}
+              className="inline p-0.5"
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
             {library && (
-              <Tooltip title="Supply from factory">
-                <span>
-                  <Clickable
-                    onClick={() => setSupplyPickerOpen(true)}
-                    className="inline p-0.5"
-                  >
-                    <WarehouseIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
+              <IconButton
+                aria-label="Supply from factory"
+                onClick={() => setSupplyPickerOpen(true)}
+                className="inline p-0.5"
+              >
+                <WarehouseIcon fontSize="small" />
+              </IconButton>
             )}
           </>
         )}

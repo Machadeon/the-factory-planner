@@ -127,7 +127,7 @@ Files under `app/components/ui/` MUST NOT import from `app/models/` or other fea
 ### Requirement: R10 — Frozen selector contract
 Existing `aria-label` and `data-testid` values SHALL NOT change, except where enumerated below. New `aria-label`s are additive. E2E selectors relying on role `button` uniqueness SHALL be audited, since real `<button>`s make `getByRole('button')` match more elements.
 
-Enumerated selector changes: _none expected; any discovered during implementation MUST be added here before merge._
+Enumerated selector changes: _none._ Implementation note: MUI Tooltip previously projected its title as the wrapped control's accessible label, so sites with **dynamic** tooltip titles (Save/"Save (unsaved changes)", Expand all/Collapse all/"No production lines", maximize toggles) carry the same dynamic expression as their `aria-label` — the effective accessible names are unchanged, verified by the full Playwright suite passing without selector edits.
 
 #### Scenario: R10.S1 — Selector stability
 - **WHEN** the full Playwright suite runs after migration

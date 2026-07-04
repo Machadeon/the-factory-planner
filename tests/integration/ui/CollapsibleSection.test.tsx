@@ -12,15 +12,17 @@ describe("CollapsibleSection", () => {
       </CollapsibleSection>,
     );
     const header = screen.getByRole("button", { name: "Outputs" });
+    const body = screen.getByText("body content").parentElement as HTMLElement;
     expect(header).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("body content")).toBeInTheDocument();
+    expect(body.style.contentVisibility).toBe("visible");
     expect(
       header.querySelector('[data-testid="ExpandMoreIcon"]'),
     ).not.toBeNull();
 
     await user.click(header);
     expect(header).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("body content")).not.toBeInTheDocument();
+    // Body stays mounted; content-visibility hides it (matches overview behavior)
+    expect(body.style.contentVisibility).toBe("hidden");
     expect(
       header.querySelector('[data-testid="ChevronRightIcon"]'),
     ).not.toBeNull();
@@ -35,6 +37,7 @@ describe("CollapsibleSection", () => {
     expect(
       screen.getByRole("button", { name: "Intermediates" }),
     ).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("hidden body")).not.toBeInTheDocument();
+    const body = screen.getByText("hidden body").parentElement as HTMLElement;
+    expect(body.style.contentVisibility).toBe("hidden");
   });
 });

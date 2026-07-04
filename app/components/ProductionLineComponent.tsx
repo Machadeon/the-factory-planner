@@ -8,9 +8,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
-import { displayNum } from "@/app/lib/format";
+import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
@@ -24,17 +23,18 @@ import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
 import AssemblyLine from "./AssemblyLineComponent";
-import Clickable, {
-  type ClickableStyle,
-  defaultClass as clickableClass,
-  defaultHoverClass as clickableHoverClass,
-} from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 import Icon from "./Icon";
 import RecipeComponent from "./RecipeComponent";
 import RecipeRejectDialog, { type RejectChoice } from "./RecipeRejectDialog";
 import SuggestedActions from "./SuggestedActions";
 import TextCalculatorField from "./TextCalculatorField";
+import ActionRow from "./ui/ActionRow";
+import IconButton from "./ui/IconButton";
+import {
+  type InteractiveVariant,
+  rowVisualClasses,
+} from "./ui/interactive-styles";
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
@@ -162,7 +162,7 @@ export default function ProductionLineComponent(
     updateProductionLine();
   }
 
-  function removeSelf(e: MouseEvent<HTMLDivElement>) {
+  function removeSelf(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     props.onDeleteClicked();
   }
@@ -173,14 +173,14 @@ export default function ProductionLineComponent(
       .map((al) => al.recipe.slug);
   }
 
-  function acceptLine(e: MouseEvent<HTMLDivElement>) {
+  function acceptLine(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     props.productionLine.autoCreated = false;
     for (const al of props.productionLine.assemblyLines) al.autoCreated = false;
     props.factory.update();
   }
 
-  function rejectLine(e: MouseEvent<HTMLDivElement>) {
+  function rejectLine(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     if (props.factory.shouldPromptReject()) {
       setRejectTarget({ kind: "line" });
@@ -223,7 +223,7 @@ export default function ProductionLineComponent(
     }
   }
 
-  function toggleAutoCalculateRate(e: MouseEvent<HTMLDivElement>) {
+  function toggleAutoCalculateRate(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     props.productionLine.autoCalculateRate =
       !props.productionLine.autoCalculateRate;
@@ -235,7 +235,7 @@ export default function ProductionLineComponent(
     }
   }
 
-  function toggleMaximizeOutput(e: MouseEvent<HTMLDivElement>) {
+  function toggleMaximizeOutput(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     props.productionLine.maximizeOutput = !props.productionLine.maximizeOutput;
     props.factory.autoCalculateRates();
@@ -269,7 +269,7 @@ export default function ProductionLineComponent(
     productionRateDiffStr = "";
   }
 
-  var mainStyle: ClickableStyle = "default";
+  var mainStyle: InteractiveVariant = "default";
   if (props.productionLine.assemblyLines.every((al) => al.rate < 0)) {
     mainStyle = "danger";
   } else if (!props.productionLine.assemblyLines.every((al) => al.rate > 0)) {
@@ -299,22 +299,30 @@ export default function ProductionLineComponent(
 
   return (
     <div className="flex flex-col gap-y-2 grow">
-      <Clickable
-        className="flex flex-row items-center gap-x-2 px-4 py-2"
-        style={mainStyle}
-        onClick={() => {
-          setExpanded(!isExpanded);
-          props.onToggle?.();
-        }}
+      <div
+        className={rowVisualClasses(
+          mainStyle,
+          "flex flex-row items-center gap-x-2 px-4 py-2",
+        )}
       >
-        {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-        <div className="flex flex-row items-center gap-2 w-sm flex-none">
-          <Icon src={part.iconSmall} label={part.name} size={64} />
-          <span className="text-xl">{part.name}</span>
-          {props.productionLine.autoCreated && (
-            <SuggestedActions onAccept={acceptLine} onReject={rejectLine} />
-          )}
-        </div>
+        <ActionRow
+          bare
+          aria-expanded={isExpanded}
+          onClick={() => {
+            setExpanded(!isExpanded);
+            props.onToggle?.();
+          }}
+          className="flex flex-row items-center gap-x-2"
+        >
+          {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+          <div className="flex flex-row items-center gap-2 w-sm flex-none">
+            <Icon src={part.iconSmall} label={part.name} size={64} />
+            <span className="text-xl">{part.name}</span>
+          </div>
+        </ActionRow>
+        {props.productionLine.autoCreated && (
+          <SuggestedActions onAccept={acceptLine} onReject={rejectLine} />
+        )}
         <div className="flex flex-row items-center w-sm flex-none gap-x-2">
           {props.productionLine.maximizeOutput ? (
             <TextField
@@ -376,62 +384,60 @@ export default function ProductionLineComponent(
               }}
             />
           )}
-          <span>{part.slug === "power" ? <> MW</> : "/min"}</span>
+          <span>{part.slug === "power" ? <> MW</> : rateUnit(part)}</span>
           {props.productionLine.autoCalculateRate ? (
-            <Tooltip title="Override rate">
-              <span>
-                <Clickable onClick={toggleAutoCalculateRate} className="p-1">
-                  <EditIcon />
-                </Clickable>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label="Override rate"
+              onClick={toggleAutoCalculateRate}
+              className="p-1"
+            >
+              <EditIcon />
+            </IconButton>
           ) : (
-            <Tooltip title="Autocalculate rate">
-              <span>
-                <Clickable onClick={toggleAutoCalculateRate} className="p-1">
-                  <LinkIcon />
-                </Clickable>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label="Autocalculate rate"
+              onClick={toggleAutoCalculateRate}
+              className="p-1"
+            >
+              <LinkIcon />
+            </IconButton>
           )}
-          <Tooltip
-            title={
+          <IconButton
+            aria-label={
               props.productionLine.maximizeOutput
                 ? "Stop maximizing output"
                 : "Maximize output (limited by constraints)"
             }
+            onClick={toggleMaximizeOutput}
+            className="p-1"
           >
-            <span>
-              <Clickable onClick={toggleMaximizeOutput} className="p-1">
-                <TrendingUpIcon
-                  sx={{
-                    color: props.productionLine.maximizeOutput
-                      ? "primary.main"
-                      : "action.active",
-                  }}
-                />
-              </Clickable>
-            </span>
-          </Tooltip>
+            <TrendingUpIcon
+              sx={{
+                color: props.productionLine.maximizeOutput
+                  ? "primary.main"
+                  : "action.active",
+              }}
+            />
+          </IconButton>
         </div>
         <p className="grow">
           Actual:{" "}
           <span className={`font-bold ${actualProductionRateTextColorClass}`}>
             {displayNum(actualProductionRate)}
           </span>
-          {part.slug === "power" ? <> MW</> : "/min"}
+          {part.slug === "power" ? <> MW</> : rateUnit(part)}
           <span className={`font-bold ${actualProductionRateTextColorClass}`}>
             {productionRateDiffStr}
           </span>
         </p>
-        <Tooltip title="Remove product">
-          <span>
-            <Clickable onClick={removeSelf} className="p-1">
-              <DeleteIcon />
-            </Clickable>
-          </span>
-        </Tooltip>
-      </Clickable>
+        <IconButton
+          aria-label="Remove product"
+          onClick={removeSelf}
+          className="p-1"
+        >
+          <DeleteIcon />
+        </IconButton>
+      </div>
       <div
         className="flex flex-col pl-12"
         style={{ display: isExpanded ? "flex" : "none" }}
@@ -459,16 +465,13 @@ export default function ProductionLineComponent(
               {recipeList.length !== 1 ||
               assemblyLine.recipe.isFactoryRecipe ||
               props.productionLine.assemblyLines.length > 1 ? (
-                <Tooltip title="Remove recipe">
-                  <span>
-                    <Clickable
-                      onClick={() => removeAssemblyLine(assemblyLine.recipe)}
-                      className="p-1"
-                    >
-                      <DeleteIcon />
-                    </Clickable>
-                  </span>
-                </Tooltip>
+                <IconButton
+                  aria-label="Remove recipe"
+                  onClick={() => removeAssemblyLine(assemblyLine.recipe)}
+                  className="p-1"
+                >
+                  <DeleteIcon />
+                </IconButton>
               ) : (
                 <div className="w-[1.5rem]"></div>
               )}
@@ -477,45 +480,45 @@ export default function ProductionLineComponent(
         })}
         {hasMoreRecipes && !needMoreProduction && !showRecipes && (
           <div className="flex flex-row items-center gap-x-2">
-            <Clickable
+            <ActionRow
               onClick={splitRecipes}
               className="flex flex-row items-center p-1"
             >
               <AddIcon />
               Add Recipe
-            </Clickable>
-            <Clickable
+            </ActionRow>
+            <ActionRow
               onClick={() => setShowFactoryPicker(true)}
               className="flex flex-row items-center p-1"
             >
               <AddIcon />
               Use Factory as Recipe
-            </Clickable>
-            <Clickable
+            </ActionRow>
+            <ActionRow
               onClick={() => setShowSupplyPicker(true)}
               className="flex flex-row items-center p-1"
             >
               <AddIcon />
               Supply from Factory
-            </Clickable>
+            </ActionRow>
           </div>
         )}
         {!hasMoreRecipes && !needMoreProduction && !showRecipes && (
           <div className="flex flex-row items-center gap-x-2">
-            <Clickable
+            <ActionRow
               onClick={() => setShowFactoryPicker(true)}
               className="flex flex-row items-center p-1"
             >
               <AddIcon />
               Use Factory as Recipe
-            </Clickable>
-            <Clickable
+            </ActionRow>
+            <ActionRow
               onClick={() => setShowSupplyPicker(true)}
               className="flex flex-row items-center p-1"
             >
               <AddIcon />
               Supply from Factory
-            </Clickable>
+            </ActionRow>
           </div>
         )}
         <RecipeRejectDialog
@@ -572,9 +575,9 @@ export default function ProductionLineComponent(
             const qty = fr.getProduct(part.slug)?.quantity ?? 1;
             const instanceRate = -productionRateDiff / qty;
             return (
-              <div
+              <ActionRow
                 key={sf.id}
-                className={`sp-recipe-component flex flex-row grow items-center gap-x-2 p-2 ${clickableClass}${clickableHoverClass}`}
+                className="sp-recipe-component flex flex-row grow items-center gap-x-2 p-2"
                 onClick={() => addFactoryAssemblyLine(sf.id, sf.name, f)}
               >
                 {sf.icon ? (
@@ -592,7 +595,7 @@ export default function ProductionLineComponent(
                 <span className="text-sm text-gray-400">
                   → {displayNum(qty * instanceRate)}/min
                 </span>
-              </div>
+              </ActionRow>
             );
           })}
       </div>

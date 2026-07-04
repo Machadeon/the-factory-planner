@@ -26,6 +26,34 @@ export const focusVisibleClass =
 
 export type InteractiveVariant = "default" | "warning" | "danger";
 
+// Visual-only classes (base + variant hover/border) for split-row outer divs
+// that carry the row highlight while an inner bare ActionRow is the actual
+// control (design D1).
+export function rowVisualClasses(
+  variant: InteractiveVariant = "default",
+  className?: string,
+): string {
+  let result = interactiveBaseClass;
+  if (variant === "danger") {
+    result += interactiveDangerClass;
+  } else if (variant === "warning") {
+    result += interactiveWarningClass;
+  } else {
+    result += interactiveHoverClass;
+  }
+  if (className) {
+    result += ` ${className}`;
+  }
+  return result;
+}
+
+// Reset + focus only — for bare ActionRows inside a split-row whose outer div
+// owns the visuals.
+export function bareButtonClasses(className?: string): string {
+  const result = `cursor-pointer${buttonResetClass}${focusVisibleClass}`;
+  return className ? `${result} ${className}` : result;
+}
+
 export function interactiveClasses(
   variant: InteractiveVariant = "default",
   className?: string,

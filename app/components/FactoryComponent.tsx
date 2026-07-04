@@ -63,6 +63,7 @@ import LogisticsSection from "./LogisticsSection";
 import OptimizationSection from "./OptimizationSection";
 import PlanningSection from "./PlanningSection";
 import StorageConsentDialog from "./StorageConsentDialog";
+import ConfirmDialog from "./ui/ConfirmDialog";
 
 type Section = "planning" | "optimization" | "logistics";
 
@@ -974,27 +975,16 @@ export default function FactoryComponent() {
         />
       )}
 
-      <Dialog
+      <ConfirmDialog
         open={unsavedPromptOpen}
-        onClose={handleUnsavedCancel}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Unsaved changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes in the current factory. What would you like
-          to do?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleUnsavedCancel}>Cancel</Button>
-          <Button onClick={handleUnsavedDiscardAndLoad}>
-            Discard &amp; load
-          </Button>
-          <Button onClick={handleUnsavedSaveAndLoad} variant="contained">
-            Save &amp; load
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Unsaved changes"
+        message="You have unsaved changes in the current factory. What would you like to do?"
+        confirmLabel="Save & load"
+        secondaryLabel="Discard & load"
+        onSecondary={handleUnsavedDiscardAndLoad}
+        onConfirm={handleUnsavedSaveAndLoad}
+        onCancel={handleUnsavedCancel}
+      />
 
       <Dialog
         open={jsonDialogOpen}
@@ -1027,27 +1017,16 @@ export default function FactoryComponent() {
         </DialogActions>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={clearConfirmOpen}
-        onClose={handleClearCancel}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Clear factory?</DialogTitle>
-        <DialogContent>
-          You have unsaved changes in the current factory. What would you like
-          to do?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClearCancel}>Cancel</Button>
-          <Button onClick={handleClearDiscardAndContinue}>
-            Discard &amp; clear
-          </Button>
-          <Button onClick={handleClearSaveAndContinue} variant="contained">
-            Save &amp; clear
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Clear factory?"
+        message="You have unsaved changes in the current factory. What would you like to do?"
+        confirmLabel="Save & clear"
+        secondaryLabel="Discard & clear"
+        onSecondary={handleClearDiscardAndContinue}
+        onConfirm={handleClearSaveAndContinue}
+        onCancel={handleClearCancel}
+      />
 
       <div className="flex flex-row grow min-h-full min-w-full">
         {libraryPinned && (

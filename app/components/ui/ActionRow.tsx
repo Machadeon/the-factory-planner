@@ -1,5 +1,6 @@
 import type { MouseEventHandler, ReactNode } from "react";
 import {
+  bareButtonClasses,
   type InteractiveVariant,
   interactiveClasses,
 } from "./interactive-styles";
@@ -8,6 +9,8 @@ export interface ActionRowProps {
   children: ReactNode;
   onClick: MouseEventHandler<HTMLButtonElement>;
   variant?: InteractiveVariant;
+  /** Reset+focus classes only — for split-rows whose outer div owns the visuals. */
+  bare?: boolean;
   className?: string;
   "aria-label"?: string;
   "aria-expanded"?: boolean;
@@ -21,6 +24,7 @@ export default function ActionRow({
   children,
   onClick,
   variant,
+  bare,
   className,
   "aria-label": ariaLabel,
   "aria-expanded": ariaExpanded,
@@ -31,7 +35,11 @@ export default function ActionRow({
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
       onClick={onClick}
-      className={interactiveClasses(variant, className)}
+      className={
+        bare
+          ? bareButtonClasses(className)
+          : interactiveClasses(variant, className)
+      }
     >
       {children}
     </button>

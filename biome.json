@@ -5,7 +5,7 @@
     }
   },
   "files": {
-    "includes": ["**", "!.next", "!app/models/data.json"]
+    "includes": ["**", "!.next", "!out", "!app/models/data.json"]
   },
   "formatter": {
     "indentStyle": "space"

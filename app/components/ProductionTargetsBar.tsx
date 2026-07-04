@@ -1,21 +1,20 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
-import { useState } from "react";
+import { rateUnit } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { Target } from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import { partSlugLookup } from "../models/library";
-import Clickable from "./Clickable";
 import PartSelector from "./PartSelector";
 import TextCalculatorField from "./TextCalculatorField";
+import AddItemControl from "./ui/AddItemControl";
+import IconButton from "./ui/IconButton";
 
 interface ProductionTargetsBarProps {
   factory: Factory;
@@ -29,8 +28,6 @@ export default function ProductionTargetsBar({
   factory,
   library,
 }: ProductionTargetsBarProps) {
-  const [showPartSelector, setShowPartSelector] = useState(false);
-
   const targets = factory.optimizer.targets;
 
   function setTargets(next: Target[]) {
@@ -42,7 +39,6 @@ export default function ProductionTargetsBar({
     if (!targets.some((t) => t.partSlug === partSlug)) {
       setTargets([...targets, { partSlug }]);
     }
-    setShowPartSelector(false);
   }
 
   function updateTargetRate(partSlug: string, rate: number | undefined) {
@@ -85,7 +81,7 @@ export default function ProductionTargetsBar({
       {targets.map((t) => {
         const part = partSlugLookup[t.partSlug];
         if (!part) return null;
-        const unit = part.slug === "power" ? "MW" : "/min";
+        const unit = rateUnit(part);
         return (
           <div
             key={t.partSlug}
@@ -120,51 +116,49 @@ export default function ProductionTargetsBar({
               />
             )}
             <span className="text-sm w-10">{unit}</span>
-            <Tooltip
-              title={
+            <IconButton
+              aria-label={
                 t.maximize
                   ? "Stop maximizing output"
                   : "Maximize output (limited by constraints)"
               }
+              onClick={() => toggleMaximize(t.partSlug)}
+              className="p-1"
             >
-              <span>
-                <Clickable
-                  onClick={() => toggleMaximize(t.partSlug)}
-                  className="p-1"
-                >
-                  <TrendingUpIcon
-                    sx={{
-                      color: t.maximize ? "primary.main" : "action.active",
-                    }}
-                  />
-                </Clickable>
-              </span>
-            </Tooltip>
-            <Clickable onClick={() => removeTarget(t.partSlug)} className="p-1">
+              <TrendingUpIcon
+                sx={{
+                  color: t.maximize ? "primary.main" : "action.active",
+                }}
+              />
+            </IconButton>
+            <IconButton
+              aria-label="Remove target"
+              title=""
+              onClick={() => removeTarget(t.partSlug)}
+              className="p-1"
+            >
               <DeleteIcon fontSize="small" />
-            </Clickable>
+            </IconButton>
           </div>
         );
       })}
 
       <div className="flex flex-row items-center gap-x-2 mt-1">
-        {showPartSelector ? (
-          <div className="grow">
+        <AddItemControl
+          label="Add target"
+          triggerClassName="flex flex-row items-center p-1 grow"
+          className="grow"
+        >
+          {(close) => (
             <PartSelector
               existingParts={targets.map((t) => t.partSlug)}
-              onPartSelected={(part) => addTarget(part.slug)}
-              onBlur={() => setShowPartSelector(false)}
+              onPartSelected={(part) => {
+                addTarget(part.slug);
+                close();
+              }}
             />
-          </div>
-        ) : (
-          <Clickable
-            onClick={() => setShowPartSelector(true)}
-            className="flex flex-row items-center p-1 grow"
-          >
-            <AddIcon fontSize="small" />
-            <span className="text-sm ml-1">Add target</span>
-          </Clickable>
-        )}
+          )}
+        </AddItemControl>
         <Button
           variant="contained"
           startIcon={<PlayArrowIcon />}

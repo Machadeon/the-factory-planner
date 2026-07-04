@@ -30,7 +30,9 @@ export default function CollapsibleSection({
           <ChevronRightIcon fontSize="small" />
         )}
       </ActionRow>
-      {expanded && children}
+      <div style={{ contentVisibility: expanded ? "visible" : "hidden" }}>
+        {children}
+      </div>
     </>
   );
 }

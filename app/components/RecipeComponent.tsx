@@ -3,26 +3,23 @@
 import AddIcon from "@mui/icons-material/Add";
 import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
-import Tooltip from "@mui/material/Tooltip";
 import type { ReactNode } from "react";
 import { type MouseEventHandler, useState } from "react";
-import { displayNum } from "@/app/lib/format";
+import { displayNum, formatRate } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
-import Clickable, {
-  defaultClass as clickableClass,
-  defaultHoverClass as clickableHoverClass,
-} from "./Clickable";
 import Icon from "./Icon";
 import TextCalculatorField from "./TextCalculatorField";
+import ActionRow from "./ui/ActionRow";
+import IconButton from "./ui/IconButton";
 
 interface RecipeComponentProps {
   recipe: Recipe;
   rate: number;
   factory?: Factory;
-  onClick?: MouseEventHandler<HTMLDivElement>;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
   partRateEditable?: boolean;
   setPartRate?: (
     recipePart: RecipePart,
@@ -47,9 +44,8 @@ export default function RecipeComponent({
 }: RecipeComponentProps) {
   const [manualRatePart, setManualRatePart] = useState<string | undefined>();
 
-  var className =
+  const className =
     "sp-recipe-component flex flex-row grow items-center gap-x-2 p-2";
-  if (onClick) className += ` ${clickableClass}${clickableHoverClass}`;
 
   function setPartRateInternal(
     recipePart: RecipePart,
@@ -71,8 +67,8 @@ export default function RecipeComponent({
   const outputRateClassName =
     rate <= 0 ? rateClassName : isSlooped ? "font-bold text-pink-600" : "";
 
-  return (
-    <div className={className} onClick={onClick}>
+  const content = (
+    <>
       <Icon
         src={recipe.building.iconLarge}
         label={recipe.building.name}
@@ -99,28 +95,24 @@ export default function RecipeComponent({
             key={`ing-${ing.part.slug}-controls`}
           >
             {partsNeeded && partsNeeded.indexOf(ing.part.slug) >= 0 && (
-              <Tooltip enterDelay={500} title="Add production line">
-                <span>
-                  <Clickable
-                    onClick={() => addProductionLine(ing.part)}
-                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-                  >
-                    <AddIcon />
-                  </Clickable>
-                </span>
-              </Tooltip>
+              <IconButton
+                aria-label="Add production line"
+                tooltipEnterDelay={500}
+                onClick={() => addProductionLine(ing.part)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <AddIcon />
+              </IconButton>
             )}
             {partRateEditable && (
-              <Tooltip enterDelay={500} title="Override rate">
-                <span>
-                  <Clickable
-                    onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
-                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-                  >
-                    <EditIcon />
-                  </Clickable>
-                </span>
-              </Tooltip>
+              <IconButton
+                aria-label="Override rate"
+                tooltipEnterDelay={500}
+                onClick={() => setManualRatePart(`ing-${ing.part.slug}`)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <EditIcon />
+              </IconButton>
             )}
           </div>,
           manualRatePart === `ing-${ing.part.slug}` && partRateEditable ? (
@@ -172,16 +164,14 @@ export default function RecipeComponent({
             key={`prod-${prod.part.slug}-controls`}
           >
             {partRateEditable && (
-              <Tooltip enterDelay={500} title="Override rate">
-                <span>
-                  <Clickable
-                    onClick={() => setManualRatePart(`prod-${prod.part.slug}`)}
-                    className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
-                  >
-                    <EditIcon />
-                  </Clickable>
-                </span>
-              </Tooltip>
+              <IconButton
+                aria-label="Override rate"
+                tooltipEnterDelay={500}
+                onClick={() => setManualRatePart(`prod-${prod.part.slug}`)}
+                className="sp-recipe-ingredient-edit-btn inline p-1 mr-1"
+              >
+                <EditIcon />
+              </IconButton>
             )}
           </div>,
           manualRatePart === `prod-${prod.part.slug}` && partRateEditable ? (
@@ -209,12 +199,19 @@ export default function RecipeComponent({
               className={`text-right ${outputRateClassName}`}
               key={`prod-${prod.part.slug}-rate`}
             >
-              {displayNum(prod.quantity * rate * mult)}
-              {prod.part.slug === "power" ? " MW" : "/min"}
+              {formatRate(prod.part, prod.quantity * rate * mult)}
             </div>
           ),
         ])}
       </div>
-    </div>
+    </>
+  );
+
+  return onClick ? (
+    <ActionRow className={className} onClick={onClick}>
+      {content}
+    </ActionRow>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
