@@ -1,5 +1,5 @@
 import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { displayNum } from "../../utils";
+import { displayNum } from "@/app/lib/format";
 import Icon from "../Icon";
 import type { TerminalNodeData } from "./graph-model";
 

@@ -1,5 +1,5 @@
 import { Tooltip } from "@mui/material";
-import { withBasePath } from "@/app/utils";
+import { withBasePath } from "@/app/lib/base-path";
 
 interface IconProps {
   src: string;

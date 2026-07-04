@@ -5,7 +5,7 @@ import {
   getBezierPath,
 } from "@xyflow/react";
 import { useState } from "react";
-import { displayNum } from "../../utils";
+import { displayNum } from "@/app/lib/format";
 
 interface LogisticEdgeData {
   partName: string;

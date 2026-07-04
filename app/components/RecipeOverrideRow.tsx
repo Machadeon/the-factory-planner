@@ -2,9 +2,9 @@
 
 import EastIcon from "@mui/icons-material/East";
 import { memo, type ReactNode } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
-import { displayNum } from "../utils";
 import Icon from "./Icon";
 
 /** Recipe name with any leading "Alternate:" prefix removed. */

@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { Fragment, useMemo, useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import { parts } from "../models/library";
@@ -14,7 +15,6 @@ import {
   computeDefaultPointValues,
   resolveEffectivePointValues,
 } from "../models/point-values";
-import { displayNum } from "../utils";
 import TextCalculatorField from "./TextCalculatorField";
 
 interface PointValuesPanelProps {

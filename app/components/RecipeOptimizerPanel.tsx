@@ -16,6 +16,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import {
   MAX_GAME_PHASE,
@@ -29,7 +30,6 @@ import {
   type StorageLibrary,
 } from "../models/factory-storage";
 import { buildings, partSlugLookup, recipes } from "../models/library";
-import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";

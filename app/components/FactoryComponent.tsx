@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { withBasePath } from "@/app/lib/base-path";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
 import {
@@ -55,7 +56,6 @@ import {
   updateFactory,
   writeAutosave,
 } from "../models/storage-service";
-import { withBasePath } from "../utils";
 import FactoryHeader from "./FactoryHeader";
 import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
 import FactoryOverviewComponent from "./FactoryOverviewComponent";

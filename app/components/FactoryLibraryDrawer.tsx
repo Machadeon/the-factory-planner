@@ -30,6 +30,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useRef, useState } from "react";
+import { withBasePath } from "@/app/lib/base-path";
 import type {
   FactoryFolder,
   SerializedFactory,
@@ -46,7 +47,6 @@ import {
   renameFolder,
   saveLibrary,
 } from "../models/storage-service";
-import { withBasePath } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 

@@ -6,12 +6,12 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
-import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";

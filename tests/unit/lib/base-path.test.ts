@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { withBasePath } from "@/app/utils";
+import { withBasePath } from "@/app/lib/base-path";
 
 describe("withBasePath()", () => {
   afterEach(() => {

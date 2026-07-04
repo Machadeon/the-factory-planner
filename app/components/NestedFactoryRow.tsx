@@ -1,9 +1,9 @@
 "use client";
 
 import EastIcon from "@mui/icons-material/East";
+import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
-import { displayNum } from "../utils";
 import Icon from "./Icon";
 import TextCalculatorField from "./TextCalculatorField";
 

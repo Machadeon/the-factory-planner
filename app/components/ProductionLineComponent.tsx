@@ -10,6 +10,8 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { displayNum } from "@/app/lib/format";
+import { rateStatusColor } from "@/app/lib/rate-status";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
@@ -21,7 +23,6 @@ import { recipeLookup } from "../models/library";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
-import { displayNum, getColorClassForProductionRate1 } from "../utils";
 import AssemblyLine from "./AssemblyLineComponent";
 import Clickable, {
   type ClickableStyle,
@@ -252,8 +253,9 @@ export default function ProductionLineComponent(
   const isSlooped = props.productionLine.assemblyLines.some((al) =>
     al.isSlooped(),
   );
-  const baseProductionRateColorClass =
-    getColorClassForProductionRate1(productionRateDiff);
+  const baseProductionRateColorClass = rateStatusColor(productionRateDiff, {
+    surplusIsGood: false,
+  });
   const actualProductionRateTextColorClass =
     isSlooped && baseProductionRateColorClass === "text-green-500"
       ? "text-pink-600"

@@ -6,11 +6,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import Tooltip from "@mui/material/Tooltip";
 import type { ReactNode } from "react";
 import { type MouseEventHandler, useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";
-import { displayNum } from "../utils";
 import Clickable, {
   defaultClass as clickableClass,
   defaultHoverClass as clickableHoverClass,

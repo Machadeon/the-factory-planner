@@ -5,12 +5,12 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import Tooltip from "@mui/material/Tooltip";
 import Image from "next/image";
 import { useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { Rate } from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
 import type { StorageLibrary } from "../models/factory-storage";
 import type Part from "../models/part";
-import { displayNum } from "../utils";
 import Clickable from "./Clickable";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 
