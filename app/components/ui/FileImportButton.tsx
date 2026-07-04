@@ -34,7 +34,7 @@ export default function FileImportButton({
         type="file"
         accept={accept}
         hidden
-        data-testid="file-import-input"
+        data-testid={`file-import-input:${ariaLabel}`}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) onFile(file);

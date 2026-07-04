@@ -214,7 +214,7 @@ export default function FactoryLibraryDrawer({
               {factoryIcon}
               <InlineEditText
                 value={factory.name}
-                aria-label="Factory name"
+                aria-label="Rename factory"
                 onCommit={commitRename}
                 onCancel={() => setEditState(null)}
                 className="grow"
@@ -316,7 +316,7 @@ export default function FactoryLibraryDrawer({
               {chevronAndIcon}
               <InlineEditText
                 value={folder.name}
-                aria-label="Folder name"
+                aria-label="Rename folder"
                 onCommit={commitRename}
                 onCancel={() => setEditState(null)}
                 className="grow"

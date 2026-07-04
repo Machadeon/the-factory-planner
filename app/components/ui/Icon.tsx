@@ -4,8 +4,9 @@ import { withBasePath } from "@/app/lib/base-path";
 interface IconProps {
   src: string;
   /**
-   * Used for `alt` and the native hover tooltip (`title`). Pass "" for purely
-   * decorative icons — no tooltip is rendered and the image is hidden from a11y.
+   * Used for `alt` and the MUI hover tooltip. Pass "" for purely decorative
+   * icons — no tooltip, empty alt, hidden from a11y. For an accessible name
+   * WITHOUT a tooltip, use `alt` instead.
    */
   label?: string;
   /**

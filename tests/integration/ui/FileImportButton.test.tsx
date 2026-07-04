@@ -14,7 +14,9 @@ describe("FileImportButton", () => {
         onFile={onFile}
       />,
     );
-    const input = screen.getByTestId("file-import-input") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "file-import-input:Import factory",
+    ) as HTMLInputElement;
     const file = new File(['{"a":1}'], "factory.json", {
       type: "application/json",
     });
@@ -33,7 +35,7 @@ describe("FileImportButton", () => {
         onFile={onFile}
       />,
     );
-    const input = screen.getByTestId("file-import-input");
+    const input = screen.getByTestId("file-import-input:Import factory");
     fireEvent.change(input, { target: { files: [] } });
     expect(onFile).not.toHaveBeenCalled();
   });

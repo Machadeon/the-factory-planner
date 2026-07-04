@@ -13,7 +13,6 @@ export interface IconButtonProps {
   title?: string;
   variant?: InteractiveVariant;
   className?: string;
-  disabled?: boolean;
   /** Passed to the MUI Tooltip (e.g. delayed hint tooltips). */
   tooltipEnterDelay?: number;
 }
@@ -25,7 +24,6 @@ export default function IconButton({
   title,
   variant,
   className,
-  disabled,
   tooltipEnterDelay,
 }: IconButtonProps) {
   return (
@@ -34,7 +32,6 @@ export default function IconButton({
         type="button"
         aria-label={ariaLabel}
         onClick={onClick}
-        disabled={disabled}
         className={interactiveClasses(variant, className)}
       >
         {children}
