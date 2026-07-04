@@ -1325,7 +1325,7 @@ export default class Factory {
             Math.abs(constraint.equal - netRate) > 0.0001
           ) {
             errors.push(
-              `${part.name} must be exactly ${constraint.min}/min, but is ${netRate}/min`,
+              `${part.name} must be exactly ${constraint.equal}/min, but is ${netRate}/min`,
             );
           }
         }
