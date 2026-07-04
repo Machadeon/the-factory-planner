@@ -100,6 +100,114 @@ describe("_updateRates()", () => {
     expect(factory._assemblyLineLookup["iron-ingot"]).toHaveLength(1);
     expect(factory._assemblyLineLookup["iron-ore"]).toHaveLength(1);
   });
+
+  it("drops lookup entries for production lines removed via direct array replacement (R1.S1)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 30);
+    addManualProductionLine(factory, ironPlatePart, ironPlateRecipe, 10);
+
+    // Bypass removeProductionLine, mirroring
+    // OptimizationSection.rejectAllSuggestions.
+    factory.productionLines = factory.productionLines.filter(
+      (pl) => pl.part.slug !== "iron-plate",
+    );
+    factory._updateRates();
+
+    expect(factory._productionLineLookup["iron-plate"]).toBeUndefined();
+  });
+
+  it("allows re-adding a part after wholesale removal via direct array replacement (R1.S2)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironPlatePart, ironPlateRecipe, 10);
+
+    factory.productionLines = factory.productionLines.filter(
+      (pl) => pl.part.slug !== "iron-plate",
+    );
+    factory._updateRates();
+
+    factory.addProductionLine(ironPlatePart);
+
+    expect(
+      factory.productionLines.some((pl) => pl.part.slug === "iron-plate"),
+    ).toBe(true);
+  });
+
+  it("creates a fresh, tracked production line when re-optimizing after reject-all removed it (R1.S3)", () => {
+    const factory = makeFactory();
+    factory.optimizer.targets = [{ partSlug: "iron-plate", rate: 30 }];
+
+    factory.optimizeRecipes();
+    expect(factory.solverError).toBeNull();
+    expect(
+      factory.productionLines.some((pl) => pl.part.slug === "iron-plate"),
+    ).toBe(true);
+
+    // Simulate OptimizationSection.rejectAllSuggestions: strip auto-created
+    // lines via direct array replacement, bypassing removeProductionLine.
+    factory.productionLines = factory.productionLines.filter(
+      (pl) => !pl.autoCreated,
+    );
+    factory._updateRates();
+
+    factory.optimizeRecipes();
+
+    expect(factory.solverError).toBeNull();
+    expect(
+      factory.productionLines.some((pl) => pl.part.slug === "iron-plate"),
+    ).toBe(true);
+  });
+
+  it("keeps the lookup in sync with normal add/remove API calls (R1.S4)", () => {
+    const factory = makeFactory();
+    factory.addProductionLine(ironPlatePart);
+    factory.addProductionLine(ironIngotPart);
+
+    factory.removeProductionLine(ironPlatePart);
+    factory.addProductionLine(ironRodPart);
+
+    expect(Object.keys(factory._productionLineLookup).sort()).toEqual(
+      ["iron-ingot", "iron-rod"].sort(),
+    );
+  });
+
+  it("keeps the untouched line's entry after a partial removal via direct array replacement (R1.S5)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 30);
+    addManualProductionLine(factory, ironPlatePart, ironPlateRecipe, 10);
+
+    factory.productionLines = factory.productionLines.filter(
+      (pl) => pl.part.slug !== "iron-ingot",
+    );
+    factory._updateRates();
+
+    expect(factory._productionLineLookup["iron-ingot"]).toBeUndefined();
+    expect(factory._productionLineLookup["iron-plate"]).toBeTruthy();
+  });
+
+  it("empties the lookup once all production lines are removed via direct array replacement (R1.S6)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 30);
+    addManualProductionLine(factory, ironPlatePart, ironPlateRecipe, 10);
+
+    factory.productionLines = [];
+    factory._updateRates();
+
+    expect(Object.keys(factory._productionLineLookup)).toHaveLength(0);
+  });
+
+  it("is idempotent across repeated calls with no changes (R1.S7)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 30);
+    addManualProductionLine(factory, ironPlatePart, ironPlateRecipe, 10);
+
+    const before = { ...factory._productionLineLookup };
+    factory._updateRates();
+    const after = factory._productionLineLookup;
+
+    expect(Object.keys(after).sort()).toEqual(Object.keys(before).sort());
+    expect(after["iron-ingot"]).toBe(before["iron-ingot"]);
+    expect(after["iron-plate"]).toBe(before["iron-plate"]);
+  });
 });
 
 describe("allOutputs()", () => {

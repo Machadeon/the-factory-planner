@@ -256,6 +256,7 @@ export default class Factory {
 
   _updateRates() {
     this.rateLookup = {};
+    this._productionLineLookup = {};
     this._assemblyLineLookup = {};
     this._partsConsumed = new Set();
     this._partsProduced = new Set();
