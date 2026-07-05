@@ -1,4 +1,4 @@
-import { defaultResourceLimits, recipes } from "./library";
+import { defaultResourceLimits, recipes } from "./game-data";
 import type Recipe from "./recipe";
 
 export const POINT_RATE_CONSTANT = Math.max(

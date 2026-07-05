@@ -1,5 +1,5 @@
 import type Building from "./building";
-import { rawResources } from "./library";
+import { rawResources } from "./game-data/constants";
 import type Part from "./part";
 
 export interface RecipePart {

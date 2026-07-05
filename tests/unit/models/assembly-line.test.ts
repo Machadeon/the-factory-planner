@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import type Recipe from "@/app/models/recipe";
 

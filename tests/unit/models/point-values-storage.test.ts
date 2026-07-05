@@ -8,7 +8,7 @@ import {
   type StorageLibrary,
   serializeFactory,
 } from "@/app/models/factory-storage";
-import { partSlugLookup } from "@/app/models/library";
+import { partSlugLookup } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 

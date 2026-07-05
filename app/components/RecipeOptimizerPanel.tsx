@@ -27,7 +27,7 @@ import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
-import { buildings, partSlugLookup, recipes } from "../models/library";
+import { buildings, partSlugLookup, recipes } from "../models/game-data";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
 import PointValuesPanel from "./PointValuesPanel";

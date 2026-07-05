@@ -1,5 +1,5 @@
 import type Factory from "./factory";
-import { partSlugLookup } from "./library";
+import { partSlugLookup } from "./game-data";
 import type Part from "./part";
 import type Recipe from "./recipe";
 import type { RecipePart } from "./recipe";

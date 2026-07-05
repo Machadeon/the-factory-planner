@@ -9,7 +9,7 @@ import {
   defaultResourceLimits,
   partSlugLookup,
   parts,
-} from "../models/library";
+} from "../models/game-data";
 import PartSelector from "./PartSelector";
 import TextCalculatorField from "./TextCalculatorField";
 import AddItemControl from "./ui/AddItemControl";

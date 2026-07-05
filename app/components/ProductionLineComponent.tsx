@@ -18,7 +18,7 @@ import type {
   SerializedFactory,
   StorageLibrary,
 } from "../models/factory-storage";
-import { recipeLookup } from "../models/library";
+import { recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";

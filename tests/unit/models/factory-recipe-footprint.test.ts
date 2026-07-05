@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";

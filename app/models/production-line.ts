@@ -1,5 +1,5 @@
 import AssemblyLine from "./assembly-line";
-import { recipeLookup } from "./library";
+import { recipeLookup } from "./game-data";
 import type Part from "./part";
 
 export default class ProductionLine {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultResourceLimits } from "@/app/models/library";
+import { defaultResourceLimits } from "@/app/models/game-data";
 import {
   computeDefaultPointValues,
   POINT_RATE_CONSTANT,

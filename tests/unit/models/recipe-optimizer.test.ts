@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import Factory, { type ScoringObjective } from "@/app/models/factory";
-import { partSlugLookup } from "@/app/models/library";
+import { partSlugLookup } from "@/app/models/game-data";
 
 function makeFactory(): Factory {
   const f = new Factory();

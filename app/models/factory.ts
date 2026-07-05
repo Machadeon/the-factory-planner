@@ -12,7 +12,7 @@ import {
   partSlugLookup,
   parts,
   recipes,
-} from "../models/library";
+} from "../models/game-data";
 import AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";

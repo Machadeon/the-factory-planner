@@ -6,7 +6,7 @@ import Factory, {
   type RecipeOptimizerConfig,
 } from "./factory";
 import FactoryRecipe from "./factory-recipe";
-import { partSlugLookup, recipes } from "./library";
+import { partSlugLookup, recipeSlugLookup } from "./game-data";
 import ProductionLine from "./production-line";
 
 export interface SerializedAssemblyLine {
@@ -230,11 +230,6 @@ function normalizeRecipeOptimizer(
     typeof p === "string" ? { partSlug: p, rate: 0 } : p,
   );
   return { ...base, ...raw, availableParts };
-}
-
-const recipeSlugLookup: Record<string, import("./recipe").default> = {};
-for (const recipe of recipes) {
-  recipeSlugLookup[recipe.slug] = recipe;
 }
 
 // When a cycle is detected, deserialize the factory using only its standard
