@@ -1,6 +1,6 @@
 import { totalMachines } from "./assembly-line";
 import type Factory from "./factory";
-import { partSlugLookup } from "./game-data";
+import { partSlugLookup, RATE_EPSILON } from "./game-data";
 import type Part from "./part";
 import type Recipe from "./recipe";
 import type { RecipePart } from "./recipe";
@@ -60,11 +60,11 @@ export default class FactoryRecipe implements RecipeLike {
       const part = partSlugLookup[partSlug];
       if (!part) continue;
       const netOut = rate.productionRate - rate.consumptionRate;
-      if (netOut > 0.0001) {
+      if (netOut > RATE_EPSILON) {
         const rp: RecipePart = { part, quantity: netOut };
         prodList.push(rp);
         this._productLookup[partSlug] = rp;
-      } else if (netOut < -0.0001) {
+      } else if (netOut < -RATE_EPSILON) {
         const rp: RecipePart = { part, quantity: -netOut };
         ingList.push(rp);
         this._ingredientLookup[partSlug] = rp;

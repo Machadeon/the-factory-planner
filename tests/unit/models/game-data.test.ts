@@ -54,8 +54,7 @@ describe("tolerance constants (R4)", () => {
 });
 
 describe("auto-created line cleanup threshold widening (R4.S2)", () => {
-  // it.fails until the tolerance sweep lands (tasks.md group 5) — flips to it() there
-  it.fails("removes an auto-created line whose demand is 5e-5 (below RATE_EPSILON, above the old 1e-5)", () => {
+  it("removes an auto-created line whose demand is 5e-5 (below RATE_EPSILON, above the old 1e-5)", () => {
     const factory = new Factory();
     const ironPlate = partSlugLookup["iron-plate"];
     const ironIngot = partSlugLookup["iron-ingot"];
@@ -64,11 +63,9 @@ describe("auto-created line cleanup threshold widening (R4.S2)", () => {
     const plateLine = factory._productionLineLookup["iron-plate"];
     const plateRecipe = recipeLookup["iron-plate"].find((r) => !r.alternate);
     if (!plateRecipe) throw new Error("no base iron-plate recipe");
-    const ingotPerPlate =
-      plateRecipe.ingredientLookup["iron-ingot"] /
-      plateRecipe.productLookup["iron-plate"];
+    const ingotPerCraft = plateRecipe.ingredientLookup["iron-ingot"];
     plateLine.assemblyLines = [
-      new AssemblyLine(plateRecipe, 5e-5 / ingotPerPlate, 0, 100, 0, false),
+      new AssemblyLine(plateRecipe, 5e-5 / ingotPerCraft, 0, 100, 0, false),
     ];
     factory._updateRates();
 

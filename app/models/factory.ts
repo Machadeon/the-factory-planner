@@ -5,16 +5,18 @@ import solver, {
   type VariableCoefficients,
 } from "javascript-lp-solver";
 import { displayNum } from "@/app/lib/format";
+import AssemblyLine, { totalMachines } from "./assembly-line";
+import type FactoryRecipe from "./factory-recipe";
 import {
   buildings,
   defaultResourceLimits,
   notAutomatable,
   partSlugLookup,
   parts,
+  RATE_EPSILON,
   recipes,
-} from "../models/game-data";
-import AssemblyLine, { totalMachines } from "./assembly-line";
-import type FactoryRecipe from "./factory-recipe";
+  SOLVER_EQUALITY_FUDGE,
+} from "./game-data";
 import type Part from "./part";
 import { resolveEffectivePointValues } from "./point-values";
 import ProductionLine from "./production-line";
@@ -317,7 +319,7 @@ export default class Factory {
         part: o.part,
         rate: o.rate.productionRate - o.rate.consumptionRate,
       }))
-      .filter((o) => o.rate > 0.0001);
+      .filter((o) => o.rate > RATE_EPSILON);
   }
 
   /**
@@ -349,14 +351,14 @@ export default class Factory {
       for (const productionLine of this.productionLines) {
         if (productionLine.maximizeOutput) {
           targetMax.add(productionLine.part.slug);
-        } else if (productionLine.outputRate > 0.0001) {
+        } else if (productionLine.outputRate > RATE_EPSILON) {
           const partSlug = productionLine.part.slug;
 
           if (
             targetFixed.has(partSlug) &&
             Math.abs(
               productionLine.outputRate - (targetFixed.get(partSlug) ?? 0),
-            ) > 0.0001
+            ) > RATE_EPSILON
           ) {
             this.solverError = `Conflicting goals for ${productionLine.part.name}: production target requires ${displayNum(targetFixed.get(partSlug) ?? 0)} but production line requires ${displayNum(productionLine.outputRate)}`;
             this.update();
@@ -565,7 +567,7 @@ export default class Factory {
 
       // set maximum rate as a constraint
       for (const [slug, rate] of Object.entries(maxRates)) {
-        model.constraints[slug] = { equal: rate * (1 - 1e-8) }; // add fudge factor for precision errors
+        model.constraints[slug] = { equal: rate * (1 - SOLVER_EQUALITY_FUDGE) };
       }
     }
 
@@ -608,7 +610,7 @@ export default class Factory {
         typeof solution[recipe.slug] === "number"
           ? (solution[recipe.slug] as number)
           : 0;
-      if (rate > 1e-6) selected.push({ recipe, rate });
+      if (rate > RATE_EPSILON) selected.push({ recipe, rate });
     }
 
     // Materialize: group selected recipes by primary product into production lines.
@@ -859,7 +861,7 @@ export default class Factory {
   allOutputs(): Part[] {
     return Object.entries(this.rateLookup)
       .filter(([_, rate]) => {
-        return rate.productionRate - rate.consumptionRate >= 0.0001;
+        return rate.productionRate - rate.consumptionRate >= RATE_EPSILON;
       })
       .map(([partSlug, _]) => partSlugLookup[partSlug]);
   }
@@ -868,12 +870,12 @@ export default class Factory {
     return Object.entries(this.rateLookup)
       .filter(([partSlug, rate]) => {
         const ownDeficit = rate.consumptionRate - rate.productionRate;
-        if (ownDeficit <= 0.0001) return false;
+        if (ownDeficit <= RATE_EPSILON) return false;
         const supplied = this.supplierFactories.reduce((sum, fr) => {
           const p = fr.getProduct(partSlug);
           return sum + (p?.quantity ?? 0);
         }, 0);
-        return ownDeficit - supplied > 0.0001;
+        return ownDeficit - supplied > RATE_EPSILON;
       })
       .map(([partSlug, _]) => partSlugLookup[partSlug]);
   }
@@ -921,7 +923,9 @@ export default class Factory {
     return parts.filter((part) => {
       const rate = this.rateLookup[part.slug];
       if (!rate) return false;
-      return Math.abs(rate.productionRate - rate.consumptionRate) < 0.0001;
+      return (
+        Math.abs(rate.productionRate - rate.consumptionRate) < RATE_EPSILON
+      );
     });
   }
 
@@ -1065,7 +1069,7 @@ export default class Factory {
     this._autoSetPartRateInProgress.add(part.slug);
     try {
       const productionRate = this.getPartDemand(part);
-      if (productionLine.autoCreated && productionRate < 0.00001) {
+      if (productionLine.autoCreated && productionRate < RATE_EPSILON) {
         this.removeProductionLine(part);
       } else {
         this.setPartRate(part, productionRate, true);
@@ -1313,17 +1317,20 @@ export default class Factory {
           const netRate = isRaw
             ? rate.consumptionRate - rate.productionRate
             : rate.productionRate - rate.consumptionRate;
-          if (constraint.min && constraint.min - netRate > 0.0001) {
+          if (constraint.min && constraint.min - netRate > RATE_EPSILON) {
             errors.push(
               `${part.name} must be ${constraint.min}/min or greater, but is ${netRate}/min`,
             );
-          } else if (constraint.max && constraint.max - netRate < -0.0001) {
+          } else if (
+            constraint.max &&
+            constraint.max - netRate < -RATE_EPSILON
+          ) {
             errors.push(
               `${part.name} must be ${constraint.max}/min or less, but is ${netRate}/min`,
             );
           } else if (
             constraint.equal &&
-            Math.abs(constraint.equal - netRate) > 0.0001
+            Math.abs(constraint.equal - netRate) > RATE_EPSILON
           ) {
             errors.push(
               `${part.name} must be exactly ${constraint.equal}/min, but is ${netRate}/min`,

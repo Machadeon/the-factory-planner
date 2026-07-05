@@ -8,6 +8,7 @@ import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
+import { RATE_EPSILON } from "../models/game-data";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
 import CollapsibleSection from "./ui/CollapsibleSection";
@@ -56,7 +57,7 @@ export default function FactoryOverviewComponent({
           const rate = consumerFactory.rateLookup[output.part.slug];
           if (!rate) continue;
           const net = rate.consumptionRate - rate.productionRate;
-          if (net <= 0.0001) continue;
+          if (net <= RATE_EPSILON) continue;
           const existing = map.get(output.part.slug) ?? [];
           existing.push({ id: sf.id, name: sf.name, rate: net });
           map.set(output.part.slug, existing);

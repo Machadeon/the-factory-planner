@@ -2,6 +2,7 @@ import type AssemblyLine from "../../models/assembly-line";
 import type Factory from "../../models/factory";
 import type { StorageLibrary } from "../../models/factory-storage";
 import { deserializeFactory } from "../../models/factory-storage";
+import { RATE_EPSILON } from "../../models/game-data";
 import type Part from "../../models/part";
 import {
   buildPartEdges,
@@ -272,7 +273,7 @@ export function deriveConsumers(
       const rate = consumerFactory.rateLookup[output.slug];
       if (!rate) continue;
       const net = rate.consumptionRate - rate.productionRate;
-      if (net <= 0.0001) continue;
+      if (net <= RATE_EPSILON) continue;
       const list = map.get(output.slug) ?? [];
       list.push({ id: sf.id, name: sf.name, rate: net });
       map.set(output.slug, list);

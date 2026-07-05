@@ -1,3 +1,4 @@
+import { RATE_EPSILON } from "./game-data/constants";
 import type Part from "./part";
 import type Recipe from "./recipe";
 import type { RecipeLike } from "./recipe-like";
@@ -182,7 +183,7 @@ export default class AssemblyLine {
       const fullMachines = Math.floor(this.rate / perMachine);
       const leftover = this.rate - fullMachines * perMachine;
       const remainderClock =
-        leftover > 0.0001 ? (leftover / baseRate) * 100 : 0;
+        leftover > RATE_EPSILON ? (leftover / baseRate) * 100 : 0;
       return { fullMachines, remainderClock };
     }
 

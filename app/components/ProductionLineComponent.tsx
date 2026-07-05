@@ -18,7 +18,7 @@ import type {
   SerializedFactory,
   StorageLibrary,
 } from "../models/factory-storage";
-import { recipeLookup } from "../models/game-data";
+import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
@@ -66,7 +66,7 @@ export default function ProductionLineComponent(
   const productionRateDiff = actualProductionRate - props.productionLine.rate;
   const needMoreProduction =
     props.productionLine.assemblyLines.length === 0 ||
-    Math.abs(productionRateDiff) > 0.0001;
+    Math.abs(productionRateDiff) > RATE_EPSILON;
   const hasMoreRecipes =
     props.productionLine.assemblyLines.length <
     recipeLookup[props.productionLine.part.slug].length;
