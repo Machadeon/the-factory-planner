@@ -1,4 +1,5 @@
 import type AssemblyLine from "../../models/assembly-line";
+import { totalMachines } from "../../models/assembly-line";
 import type Recipe from "../../models/recipe";
 import { MIN_BODY_H, MIN_BODY_W, SCALE } from "./constants";
 import type { GraphNode } from "./graph-model";
@@ -13,10 +14,7 @@ const HEADER_H = 74;
 const ROWS_ROW_H = 26;
 
 export function machineCountOf(al: AssemblyLine): number {
-  const count = al.getMachineCount();
-  return "fullMachines" in count
-    ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
-    : count.machineCount;
+  return totalMachines(al.getMachineCount());
 }
 
 /**

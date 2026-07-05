@@ -13,7 +13,7 @@ import {
   parts,
   recipes,
 } from "../models/game-data";
-import AssemblyLine from "./assembly-line";
+import AssemblyLine, { totalMachines } from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";
 import { resolveEffectivePointValues } from "./point-values";
@@ -1384,11 +1384,7 @@ export default class Factory {
             (al.recipe as unknown as { sloopsPerInstance: number })
               .sloopsPerInstance;
         } else {
-          const count = al.getMachineCount();
-          const machines =
-            "fullMachines" in count
-              ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
-              : count.machineCount;
+          const machines = totalMachines(al.getMachineCount());
           total += al.sloopedSlots * machines;
         }
       }

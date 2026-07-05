@@ -1,4 +1,7 @@
-import AssemblyLine, { DEFAULT_ROW_SPACING } from "./assembly-line";
+import AssemblyLine, {
+  DEFAULT_ROW_SPACING,
+  shardsForClock,
+} from "./assembly-line";
 import Factory, {
   type AvailablePart,
   defaultRecipeOptimizerConfig,
@@ -265,7 +268,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           alData.rate,
           alData.sloopedSlots,
           alData.machineSpeed,
-          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          shardsForClock(alData.machineSpeed),
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
@@ -415,7 +418,7 @@ export function deserializeFactory(
             alData.rate,
             0,
             alData.machineSpeed,
-            Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+            shardsForClock(alData.machineSpeed),
             alData.allowRemainder,
             alData.autoCreated ?? false,
             alData.id ?? generateId(),
@@ -445,7 +448,7 @@ export function deserializeFactory(
           alData.rate,
           alData.sloopedSlots,
           alData.machineSpeed,
-          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          shardsForClock(alData.machineSpeed),
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),

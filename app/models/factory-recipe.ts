@@ -1,3 +1,4 @@
+import { totalMachines } from "./assembly-line";
 import type Factory from "./factory";
 import { partSlugLookup } from "./game-data";
 import type Part from "./part";
@@ -24,11 +25,7 @@ function factoryFloorArea(factory: Factory, depth = 0): number {
       }
       const building = (al.recipe as Recipe).building;
       if (!building?.size) continue;
-      const count = al.getMachineCount();
-      const machines =
-        "fullMachines" in count
-          ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
-          : count.machineCount;
+      const machines = totalMachines(al.getMachineCount());
       area += machines * building.size.width * building.size.length;
     }
   }
