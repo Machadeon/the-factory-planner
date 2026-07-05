@@ -1,5 +1,6 @@
 import type AssemblyLine from "../../models/assembly-line";
 import type Factory from "../../models/factory";
+import { factoryRecipeId } from "../../models/factory-recipe";
 import type { StorageLibrary } from "../../models/factory-storage";
 import { deserializeFactory } from "../../models/factory-storage";
 import { RATE_EPSILON } from "../../models/game-data";
@@ -130,7 +131,7 @@ export function buildGraphModel(
 
   // Supplier factory nodes (distinct sources).
   for (const fr of factory.supplierFactories) {
-    const fid = fr.slug.slice("factory:".length);
+    const fid = factoryRecipeId(fr.slug);
     const id = supplierId(fid);
     const parts: { part: Part; rate: number }[] = [];
     for (const product of fr.products) {

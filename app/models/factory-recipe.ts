@@ -32,6 +32,15 @@ function factoryFloorArea(factory: Factory, depth = 0): number {
   return area;
 }
 
+export function factoryRecipeSlug(factoryId: string): string {
+  return `factory:${factoryId}`;
+}
+
+/** Extracts the factory id from a factory-recipe slug; non-prefixed input passes through. */
+export function factoryRecipeId(slug: string): string {
+  return slug.startsWith("factory:") ? slug.slice("factory:".length) : slug;
+}
+
 export default class FactoryRecipe implements RecipeLike {
   readonly isFactoryRecipe = true as const;
   readonly slug: string;
@@ -50,7 +59,7 @@ export default class FactoryRecipe implements RecipeLike {
   private readonly _productLookup: Record<string, RecipePart> = {};
 
   constructor(factoryId: string, factoryName: string, factory: Factory) {
-    this.slug = `factory:${factoryId}`;
+    this.slug = factoryRecipeSlug(factoryId);
     this.name = factoryName;
     this.icon = factory.icon;
     const ingList: RecipePart[] = [];

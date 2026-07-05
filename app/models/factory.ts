@@ -7,6 +7,7 @@ import solver, {
 import { displayNum } from "@/app/lib/format";
 import AssemblyLine, { totalMachines } from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
+import { factoryRecipeSlug } from "./factory-recipe";
 import {
   buildings,
   defaultResourceLimits,
@@ -897,7 +898,7 @@ export default class Factory {
 
   removeSupplier(factoryId: string) {
     this.supplierFactories = this.supplierFactories.filter(
-      (fr) => fr.slug !== `factory:${factoryId}`,
+      (fr) => fr.slug !== factoryRecipeSlug(factoryId),
     );
     this.update();
   }

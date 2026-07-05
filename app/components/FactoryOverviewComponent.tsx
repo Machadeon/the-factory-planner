@@ -4,6 +4,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useMemo } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
+import { factoryRecipeId } from "../models/factory-recipe";
 import {
   deserializeFactory,
   type StorageLibrary,
@@ -294,7 +295,7 @@ export default function FactoryOverviewComponent({
                           type="button"
                           className="grow font-medium text-left underline cursor-pointer hover:opacity-70"
                           onClick={() =>
-                            onNavigateToFactory(fr.slug.replace("factory:", ""))
+                            onNavigateToFactory(factoryRecipeId(fr.slug))
                           }
                         >
                           {fr.name}
@@ -305,9 +306,7 @@ export default function FactoryOverviewComponent({
                       <IconButton
                         aria-label="Remove supplier"
                         onClick={() =>
-                          factory.removeSupplier(
-                            fr.slug.replace("factory:", ""),
-                          )
+                          factory.removeSupplier(factoryRecipeId(fr.slug))
                         }
                         className="inline p-1"
                       >

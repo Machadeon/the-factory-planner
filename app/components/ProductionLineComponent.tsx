@@ -13,7 +13,7 @@ import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
-import FactoryRecipe from "../models/factory-recipe";
+import FactoryRecipe, { factoryRecipeSlug } from "../models/factory-recipe";
 import type {
   SerializedFactory,
   StorageLibrary,
@@ -77,7 +77,7 @@ export default function ProductionLineComponent(
         ({ sf, factory: f }) =>
           f.allOutputs().some((p) => p.slug === part.slug) &&
           !props.productionLine.assemblyLines.some(
-            (al) => al.recipe.slug === `factory:${sf.id}`,
+            (al) => al.recipe.slug === factoryRecipeSlug(sf.id),
           ),
       ),
     [props.candidateFactories, part.slug, props.productionLine.assemblyLines],

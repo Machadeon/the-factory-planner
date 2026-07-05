@@ -8,7 +8,7 @@ import Factory, {
   type PartConstraint,
   type RecipeOptimizerConfig,
 } from "./factory";
-import FactoryRecipe from "./factory-recipe";
+import FactoryRecipe, { factoryRecipeId } from "./factory-recipe";
 import { partSlugLookup, recipeSlugLookup } from "./game-data";
 import ProductionLine from "./production-line";
 
@@ -161,9 +161,7 @@ export function serializeFactory(
     autoAddProductLines: factory.autoAddProductLines,
     supplierIds:
       factory.supplierFactories.length > 0
-        ? factory.supplierFactories.map((fr) =>
-            fr.slug.slice("factory:".length),
-          )
+        ? factory.supplierFactories.map((fr) => factoryRecipeId(fr.slug))
         : undefined,
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
@@ -189,7 +187,7 @@ export function serializeFactory(
         if (al.recipe.isFactoryRecipe) {
           // Reference the nested factory by id only — it lives as its own
           // independent library entry, not embedded here.
-          const nestedId = al.recipe.slug.slice("factory:".length);
+          const nestedId = factoryRecipeId(al.recipe.slug);
           return {
             id: al.id,
             rows: al.rows > 0 ? al.rows : undefined,

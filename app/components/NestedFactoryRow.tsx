@@ -4,6 +4,7 @@ import EastIcon from "@mui/icons-material/East";
 import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
+import { factoryRecipeId } from "../models/factory-recipe";
 import TextCalculatorField from "./TextCalculatorField";
 import Icon from "./ui/Icon";
 
@@ -20,7 +21,7 @@ export default function NestedFactoryRow({
 }: NestedFactoryRowProps) {
   const recipe = assemblyLine.recipe;
   const rate = assemblyLine.rate;
-  const factoryId = recipe.slug.replace("factory:", "");
+  const factoryId = factoryRecipeId(recipe.slug);
 
   function updateRate(newRate: number) {
     // A factory-as-recipe represents whole copies of a physical sub-factory.
