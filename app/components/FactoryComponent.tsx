@@ -22,6 +22,7 @@ import {
   useState,
 } from "react";
 import { withBasePath } from "@/app/lib/base-path";
+import { downloadJson } from "../lib/download";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
 import {
@@ -40,7 +41,6 @@ import {
   addFactory,
   clearAutosave,
   clearCurrentFactoryId,
-  downloadJson,
   getAutosavePref,
   getCurrentFactoryId,
   getLibraryPinned,
@@ -1115,6 +1115,7 @@ export default function FactoryComponent() {
                 />
               )}
             </div>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: mouse-only resize handle; keyboard-accessible version tracked separately */}
             <div
               className="w-1.5 cursor-ew-resize flex-none hover:bg-blue-500/40 bg-black/20 dark:bg-white/20 min-h-full transition-colors"
               onMouseDown={handleResizeDividerMouseDown}
