@@ -9,7 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { calculate as evaluateExpression } from "../utils";
+import { calculate as evaluateExpression } from "@/app/lib/expression";
 
 export interface TextCalculatorFieldProps extends OutlinedTextFieldProps {
   onCalculate?: (newValue: number) => void;

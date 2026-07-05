@@ -3,10 +3,6 @@
 import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import { useState } from "react";
 import type Factory from "../models/factory";
 import type { ScoringObjective } from "../models/factory";
@@ -15,6 +11,7 @@ import ConstraintsPanel from "./ConstraintsPanel";
 import { HorizontalDivider } from "./Dividers";
 import ProductionTargetsBar from "./ProductionTargetsBar";
 import RecipeOptimizerPanel from "./RecipeOptimizerPanel";
+import ConfirmDialog from "./ui/ConfirmDialog";
 
 const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   minResources: "Min resources",
@@ -141,30 +138,20 @@ export default function OptimizationSection({
         onUpdateLibrary={onUpdateLibrary}
       />
 
-      <Dialog
+      <ConfirmDialog
         open={showRejectAllConfirm}
-        onClose={() => setShowRejectAllConfirm(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Reject all suggestions?</DialogTitle>
-        <DialogContent>
+        title="Reject all suggestions?"
+        message={
           <p className="text-sm text-gray-400">
             This removes all auto-suggested production lines and recipes. This
             cannot be undone.
           </p>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowRejectAllConfirm(false)}>Cancel</Button>
-          <Button
-            onClick={rejectAllSuggestions}
-            variant="contained"
-            color="warning"
-          >
-            Reject all
-          </Button>
-        </DialogActions>
-      </Dialog>
+        }
+        confirmLabel="Reject all"
+        severity="warning"
+        onConfirm={rejectAllSuggestions}
+        onCancel={() => setShowRejectAllConfirm(false)}
+      />
     </div>
   );
 }

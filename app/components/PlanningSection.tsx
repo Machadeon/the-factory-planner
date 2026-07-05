@@ -1,17 +1,15 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
-import { useState } from "react";
 import type Factory from "../models/factory";
 import type {
   SerializedFactory,
   StorageLibrary,
 } from "../models/factory-storage";
 import type Part from "../models/part";
-import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
 import ProductionLineComponent from "./ProductionLineComponent";
+import AddItemControl from "./ui/AddItemControl";
 
 interface PlanningSectionProps {
   factory: Factory;
@@ -36,8 +34,6 @@ export default function PlanningSection({
   onRemoveProduct,
   onNavigateToFactory,
 }: PlanningSectionProps) {
-  const [addingProduct, setAddingProduct] = useState(false);
-
   return (
     <div className="flex flex-col grow">
       {factory.productionLines.length === 0 ? (
@@ -62,24 +58,20 @@ export default function PlanningSection({
           </div>
         ))
       )}
-      {addingProduct ? (
-        <PartSelector
-          existingParts={factory.productionLines.map((p) => p.part.slug)}
-          onPartSelected={(part) => {
-            onAddProduct(part);
-            setAddingProduct(false);
-          }}
-          onBlur={() => setAddingProduct(false)}
-        />
-      ) : (
-        <Clickable
-          className="flex flex-row items-center p-1 mx-4 grow-x"
-          onClick={() => setAddingProduct(true)}
-        >
-          <AddIcon fontSize="small" />
-          <span className="text-sm ml-1">Add product</span>
-        </Clickable>
-      )}
+      <AddItemControl
+        label="Add product"
+        triggerClassName="flex flex-row items-center p-1 mx-4 grow-x"
+      >
+        {(close) => (
+          <PartSelector
+            existingParts={factory.productionLines.map((p) => p.part.slug)}
+            onPartSelected={(part) => {
+              onAddProduct(part);
+              close();
+            }}
+          />
+        )}
+      </AddItemControl>
     </div>
   );
 }

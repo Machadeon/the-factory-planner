@@ -5,13 +5,13 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
+import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
 import type Recipe from "../models/recipe";
-import { displayNum } from "../utils";
-import Icon from "./Icon";
 import MachineCountDisplay from "./MachineCountDisplay";
 import TextCalculatorField from "./TextCalculatorField";
+import Icon from "./ui/Icon";
 
 interface AssemblyLineControlsProps {
   assemblyLine: AssemblyLine;

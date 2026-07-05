@@ -3,13 +3,12 @@
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import Chip from "@mui/material/Chip";
-import Tooltip from "@mui/material/Tooltip";
 import type { MouseEvent } from "react";
-import Clickable from "./Clickable";
+import IconButton from "./ui/IconButton";
 
 interface SuggestedActionsProps {
-  onAccept: (e: MouseEvent<HTMLDivElement>) => void;
-  onReject: (e: MouseEvent<HTMLDivElement>) => void;
+  onAccept: (e: MouseEvent<HTMLButtonElement>) => void;
+  onReject: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
 /** "Suggested" chip with accept (make permanent) and reject affordances. */
@@ -20,20 +19,16 @@ export default function SuggestedActions({
   return (
     <span className="flex flex-row items-center gap-x-1">
       <Chip label="Suggested" size="small" color="info" />
-      <Tooltip title="Accept (make permanent)">
-        <span>
-          <Clickable onClick={onAccept} className="p-1">
-            <CheckIcon fontSize="small" />
-          </Clickable>
-        </span>
-      </Tooltip>
-      <Tooltip title="Reject">
-        <span>
-          <Clickable onClick={onReject} className="p-1">
-            <CloseIcon fontSize="small" />
-          </Clickable>
-        </span>
-      </Tooltip>
+      <IconButton
+        aria-label="Accept (make permanent)"
+        onClick={onAccept}
+        className="p-1"
+      >
+        <CheckIcon fontSize="small" />
+      </IconButton>
+      <IconButton aria-label="Reject" onClick={onReject} className="p-1">
+        <CloseIcon fontSize="small" />
+      </IconButton>
     </span>
   );
 }

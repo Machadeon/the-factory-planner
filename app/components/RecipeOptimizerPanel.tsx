@@ -1,6 +1,5 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -14,8 +13,8 @@ import Select from "@mui/material/Select";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
 import { useMemo, useState } from "react";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import {
   MAX_GAME_PHASE,
@@ -29,13 +28,15 @@ import {
   type StorageLibrary,
 } from "../models/factory-storage";
 import { buildings, partSlugLookup, recipes } from "../models/library";
-import { displayNum } from "../utils";
-import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
 import PointValuesPanel from "./PointValuesPanel";
 import RecipeListPanel from "./RecipeListPanel";
 import TextCalculatorField from "./TextCalculatorField";
+import ActionRow from "./ui/ActionRow";
+import AddItemControl from "./ui/AddItemControl";
+import Icon from "./ui/Icon";
+import IconButton from "./ui/IconButton";
 
 const OBJECTIVE_OPTIONS: {
   value: ScoringObjective;
@@ -124,8 +125,6 @@ export default function RecipeOptimizerPanel({
   currentFactoryId,
   onUpdateLibrary,
 }: RecipeOptimizerPanelProps) {
-  const [showPartSelector, setShowPartSelector] = useState(false);
-  const [showFactorySelector, setShowFactorySelector] = useState(false);
   const [showRecipeList, setShowRecipeList] = useState(false);
   const [showPointValues, setShowPointValues] = useState(false);
 
@@ -221,7 +220,6 @@ export default function RecipeOptimizerPanel({
     update({
       availableParts: [...config.availableParts, { partSlug: slug, rate: 0 }],
     });
-    setShowPartSelector(false);
   }
 
   function updateAvailablePartRate(slug: string, rate: number | undefined) {
@@ -444,11 +442,10 @@ export default function RecipeOptimizerPanel({
                 }
                 label={
                   <span className="flex flex-row items-center gap-x-1">
-                    <Image
+                    <Icon
                       src={building.iconSmall}
                       alt={building.name}
-                      width={20}
-                      height={20}
+                      size={20}
                     />
                     <span className="text-sm">{building.name}</span>
                   </span>
@@ -464,15 +461,16 @@ export default function RecipeOptimizerPanel({
         {config.enabledRecipes.length} of {recipes.length} recipes enabled. The
         controls above are helpers; fine-tune individual recipes here.
       </p>
-      <Clickable
+      <ActionRow
         onClick={() => setShowRecipeList((s) => !s)}
+        aria-expanded={showRecipeList}
         className="flex flex-row items-center p-1 mt-1"
       >
         <TuneIcon fontSize="small" />
         <span className="text-sm ml-1">
           {showRecipeList ? "Hide recipes" : "Manage recipes"}
         </span>
-      </Clickable>
+      </ActionRow>
       {showRecipeList && (
         <div className="mt-2">
           <RecipeListPanel
@@ -499,12 +497,7 @@ export default function RecipeOptimizerPanel({
             key={ap.partSlug}
             className="flex flex-row items-center gap-x-2 mb-2"
           >
-            <Image
-              src={part.iconSmall}
-              alt={part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="text-sm grow">{part.name}</span>
             <TextCalculatorField
               variant="outlined"
@@ -531,32 +524,32 @@ export default function RecipeOptimizerPanel({
                 className="m-0"
               />
             </Tooltip>
-            <Clickable
+            <IconButton
+              aria-label="Remove available part"
+              title=""
               onClick={() => removeAvailablePart(ap.partSlug)}
               className="p-1"
             >
               <DeleteIcon fontSize="small" />
-            </Clickable>
+            </IconButton>
           </div>
         );
       })}
-      {showPartSelector ? (
-        <div className="mt-2">
+      <AddItemControl
+        label="Add available part"
+        triggerClassName="flex flex-row items-center p-1 mt-1"
+        className="mt-2"
+      >
+        {(close) => (
           <PartSelector
             existingParts={partExclusions}
-            onPartSelected={(part) => addAvailablePart(part.slug)}
-            onBlur={() => setShowPartSelector(false)}
+            onPartSelected={(part) => {
+              addAvailablePart(part.slug);
+              close();
+            }}
           />
-        </div>
-      ) : (
-        <Clickable
-          onClick={() => setShowPartSelector(true)}
-          className="flex flex-row items-center p-1 mt-1"
-        >
-          <AddIcon fontSize="small" />
-          <span className="text-sm ml-1">Add available part</span>
-        </Clickable>
-      )}
+        )}
+      </AddItemControl>
 
       {/* Source factories */}
       <p className="text-md mt-4 mb-1">Source factories</p>
@@ -569,24 +562,21 @@ export default function RecipeOptimizerPanel({
         <div key={sf.id} className="mb-2">
           <div className="flex flex-row items-center gap-x-2">
             <span className="text-sm grow">{sf.name}</span>
-            <Clickable
+            <IconButton
+              aria-label="Remove source factory"
+              title=""
               onClick={() => removeSourceFactory(sf.id)}
               className="p-1"
             >
               <DeleteIcon fontSize="small" />
-            </Clickable>
+            </IconButton>
           </div>
           {sf.outputs.map((o) => (
             <div
               key={o.part.slug}
               className="flex flex-row items-center gap-x-2 ml-2"
             >
-              <Image
-                src={o.part.iconSmall}
-                alt={o.part.name}
-                width={20}
-                height={20}
-              />
+              <Icon src={o.part.iconSmall} alt={o.part.name} size={20} />
               <span className="text-xs text-gray-400 grow">{o.part.name}</span>
               <span className="text-xs text-gray-400">
                 {displayNum(o.rate)}/min
@@ -595,10 +585,13 @@ export default function RecipeOptimizerPanel({
           ))}
         </div>
       ))}
-      {library &&
-        factoryOptions.length > 0 &&
-        (showFactorySelector ? (
-          <div className="mt-2">
+      {library && factoryOptions.length > 0 && (
+        <AddItemControl
+          label="Add source factory"
+          triggerClassName="flex flex-row items-center p-1 mt-1"
+          className="mt-2"
+        >
+          {(close) => (
             <Autocomplete
               options={factoryOptions}
               openOnFocus
@@ -607,10 +600,9 @@ export default function RecipeOptimizerPanel({
               onChange={(_, option) => {
                 if (option) {
                   addSourceFactory(option.id);
-                  setShowFactorySelector(false);
+                  close();
                 }
               }}
-              onBlur={() => setShowFactorySelector(false)}
               isOptionEqualToValue={(o, v) => o.id === v.id}
               renderInput={(params) => (
                 <TextField
@@ -621,16 +613,9 @@ export default function RecipeOptimizerPanel({
                 />
               )}
             />
-          </div>
-        ) : (
-          <Clickable
-            onClick={() => setShowFactorySelector(true)}
-            className="flex flex-row items-center p-1 mt-1"
-          >
-            <AddIcon fontSize="small" />
-            <span className="text-sm ml-1">Add source factory</span>
-          </Clickable>
-        ))}
+          )}
+        </AddItemControl>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import solver, {
   type SolveResult,
   type VariableCoefficients,
 } from "javascript-lp-solver";
+import { displayNum } from "@/app/lib/format";
 import {
   buildings,
   defaultResourceLimits,
@@ -12,7 +13,6 @@ import {
   parts,
   recipes,
 } from "../models/library";
-import { displayNum } from "../utils";
 import AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import type Part from "./part";

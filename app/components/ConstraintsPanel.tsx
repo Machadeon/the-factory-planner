@@ -1,11 +1,8 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import Image from "next/image";
-import { useState } from "react";
 import type Factory from "../models/factory";
 import type { PartConstraint } from "../models/factory";
 import {
@@ -13,9 +10,10 @@ import {
   partSlugLookup,
   parts,
 } from "../models/library";
-import Clickable from "./Clickable";
 import PartSelector from "./PartSelector";
 import TextCalculatorField from "./TextCalculatorField";
+import AddItemControl from "./ui/AddItemControl";
+import Icon from "./ui/Icon";
 
 interface ConstraintsPanelProps {
   factory: Factory;
@@ -24,8 +22,6 @@ interface ConstraintsPanelProps {
 // Inline, always-visible constraints editor. Live-write: every committed edit
 // mutates factory.constraints and re-solves. No Apply/Cancel (see spec R6b).
 export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
-  const [showPartSelector, setShowPartSelector] = useState(false);
-
   const constraints = factory.constraints;
   const allowedSlugs = new Set(parts.map((p) => p.slug));
   const existingSlugs = constraints.map((c) => c.partSlug);
@@ -47,7 +43,6 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
   function addConstraint(partSlug: string) {
     const defaultMax = defaultResourceLimits[partSlug];
     commit([...constraints, { partSlug, max: defaultMax }]);
-    setShowPartSelector(false);
   }
 
   function removeConstraint(slug: string) {
@@ -83,12 +78,7 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
             key={constraint.partSlug}
             className="flex flex-row items-center gap-x-2 mb-2 mt-2"
           >
-            <Image
-              src={part.iconSmall}
-              alt={part.name}
-              width={24}
-              height={24}
-            />
+            <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="w-32 text-sm shrink-0">{part.name}</span>
             <TextCalculatorField
               variant="outlined"
@@ -143,12 +133,7 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
                 key={slug}
                 className="flex flex-row items-center gap-x-2 mb-1"
               >
-                <Image
-                  src={part.iconSmall}
-                  alt={part.name}
-                  width={24}
-                  height={24}
-                />
+                <Icon src={part.iconSmall} alt={part.name} size={24} />
                 <span className="w-32 text-sm shrink-0">{part.name}</span>
                 <span className="text-sm text-gray-400">
                   max {limit}/min (default)
@@ -158,23 +143,24 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
           })}
         </>
       )}
-      {showPartSelector ? (
-        <div className="mt-3">
-          <PartSelector
-            existingParts={selectorExcludedSlugs}
-            onPartSelected={(part) => addConstraint(part.slug)}
-          />
-        </div>
-      ) : (
-        allowedSlugs.size > existingSlugs.length && (
-          <Clickable
-            onClick={() => setShowPartSelector(true)}
-            className="flex flex-row items-center p-1 mt-2"
-          >
-            <AddIcon fontSize="small" />
-            <span className="text-sm ml-1">Add constraint</span>
-          </Clickable>
-        )
+      {allowedSlugs.size > existingSlugs.length && (
+        <AddItemControl
+          label="Add constraint"
+          closeOnBlur={false}
+          triggerClassName="flex flex-row items-center p-1 mt-2"
+        >
+          {(close) => (
+            <div className="mt-3">
+              <PartSelector
+                existingParts={selectorExcludedSlugs}
+                onPartSelected={(part) => {
+                  addConstraint(part.slug);
+                  close();
+                }}
+              />
+            </div>
+          )}
+        </AddItemControl>
       )}
     </div>
   );

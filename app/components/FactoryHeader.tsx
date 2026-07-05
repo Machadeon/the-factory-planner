@@ -9,9 +9,9 @@ import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
-import { useRef } from "react";
-import Clickable from "./Clickable";
 import FactoryIconPicker from "./FactoryIconPicker";
+import FileImportButton from "./ui/FileImportButton";
+import IconButton from "./ui/IconButton";
 
 interface Props {
   factoryName: string;
@@ -50,14 +50,6 @@ export default function FactoryHeader({
   onCollapseAll,
   productionLineCount,
 }: Props) {
-  const importInputRef = useRef<HTMLInputElement>(null);
-
-  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) onImport(file);
-    e.target.value = "";
-  }
-
   function handleOpenLibrary() {
     onOpenLibrary?.();
   }
@@ -65,13 +57,13 @@ export default function FactoryHeader({
   return (
     <div className="flex flex-row items-center gap-2 px-4 py-2 border-b border-[rgba(128,128,128,0.2)]">
       {onOpenLibrary && (
-        <Tooltip title="Open factory library">
-          <span>
-            <Clickable className="p-1" onClick={handleOpenLibrary}>
-              <FolderOpenIcon sx={{ fontSize: "2.25rem" }} />
-            </Clickable>
-          </span>
-        </Tooltip>
+        <IconButton
+          aria-label="Open factory library"
+          className="p-1"
+          onClick={handleOpenLibrary}
+        >
+          <FolderOpenIcon sx={{ fontSize: "2.25rem" }} />
+        </IconButton>
       )}
 
       <div className="flex flex-row items-center gap-0.5 grow">
@@ -101,81 +93,64 @@ export default function FactoryHeader({
       <div className="flex flex-row ml-auto">
         {onExpandAll && onCollapseAll && (
           <>
-            <Tooltip
-              title={productionLineCount ? "Expand all" : "No production lines"}
+            <IconButton
+              aria-label={
+                productionLineCount ? "Expand all" : "No production lines"
+              }
+              className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
+              onClick={productionLineCount ? onExpandAll : () => {}}
             >
-              <span>
-                <Clickable
-                  className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
-                  onClick={productionLineCount ? onExpandAll : () => {}}
-                >
-                  <UnfoldMoreIcon fontSize="small" />
-                </Clickable>
-              </span>
-            </Tooltip>
-            <Tooltip
-              title={
+              <UnfoldMoreIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              aria-label={
                 productionLineCount ? "Collapse all" : "No production lines"
               }
+              className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
+              onClick={productionLineCount ? onCollapseAll : () => {}}
             >
-              <span>
-                <Clickable
-                  className={`p-1 ${!productionLineCount ? "opacity-50 cursor-default" : ""}`}
-                  onClick={productionLineCount ? onCollapseAll : () => {}}
-                >
-                  <UnfoldLessIcon fontSize="small" />
-                </Clickable>
-              </span>
-            </Tooltip>
+              <UnfoldLessIcon fontSize="small" />
+            </IconButton>
           </>
         )}
-        <Tooltip title="Clear factory">
-          <span>
-            <Clickable className="p-1" onClick={onNewFactory}>
-              <CancelIcon />
-            </Clickable>
-          </span>
-        </Tooltip>
-        <Tooltip title="Import factory from file">
-          <span>
-            <Clickable
-              className="p-1"
-              onClick={() => importInputRef.current?.click()}
-            >
-              <UploadIcon />
-            </Clickable>
-          </span>
-        </Tooltip>
-        <input
-          ref={importInputRef}
-          type="file"
+        <IconButton
+          aria-label="Clear factory"
+          className="p-1"
+          onClick={onNewFactory}
+        >
+          <CancelIcon />
+        </IconButton>
+        <FileImportButton
+          aria-label="Import factory from file"
           accept=".json"
-          className="hidden"
-          onChange={handleImportFile}
-        />
-        <Tooltip title="Export current factory">
-          <span>
-            <Clickable className="p-1" onClick={onExport}>
-              <DownloadIcon />
-            </Clickable>
-          </span>
-        </Tooltip>
-        <Tooltip title="View factory JSON">
-          <span>
-            <Clickable className="p-1" onClick={onViewJson}>
-              <DataObjectIcon />
-            </Clickable>
-          </span>
-        </Tooltip>
-        <Tooltip title={isDirty ? "Save (unsaved changes)" : "Save"}>
-          <span>
-            <Clickable className="p-1" onClick={onSave}>
-              <Badge color="warning" variant="dot" invisible={!isDirty}>
-                <SaveIcon />
-              </Badge>
-            </Clickable>
-          </span>
-        </Tooltip>
+          className="p-1"
+          onFile={onImport}
+        >
+          <UploadIcon />
+        </FileImportButton>
+        <IconButton
+          aria-label="Export current factory"
+          className="p-1"
+          onClick={onExport}
+        >
+          <DownloadIcon />
+        </IconButton>
+        <IconButton
+          aria-label="View factory JSON"
+          className="p-1"
+          onClick={onViewJson}
+        >
+          <DataObjectIcon />
+        </IconButton>
+        <IconButton
+          aria-label={isDirty ? "Save (unsaved changes)" : "Save"}
+          className="p-1"
+          onClick={onSave}
+        >
+          <Badge color="warning" variant="dot" invisible={!isDirty}>
+            <SaveIcon />
+          </Badge>
+        </IconButton>
         <Tooltip title={autosaveEnabled ? "Autosave on" : "Autosave off"}>
           <span className="flex items-center">
             <Switch

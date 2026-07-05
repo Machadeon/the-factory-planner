@@ -15,21 +15,15 @@ import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import UploadIcon from "@mui/icons-material/Upload";
 import {
-  Button,
   Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Drawer,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
   TextField,
-  Tooltip,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type {
   FactoryFolder,
   SerializedFactory,
@@ -46,9 +40,14 @@ import {
   renameFolder,
   saveLibrary,
 } from "../models/storage-service";
-import { withBasePath } from "../utils";
-import Clickable from "./Clickable";
 import { HorizontalDivider } from "./Dividers";
+import ActionRow from "./ui/ActionRow";
+import ConfirmDialog from "./ui/ConfirmDialog";
+import FileImportButton from "./ui/FileImportButton";
+import Icon from "./ui/Icon";
+import IconButton from "./ui/IconButton";
+import InlineEditText from "./ui/InlineEditText";
+import { rowVisualClasses } from "./ui/interactive-styles";
 
 interface Props {
   open: boolean;
@@ -66,7 +65,6 @@ interface Props {
 interface EditState {
   type: "folder" | "factory";
   id: string;
-  value: string;
 }
 
 interface MenuState {
@@ -96,7 +94,6 @@ export default function FactoryLibraryDrawer({
     useState<SerializedFactory | null>(null);
   const [deleteConfirmFolder, setDeleteConfirmFolder] =
     useState<FactoryFolder | null>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   function toggleFolder(id: string) {
     setExpandedFolders((prev) => {
@@ -107,14 +104,9 @@ export default function FactoryLibraryDrawer({
     });
   }
 
-  function commitEdit() {
+  // Trimming and empty-cancel live in InlineEditText; these just persist.
+  function commitRename(trimmed: string) {
     if (!editState) return;
-    const trimmed = editState.value.trim();
-    if (!trimmed) {
-      setEditState(null);
-      return;
-    }
-
     if (editState.type === "folder") {
       const updated = renameFolder(library, editState.id, trimmed);
       saveLibrary(updated);
@@ -167,7 +159,7 @@ export default function FactoryLibraryDrawer({
       if (parentId) next.add(parentId);
       return next;
     });
-    setEditState({ type: "folder", id: folder.id, value: "New Folder" });
+    setEditState({ type: "folder", id: folder.id });
   }
 
   function handleMoveFactory(factoryId: string, folderId: string | null) {
@@ -183,12 +175,6 @@ export default function FactoryLibraryDrawer({
 
   function handleExportAll() {
     downloadJson(library, "satisfactory-factories.json");
-  }
-
-  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) onImport(file);
-    e.target.value = "";
   }
 
   function closeMenu() {
@@ -208,64 +194,59 @@ export default function FactoryLibraryDrawer({
       editState?.type === "factory" && editState.id === factory.id;
     const isMoving = moveMenuFactory === factory.id;
 
+    const factoryIcon = factory.icon ? (
+      <Icon src={factory.icon} label="" size={20} className="flex-none" />
+    ) : (
+      <div className="w-5 flex-none" />
+    );
+
     return (
       <div key={factory.id}>
-        <Clickable
-          className={`flex flex-row items-center gap-x-1 px-2 py-1 ${isCurrent ? "bg-[rgba(128,128,128,0.2)]" : ""}`}
-          style="default"
-          onClick={() => !isEditing && onLoadFactory(factory)}
+        <div
+          className={rowVisualClasses(
+            "default",
+            `flex flex-row items-center gap-x-1 px-2 py-1 ${isCurrent ? "bg-[rgba(128,128,128,0.2)]" : ""}`,
+          )}
         >
-          <div style={{ width: depth * 16 }} className="flex-none" />
-          {factory.icon ? (
-            // biome-ignore lint/performance/noImgElement: local game asset path
-            <img
-              src={withBasePath(factory.icon)}
-              alt=""
-              width={20}
-              height={20}
-              className="flex-none"
-            />
-          ) : (
-            <div className="w-5 flex-none" />
-          )}
           {isEditing ? (
-            <TextField
-              size="small"
-              value={editState.value}
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) =>
-                setEditState({ ...editState, value: e.target.value })
-              }
-              onBlur={commitEdit}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitEdit();
-                if (e.key === "Escape") setEditState(null);
-              }}
-              className="grow"
-            />
+            <>
+              <div style={{ width: depth * 16 }} className="flex-none" />
+              {factoryIcon}
+              <InlineEditText
+                value={factory.name}
+                aria-label="Rename factory"
+                onCommit={commitRename}
+                onCancel={() => setEditState(null)}
+                className="grow"
+              />
+            </>
           ) : (
-            <span className="grow truncate text-sm">{factory.name}</span>
+            <>
+              <ActionRow
+                bare
+                onClick={() => onLoadFactory(factory)}
+                className="flex flex-row items-center gap-x-1 grow min-w-0"
+              >
+                <div style={{ width: depth * 16 }} className="flex-none" />
+                {factoryIcon}
+                <span className="grow truncate text-sm">{factory.name}</span>
+              </ActionRow>
+              <IconButton
+                aria-label="Actions"
+                className="p-1 flex-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuState({
+                    anchorEl: e.currentTarget as HTMLElement,
+                    factoryId: factory.id,
+                  });
+                }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+            </>
           )}
-          {!isEditing && (
-            <Tooltip title="Actions">
-              <span>
-                <Clickable
-                  className="p-1 flex-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuState({
-                      anchorEl: e.currentTarget as HTMLElement,
-                      factoryId: factory.id,
-                    });
-                  }}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </Clickable>
-              </span>
-            </Tooltip>
-          )}
-        </Clickable>
+        </div>
         {isMoving && (
           <div className="px-4 pb-2">
             <TextField
@@ -302,109 +283,104 @@ export default function FactoryLibraryDrawer({
       (f) => f.folderId === folder.id,
     );
 
+    const chevronAndIcon = (
+      <>
+        <span className="flex-none text-inherit">
+          {isExpanded ? (
+            <ExpandMoreIcon fontSize="small" />
+          ) : (
+            <ChevronRightIcon fontSize="small" />
+          )}
+        </span>
+        <span className="flex-none text-inherit">
+          {isExpanded ? (
+            <FolderOpenIcon fontSize="small" />
+          ) : (
+            <FolderIcon fontSize="small" />
+          )}
+        </span>
+      </>
+    );
+
     return (
       <div key={folder.id}>
-        <Clickable
-          className="flex flex-row items-center gap-x-1 px-2 py-1"
-          onClick={() => !isEditing && toggleFolder(folder.id)}
+        <div
+          className={rowVisualClasses(
+            "default",
+            "flex flex-row items-center gap-x-1 px-2 py-1",
+          )}
         >
-          <div style={{ width: depth * 16 }} className="flex-none" />
-          <span className="flex-none text-inherit">
-            {isExpanded ? (
-              <ExpandMoreIcon fontSize="small" />
-            ) : (
-              <ChevronRightIcon fontSize="small" />
-            )}
-          </span>
-          <span className="flex-none text-inherit">
-            {isExpanded ? (
-              <FolderOpenIcon fontSize="small" />
-            ) : (
-              <FolderIcon fontSize="small" />
-            )}
-          </span>
           {isEditing ? (
-            <TextField
-              size="small"
-              value={editState.value}
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) =>
-                setEditState({ ...editState, value: e.target.value })
-              }
-              onBlur={commitEdit}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitEdit();
-                if (e.key === "Escape") setEditState(null);
-              }}
-              className="grow"
-            />
+            <>
+              <div style={{ width: depth * 16 }} className="flex-none" />
+              {chevronAndIcon}
+              <InlineEditText
+                value={folder.name}
+                aria-label="Rename folder"
+                onCommit={commitRename}
+                onCancel={() => setEditState(null)}
+                className="grow"
+              />
+            </>
           ) : (
-            <span className="grow truncate text-sm font-medium">
-              {folder.name}
-            </span>
+            <>
+              <ActionRow
+                bare
+                aria-expanded={isExpanded}
+                onClick={() => toggleFolder(folder.id)}
+                className="flex flex-row items-center gap-x-1 grow min-w-0"
+              >
+                <div style={{ width: depth * 16 }} className="flex-none" />
+                {chevronAndIcon}
+                <span className="grow truncate text-sm font-medium">
+                  {folder.name}
+                </span>
+              </ActionRow>
+              <div className="flex flex-row flex-none">
+                <IconButton
+                  aria-label="New factory here"
+                  className="p-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNewFactory(folder.id);
+                  }}
+                >
+                  <AddIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  aria-label="New subfolder"
+                  className="p-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddFolder(folder.id);
+                  }}
+                >
+                  <CreateNewFolderIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  aria-label="Rename"
+                  className="p-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditState({ type: "folder", id: folder.id });
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  aria-label="Delete folder"
+                  className="p-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirmFolder(folder);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </div>
+            </>
           )}
-          {!isEditing && (
-            <div className="flex flex-row flex-none">
-              <Tooltip title="New factory here">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNewFactory(folder.id);
-                    }}
-                  >
-                    <AddIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="New subfolder">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddFolder(folder.id);
-                    }}
-                  >
-                    <CreateNewFolderIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Rename">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditState({
-                        type: "folder",
-                        id: folder.id,
-                        value: folder.name,
-                      });
-                    }}
-                  >
-                    <EditIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-              <Tooltip title="Delete folder">
-                <span>
-                  <Clickable
-                    className="p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteConfirmFolder(folder);
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </Clickable>
-                </span>
-              </Tooltip>
-            </div>
-          )}
-        </Clickable>
+        </div>
         <Collapse in={isExpanded} unmountOnExit>
           {childFolders
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -427,49 +403,40 @@ export default function FactoryLibraryDrawer({
         <span className="font-semibold">Factories</span>
         <div className="flex flex-row">
           {onPinChange && (
-            <Tooltip title={pinned ? "Unpin sidebar" : "Pin sidebar"}>
-              <span>
-                <Clickable className="p-1" onClick={() => onPinChange(!pinned)}>
-                  {pinned ? (
-                    <PushPinIcon fontSize="small" />
-                  ) : (
-                    <PushPinOutlinedIcon fontSize="small" />
-                  )}
-                </Clickable>
-              </span>
-            </Tooltip>
+            <IconButton
+              aria-label={pinned ? "Unpin sidebar" : "Pin sidebar"}
+              className="p-1"
+              onClick={() => onPinChange(!pinned)}
+            >
+              {pinned ? (
+                <PushPinIcon fontSize="small" />
+              ) : (
+                <PushPinOutlinedIcon fontSize="small" />
+              )}
+            </IconButton>
           )}
-          <Tooltip title="New factory">
-            <span>
-              <Clickable className="p-1" onClick={() => onNewFactory(null)}>
-                <AddIcon />
-              </Clickable>
-            </span>
-          </Tooltip>
-          <Tooltip title="New folder">
-            <span>
-              <Clickable className="p-1" onClick={() => handleAddFolder(null)}>
-                <CreateNewFolderIcon />
-              </Clickable>
-            </span>
-          </Tooltip>
-          <Tooltip title="Import">
-            <span>
-              <Clickable
-                className="p-1"
-                onClick={() => importInputRef.current?.click()}
-              >
-                <UploadIcon />
-              </Clickable>
-            </span>
-          </Tooltip>
-          <input
-            ref={importInputRef}
-            type="file"
+          <IconButton
+            aria-label="New factory"
+            className="p-1"
+            onClick={() => onNewFactory(null)}
+          >
+            <AddIcon />
+          </IconButton>
+          <IconButton
+            aria-label="New folder"
+            className="p-1"
+            onClick={() => handleAddFolder(null)}
+          >
+            <CreateNewFolderIcon />
+          </IconButton>
+          <FileImportButton
+            aria-label="Import"
             accept=".json"
-            className="hidden"
-            onChange={handleImportFile}
-          />
+            className="p-1"
+            onFile={onImport}
+          >
+            <UploadIcon />
+          </FileImportButton>
         </div>
       </div>
       <HorizontalDivider />
@@ -495,13 +462,13 @@ export default function FactoryLibraryDrawer({
       {/* Footer */}
       <HorizontalDivider />
       <div className="flex flex-row items-center px-2 py-1">
-        <Tooltip title="Export all factories">
-          <span>
-            <Clickable className="p-1" onClick={handleExportAll}>
-              <DownloadIcon fontSize="small" />
-            </Clickable>
-          </span>
-        </Tooltip>
+        <IconButton
+          aria-label="Export all factories"
+          className="p-1"
+          onClick={handleExportAll}
+        >
+          <DownloadIcon fontSize="small" />
+        </IconButton>
         <span className="text-xs opacity-50 ml-1">Export all</span>
       </div>
 
@@ -514,11 +481,7 @@ export default function FactoryLibraryDrawer({
         <MenuItem
           onClick={() => {
             if (menuFactory) {
-              setEditState({
-                type: "factory",
-                id: menuFactory.id,
-                value: menuFactory.name,
-              });
+              setEditState({ type: "factory", id: menuFactory.id });
             }
             closeMenu();
           }}
@@ -574,57 +537,40 @@ export default function FactoryLibraryDrawer({
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
-      <Dialog
+      <ConfirmDialog
         open={deleteConfirmFolder !== null}
-        onClose={() => setDeleteConfirmFolder(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Delete folder?</DialogTitle>
-        <DialogContent>
-          &ldquo;{deleteConfirmFolder?.name}&rdquo; and all its contents will be
-          permanently deleted.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmFolder(null)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => {
-              if (deleteConfirmFolder) handleDeleteFolder(deleteConfirmFolder);
-              setDeleteConfirmFolder(null);
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
+        title="Delete folder?"
+        message={
+          <>
+            &ldquo;{deleteConfirmFolder?.name}&rdquo; and all its contents will
+            be permanently deleted.
+          </>
+        }
+        confirmLabel="Delete"
+        severity="danger"
+        onConfirm={() => {
+          if (deleteConfirmFolder) handleDeleteFolder(deleteConfirmFolder);
+          setDeleteConfirmFolder(null);
+        }}
+        onCancel={() => setDeleteConfirmFolder(null)}
+      />
+      <ConfirmDialog
         open={deleteConfirmFactory !== null}
-        onClose={() => setDeleteConfirmFactory(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Delete factory?</DialogTitle>
-        <DialogContent>
-          &ldquo;{deleteConfirmFactory?.name}&rdquo; will be permanently
-          deleted.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmFactory(null)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => {
-              if (deleteConfirmFactory)
-                handleDeleteFactory(deleteConfirmFactory);
-              setDeleteConfirmFactory(null);
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Delete factory?"
+        message={
+          <>
+            &ldquo;{deleteConfirmFactory?.name}&rdquo; will be permanently
+            deleted.
+          </>
+        }
+        confirmLabel="Delete"
+        severity="danger"
+        onConfirm={() => {
+          if (deleteConfirmFactory) handleDeleteFactory(deleteConfirmFactory);
+          setDeleteConfirmFactory(null);
+        }}
+        onCancel={() => setDeleteConfirmFactory(null)}
+      />
     </>
   );
 

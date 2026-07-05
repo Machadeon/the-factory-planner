@@ -1,6 +1,6 @@
 import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { displayNum } from "../../utils";
-import Icon from "../Icon";
+import { displayNum } from "@/app/lib/format";
+import Icon from "../ui/Icon";
 import type { TerminalNodeData } from "./graph-model";
 
 // A raw input (source) or net output (sink) terminal: just the part icon and its rate.
