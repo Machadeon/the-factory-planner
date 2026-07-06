@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Correctness invariants of `Factory.autoCalculateRates()`'s LP objective construction. Named to align with the eventual `solver/rate-solver.ts` home planned for Phase M2 of `plans/model-refactor.md`, even though the logic currently lives inline in `factory.tsx`.
-## Requirements
 ### Requirement: R1 Minimize-inputs objective accumulates raw-resource coefficients
 When the rate solver builds the minimize-inputs LP objective (no `maximizeOutput` target present), it iterates the configured raw resources (`defaultResourceLimits` keys) and, for each LP variable whose coefficient map has a truthy, non-zero value under that resource's `_raw_<resource>` key, contributes that value toward the variable's `_obj` coefficient. The `_obj` coefficient SHALL equal the arithmetic sum of every such contribution for that variable, not just the most recently processed one. Summation SHALL be independent of the order resources are processed in and of the sign of individual contributions. A raw-resource key whose value is `0` or otherwise falsy SHALL NOT contribute to the sum.
 
@@ -38,6 +36,8 @@ Note: today's real recipe/game data cannot produce this two-key shape via the ba
 #### Scenario: R1.S6 maximizeOutput branch is unaffected
 - **WHEN** the rate solver runs with a `maximizeOutput` target present
 - **THEN** the minimize-inputs accumulation logic described in this requirement does not execute; `_obj` assignment follows the existing direct-assignment behavior of the `maximizeOutput` branch
+
+## ADDED Requirements
 
 ### Requirement: R2 Pure rate-solve function with thin Factory wrapper
 `app/models/solver/rate-solver.ts` SHALL export a pure rate-solve function that takes the solve inputs derived from the factory (assembly-line recipes, per-line output-rate and maximize targets, factory constraints) and returns solved per-assembly-line rates plus a feasibility outcome, without mutating the factory or invoking `update()`. `Factory.autoCalculateRates()` SHALL reduce to: build inputs → solve → on infeasible, set `solverError` to the structured infeasible variant → otherwise apply rates, recompute `rateLookup` (`_updateRates()`), run synchronous verification, and notify. The solve loop, model construction, and objective building SHALL no longer be defined in `factory.ts`.

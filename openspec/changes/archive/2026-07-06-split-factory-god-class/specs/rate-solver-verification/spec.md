@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Correctness of `Factory.autoCalculateRates()`'s post-solve constraint-verification callback — the deferred check that compares solved net rates against the LP model's constraints and reports violations. Named to align with the eventual `solver/verify.ts` home planned for Phase M2 of `plans/model-refactor.md`; the logic currently lives inline in `factory.tsx`.
-## Requirements
 ### Requirement: R1 Equal-constraint violation message reports the equal target
 When post-solve constraint verification finds a solved part's net rate violates an `equal` constraint (`Math.abs(constraint.equal - netRate) > RATE_EPSILON`), the resulting `ConstraintViolation` SHALL carry `bound: "equal"` and the constraint's `equal` value as its limit — not any other field of the constraint (e.g. `min` or `max`) — and the view-layer formatter SHALL interpolate that limit as the target value in the rendered message.
 
@@ -18,6 +16,8 @@ Verification lives in `app/models/solver/verify.ts` and returns structured `Cons
 #### Scenario: R1.S3 Min- and max-constraint violations carry their own bounds
 - **WHEN** a solved part's net rate violates a `min` constraint or a `max` constraint
 - **THEN** the violation carries `bound: "min"` with the `min` value (or `bound: "max"` with the `max` value) as its limit, and the formatted message interpolates that limit
+
+## ADDED Requirements
 
 ### Requirement: R2 Synchronous verification
 `app/models/solver/verify.ts` SHALL export a pure, synchronous verification function that compares the solved model's constraints against the factory's recomputed `rateLookup` and returns a `ConstraintViolation[]`. `Factory.autoCalculateRates()` SHALL call it synchronously after applying rates and recomputing `rateLookup` (`_updateRates()`), before returning — the model layer SHALL contain no `setTimeout`. When violations exist, `solverError` SHALL be set to the structured constraint-violations variant before `autoCalculateRates()` returns; when none exist, a previously null `solverError` stays null. The `_raw_` constraint semantics are preserved: raw-resource constraints measure net consumption-first (`consumptionRate − productionRate`), computed into a local without mutating the shared `rateLookup` entry; parts missing from `rateLookup` or the part lookup are skipped as today.

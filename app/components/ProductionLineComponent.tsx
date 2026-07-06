@@ -22,6 +22,11 @@ import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
+import {
+  applyRejectChoice,
+  applyRejectSilent,
+  shouldPromptReject,
+} from "../models/suggestions";
 import AssemblyLine from "./AssemblyLineComponent";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 import RecipeComponent from "./RecipeComponent";
@@ -182,10 +187,10 @@ export default function ProductionLineComponent(
 
   function rejectLine(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
-    if (props.factory.shouldPromptReject()) {
+    if (shouldPromptReject(props.factory.optimizer)) {
       setRejectTarget({ kind: "line" });
     } else {
-      props.factory.applyRejectSilent(lineRecipeSlugs());
+      applyRejectSilent(props.factory.optimizer, lineRecipeSlugs());
       props.onDeleteClicked();
     }
   }
@@ -200,10 +205,10 @@ export default function ProductionLineComponent(
 
   function rejectAssembly(recipe: RecipeLike) {
     const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
-    if (props.factory.shouldPromptReject()) {
+    if (shouldPromptReject(props.factory.optimizer)) {
       setRejectTarget({ kind: "assembly", recipe });
     } else {
-      props.factory.applyRejectSilent(slugs);
+      applyRejectSilent(props.factory.optimizer, slugs);
       removeAssemblyLine(recipe);
     }
   }
@@ -211,13 +216,13 @@ export default function ProductionLineComponent(
   function onRejectChoice(choice: RejectChoice) {
     if (!rejectTarget) return;
     if (rejectTarget.kind === "line") {
-      props.factory.applyRejectChoice(lineRecipeSlugs(), choice);
+      applyRejectChoice(props.factory.optimizer, lineRecipeSlugs(), choice);
       setRejectTarget(null);
       props.onDeleteClicked();
     } else {
       const recipe = rejectTarget.recipe;
       const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
-      props.factory.applyRejectChoice(slugs, choice);
+      applyRejectChoice(props.factory.optimizer, slugs, choice);
       setRejectTarget(null);
       removeAssemblyLine(recipe);
     }

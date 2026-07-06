@@ -1,36 +1,14 @@
-import { totalMachines } from "./assembly-line";
 import type Factory from "./factory";
+import {
+  factoryFloorArea,
+  getTotalPower,
+  getTotalShards,
+  getTotalSloops,
+} from "./factory-metrics";
 import { partSlugLookup, RATE_EPSILON } from "./game-data";
 import type Part from "./part";
-import type Recipe from "./recipe";
 import type { RecipePart } from "./recipe";
 import type { RecipeLike } from "./recipe-like";
-
-/**
- * Total machine floor area (m²) of a factory: footprint × machine count summed over
- * every assembly line, recursing into nested factory-recipe lines (× their integer
- * instance count). Depth-capped as a defensive guard; the in-memory factory graph is
- * already acyclic (deserialize stubs cycles).
- */
-function factoryFloorArea(factory: Factory, depth = 0): number {
-  if (depth > 32) return 0;
-  let area = 0;
-  for (const pl of factory.productionLines) {
-    for (const al of pl.assemblyLines) {
-      if (al.recipe.isFactoryRecipe) {
-        const nested = (al.recipe as unknown as FactoryRecipe)
-          .footprintAreaPerInstance;
-        area += al.rate * (nested ?? 0);
-        continue;
-      }
-      const building = (al.recipe as Recipe).building;
-      if (!building?.size) continue;
-      const machines = totalMachines(al.getMachineCount());
-      area += machines * building.size.width * building.size.length;
-    }
-  }
-  return area;
-}
 
 export function factoryRecipeSlug(factoryId: string): string {
   return `factory:${factoryId}`;
@@ -82,12 +60,12 @@ export default class FactoryRecipe implements RecipeLike {
     this.ingredients = ingList;
     this.products = prodList;
 
-    const totalPower = factory.getTotalPower();
+    const totalPower = getTotalPower(factory);
     this.avgPowerPerInstance = totalPower.avg;
     this.minPowerPerInstance = totalPower.min;
     this.maxPowerPerInstance = totalPower.max;
-    this.shardsPerInstance = factory.getTotalShards();
-    this.sloopsPerInstance = factory.getTotalSloops();
+    this.shardsPerInstance = getTotalShards(factory);
+    this.sloopsPerInstance = getTotalSloops(factory);
     this.footprintAreaPerInstance = factoryFloorArea(factory);
   }
 

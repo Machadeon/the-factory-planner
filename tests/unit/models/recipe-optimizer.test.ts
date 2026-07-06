@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import Factory, { type ScoringObjective } from "@/app/models/factory";
+import Factory from "@/app/models/factory";
 import { partSlugLookup } from "@/app/models/game-data";
+import type { ScoringObjective } from "@/app/models/optimizer-config";
 
 function makeFactory(): Factory {
   const f = new Factory();
@@ -80,7 +81,7 @@ describe("optimizeRecipes() — target satisfaction", () => {
     const f = makeFactory();
     f.optimizeRecipes();
     expect(f.productionLines).toHaveLength(0);
-    expect(f.solverError).toBe("Nothing to optimize");
+    expect(f.solverError).toEqual({ kind: "nothing-to-optimize" });
   });
 });
 
