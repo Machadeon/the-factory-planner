@@ -1,9 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import useDragResize from "@/app/hooks/useDragResize";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 beforeEach(() => {
-  localStorage.clear();
+  installLocalStorageMock();
 });
 
 function drag(

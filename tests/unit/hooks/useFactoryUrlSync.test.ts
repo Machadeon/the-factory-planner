@@ -9,6 +9,7 @@ import {
   emptyLibrary,
   type SerializedFactory,
 } from "@/app/models/factory-storage";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 
@@ -75,7 +76,7 @@ function setUrl(url: string) {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  installLocalStorageMock();
   localStorage.setItem("sfp:consent", "true");
   disableAutosave.mockClear();
   setUrl("/");

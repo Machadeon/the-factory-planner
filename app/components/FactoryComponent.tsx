@@ -24,6 +24,9 @@ import {
 import { withBasePath } from "@/app/lib/base-path";
 import { sanitizeFilename } from "@/app/lib/filenames";
 import { formatSolverError } from "@/app/lib/format-solver-error";
+import useConsentGate from "../hooks/useConsentGate";
+import useDragResize from "../hooks/useDragResize";
+import useLibrary from "../hooks/useLibrary";
 import { downloadJson } from "../lib/download";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
@@ -69,8 +72,6 @@ import ConfirmDialog from "./ui/ConfirmDialog";
 
 type Section = "planning" | "optimization" | "logistics";
 
-type PendingAction = "save" | "openLibrary" | null;
-
 const AUTOSAVE_DEBOUNCE_MS = 400;
 
 export default function FactoryComponent() {
@@ -92,12 +93,7 @@ export default function FactoryComponent() {
   activeSectionRef.current = activeSection;
   const [forceExpanded, setForceExpanded] = useState<boolean | null>(null);
   const [libraryPinned, setLibraryPinned] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(380);
-  const sidebarWidthRef = useRef<number>(380);
-  sidebarWidthRef.current = sidebarWidth;
-  const dragStateRef = useRef<{ startX: number; startWidth: number } | null>(
-    null,
-  );
+  const { sidebarWidth, handleResizeDividerMouseDown } = useDragResize();
 
   const factoryRef = useRef<Factory>(new Factory());
   const factory = factoryRef.current;
@@ -123,15 +119,17 @@ export default function FactoryComponent() {
   >(() => ({}) as SerializedFactory);
   const flushAutosaveRef = useRef<() => void>(() => {});
 
-  const [library, setLibrary] = useState<StorageLibrary>({
-    schemaVersion: 1,
-    folders: [],
-    factories: [],
-  });
+  const {
+    library,
+    setLibrary,
+    reload,
+    replaceLibrary,
+    updatePartPointOverrides,
+  } = useLibrary();
   const [libraryOpen, setLibraryOpen] = useState(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const [consentOpen, setConsentOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const { consentOpen, requireConsent, handleAllow, handleCancel } =
+    useConsentGate({ onConsentGranted: () => reload() });
   const [unsavedPromptOpen, setUnsavedPromptOpen] = useState(false);
   const [pendingLoadFactory, setPendingLoadFactory] =
     useState<SerializedFactory | null>(null);
@@ -326,7 +324,6 @@ export default function FactoryComponent() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     setLibraryPinned(getLibraryPinned());
-    setSidebarWidth(getSidebarWidth());
 
     if (hasConsent()) {
       const pref = getAutosavePref();
@@ -338,8 +335,7 @@ export default function FactoryComponent() {
       setFactoryName(generateFactoryName());
       return;
     }
-    const lib = loadLibrary();
-    setLibrary(lib);
+    const lib = reload();
 
     // Restore from URL or session. Extracted so the popstate handler can reuse it.
     // Nothing to restore → fresh factory gets a generated name.
@@ -403,8 +399,7 @@ export default function FactoryComponent() {
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       const id = e.state?.factoryId as string | null | undefined;
-      const lib = loadLibrary();
-      setLibrary(lib);
+      const lib = reload();
       const target = id ? lib.factories.find((f) => f.id === id) : null;
       // Suppress URL-sync effect: popstate already updated the URL, we must
       // not pushState again or the forward history stack gets destroyed.
@@ -515,22 +510,12 @@ export default function FactoryComponent() {
     factory.removeProductionLine(part);
   }
 
-  // --- Consent gate ---
-
-  function requireConsent(action: PendingAction) {
-    if (hasConsent()) {
-      executePendingAction(action);
-    } else {
-      setPendingAction(action);
-      setConsentOpen(true);
-    }
-  }
+  // --- Consent gate (state machine lives in useConsentGate) ---
 
   function handleOpenLibrary() {
     if (libraryOpen) return;
     previousFocusRef.current = document.activeElement as HTMLElement;
-    const lib = loadLibrary();
-    setLibrary(lib);
+    reload();
     setLibraryOpen(true);
   }
 
@@ -545,27 +530,6 @@ export default function FactoryComponent() {
     setLibraryPinned(pinned);
     persistLibraryPinned(pinned);
   }, []);
-
-  function executePendingAction(action: PendingAction) {
-    if (action === "save") {
-      doSave();
-    } else if (action === "openLibrary") {
-      handleOpenLibrary();
-    }
-  }
-
-  function handleConsentAllow() {
-    setConsentOpen(false);
-    const lib = loadLibrary();
-    setLibrary(lib);
-    executePendingAction(pendingAction);
-    setPendingAction(null);
-  }
-
-  function handleConsentCancel() {
-    setConsentOpen(false);
-    setPendingAction(null);
-  }
 
   // --- Save ---
 
@@ -621,10 +585,9 @@ export default function FactoryComponent() {
         updatedAt: now,
       });
       const updatedLib = addFactory(library, reserialised);
-      saveLibrary(updatedLib);
+      replaceLibrary(updatedLib);
       clearAutosave();
       persistCurrentFactoryId(newId);
-      setLibrary(updatedLib);
       setIsDirty(false);
       if (isFirstSave) enableAutosave();
       return;
@@ -642,16 +605,15 @@ export default function FactoryComponent() {
       ? updateFactory(library, serialized)
       : addFactory(library, serialized);
 
-    saveLibrary(updatedLib);
+    replaceLibrary(updatedLib);
     clearAutosave();
     persistCurrentFactoryId(id);
-    setLibrary(updatedLib);
     setIsDirty(false);
     if (isFirstSave) enableAutosave();
   }
 
   function handleSave() {
-    requireConsent("save");
+    requireConsent(doSave);
   }
 
   // --- Export ---
@@ -703,8 +665,7 @@ export default function FactoryComponent() {
     if (!root) return;
 
     if (hasConsent()) {
-      saveLibrary(updatedLib);
-      setLibrary(updatedLib);
+      replaceLibrary(updatedLib);
     }
 
     // Resolve nested references against the freshly merged library, not the
@@ -714,13 +675,12 @@ export default function FactoryComponent() {
 
   function importLibrary(data: StorageLibrary) {
     if (!hasConsent()) {
-      requireConsent("openLibrary");
+      requireConsent(handleOpenLibrary);
       return;
     }
 
     const { library: updatedLib, root } = mergeLibrary(library, data);
-    saveLibrary(updatedLib);
-    setLibrary(updatedLib);
+    replaceLibrary(updatedLib);
 
     // Exported bundles carry the root factory's id — load it directly (resolving
     // references against the freshly merged library) instead of opening the drawer.
@@ -846,29 +806,6 @@ export default function FactoryComponent() {
     if (sf) handleLoadFactory(sf);
   }
 
-  function handleResizeDividerMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    dragStateRef.current = { startX: e.clientX, startWidth: sidebarWidth };
-    const onMouseMove = (ev: MouseEvent) => {
-      if (!dragStateRef.current) return;
-      const delta = dragStateRef.current.startX - ev.clientX;
-      const newWidth = Math.max(
-        200,
-        Math.min(700, dragStateRef.current.startWidth + delta),
-      );
-      setSidebarWidth(newWidth);
-      sidebarWidthRef.current = newWidth;
-    };
-    const onMouseUp = () => {
-      persistSidebarWidth(sidebarWidthRef.current);
-      dragStateRef.current = null;
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }
-
   function handleToggleAutosave() {
     const next = !autosaveEnabled;
     setAutosaveEnabled(next);
@@ -887,10 +824,7 @@ export default function FactoryComponent() {
   }
 
   function handleUpdateGlobalPointOverrides(overrides: Record<string, number>) {
-    if (!library) return;
-    const updatedLib = { ...library, partPointOverrides: overrides };
-    setLibrary(updatedLib);
-    saveLibrary(updatedLib);
+    updatePartPointOverrides(overrides);
   }
 
   const currentFactory = factoryRef.current;
@@ -899,8 +833,8 @@ export default function FactoryComponent() {
     <>
       <StorageConsentDialog
         open={consentOpen}
-        onAllow={handleConsentAllow}
-        onCancel={handleConsentCancel}
+        onAllow={handleAllow}
+        onCancel={handleCancel}
       />
 
       {!libraryPinned && (
@@ -997,7 +931,9 @@ export default function FactoryComponent() {
             onNameChange={handleFactoryNameChange}
             onIconChange={handleIconChange}
             onOpenLibrary={
-              libraryPinned ? undefined : () => requireConsent("openLibrary")
+              libraryPinned
+                ? undefined
+                : () => requireConsent(handleOpenLibrary)
             }
             onSave={handleSave}
             onToggleAutosave={handleToggleAutosave}

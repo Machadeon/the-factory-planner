@@ -5,6 +5,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   type SerializedFactory,
 } from "@/app/models/factory-storage";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 const serialized: SerializedFactory = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -54,7 +55,7 @@ function mount(overrides: { doSave?: () => void } = {}) {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  installLocalStorageMock();
   localStorage.setItem("sfp:consent", "true");
   vi.useFakeTimers();
 });

@@ -9,6 +9,7 @@ import {
   type StorageLibrary,
 } from "@/app/models/factory-storage";
 import { partSlugLookup } from "@/app/models/game-data";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 
@@ -59,7 +60,7 @@ async function settle() {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  installLocalStorageMock();
   localStorage.setItem("sfp:consent", "true");
 });
 

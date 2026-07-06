@@ -1,13 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import useConsentGate from "@/app/hooks/useConsentGate";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 function grant() {
   localStorage.setItem("sfp:consent", "true");
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  installLocalStorageMock();
 });
 
 describe("useConsentGate", () => {

@@ -28,9 +28,9 @@ All stubs written first and confirmed failing (or failing-to-compile) before imp
 
 ## 3. Independent hooks (design step 3)
 
-- [ ] 3.1 Extract `app/hooks/useConsentGate.ts`; FactoryComponent consumes; 1.4 green
-- [ ] 3.2 Extract `app/hooks/useLibrary.ts` (library state + persist-pairing mutators incl. point-override update); FactoryComponent consumes; 1.5 green
-- [ ] 3.3 Extract `app/hooks/useDragResize.ts`; FactoryComponent consumes; 1.6 green
+- [x] 3.1 Extract `app/hooks/useConsentGate.ts`; FactoryComponent consumes; 1.4 green
+- [x] 3.2 Extract `app/hooks/useLibrary.ts` (library state + persist-pairing mutators incl. point-override update); FactoryComponent consumes; 1.5 green
+- [x] 3.3 Extract `app/hooks/useDragResize.ts`; FactoryComponent consumes; 1.6 green
 
 ## 4. Session + autosave (design step 4 — one commit, kills version counter and ref machinery)
 
