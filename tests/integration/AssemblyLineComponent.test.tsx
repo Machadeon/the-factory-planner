@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import AssemblyLineComponent from "@/app/components/AssemblyLineComponent";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";

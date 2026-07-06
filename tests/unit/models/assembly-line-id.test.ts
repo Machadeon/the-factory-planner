@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
-import { recipes } from "@/app/models/library";
+import { recipes } from "@/app/models/game-data";
 import type Recipe from "@/app/models/recipe";
 
 // AC1 (R7.2): every AssemblyLine gets a stable, unique, auto-generated id so graph

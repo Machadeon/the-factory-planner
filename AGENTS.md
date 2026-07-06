@@ -57,9 +57,9 @@ npx playwright test tests/e2e/seed.spec.ts
 
 Core hierarchy: `Factory → ProductionLine → AssemblyLine → RecipeLike`
 
-- **`Factory`** (`app/models/factory.tsx`): Top-level container. Holds `ProductionLine[]`, maintains rate/lookup indexes (`rateLookup`, `_assemblyLineLookup`, `_productionLineLookup`), owns LP solver (`autoCalculateRates()`). `Factory.update()` injected by `FactoryComponent` at mount.
-- **`ProductionLine`** (`app/models/production-line.tsx`): One per output part. Tracks `rate`, `outputRate` (desired export), `autoCalculateRate`, `autoCreated` flags.
-- **`AssemblyLine`** (`app/models/assembly-line.tsx`): One per recipe within production line. Holds `rate`, `machineSpeed`, `powerShards`, `sloopedSlots`, `allowRemainder`.
+- **`Factory`** (`app/models/factory.ts`): Top-level container. Holds `ProductionLine[]`, maintains rate/lookup indexes (`rateLookup`, `_assemblyLineLookup`, `_productionLineLookup`), owns LP solver (`autoCalculateRates()`). `Factory.update()` injected by `FactoryComponent` at mount.
+- **`ProductionLine`** (`app/models/production-line.ts`): One per output part. Tracks `rate`, `outputRate` (desired export), `autoCalculateRate`, `autoCreated` flags.
+- **`AssemblyLine`** (`app/models/assembly-line.ts`): One per recipe within production line. Holds `rate`, `machineSpeed`, `powerShards`, `sloopedSlots`, `allowRemainder`.
 - **`RecipeLike`** (`app/models/recipe-like.ts`): Interface satisfied by `Recipe` (game recipe) and `FactoryRecipe` (supplier factory). Distinguish via `isFactoryRecipe` flag.
 
 ## State management pattern
@@ -82,13 +82,14 @@ Never mutate `Factory` directly without `factory.update()` after — shallow-clo
 
 ## Static game data
 
-`app/models/library.tsx` loads `app/models/data.json` at module init, exports:
+`app/models/game-data/` loads `app/models/data.json` at module init:
 
-- `parts`, `partLookup` (by className), `partSlugLookup`
-- `buildings`, `buildingLookup`
-- `recipes`, `recipeLookup` (partSlug → Recipe[])
+- `constants.ts` — `rawResources`, `defaultResourceLimits`, `notAutomatable`, `syntheticSinkPoints`, `RATE_EPSILON`, `SOLVER_EQUALITY_FUDGE`
+- `load.ts` — parts/buildings/base-recipe parsing; single `registerRecipe()` path
+- `generator-recipes.ts` — synthetic burn-recipe generation
+- `index.ts` — public barrel: `parts`, `partLookup` (by className), `partSlugLookup`, `buildings`, `buildingLookup`, `recipes`, `recipeLookup` (partSlug → Recipe[]), `recipeSlugLookup` (slug → Recipe)
 
-`recipeLookup` primary way to find recipes producing a given part.
+`recipeLookup` primary way to find recipes producing a given part. Import from `@/app/models/game-data`; model files that `game-data` itself imports (e.g. `recipe.ts`) import `game-data/constants` directly to stay acyclic. Rate tolerance comparisons always use `RATE_EPSILON` — never literal epsilons.
 
 ## Storage layer
 
@@ -152,7 +153,7 @@ Two MCP servers in `.mcp.json`:
 
 - Biome enforces formatting/linting; run `npm run lint-fix`.
 - No comments unless why non-obvious.
-- `a11y` rules disabled in Biome config.
+- `a11y` rules are active (pre-commit biome hook enforces them); suppress only with a reasoned `biome-ignore` comment.
 - One exported component per file in `app/components/`; internal sub-components in own files.
 
 ### Naming conventions
@@ -160,7 +161,7 @@ Two MCP servers in `.mcp.json`:
 | Thing               | Convention           | Example                                          |
 | ------------------- | -------------------- | ------------------------------------------------ |
 | Component files     | PascalCase           | `AssemblyLineComponent.tsx`                      |
-| Model/service files | kebab-case           | `assembly-line.tsx`, `storage-service.ts`        |
+| Model/service files | kebab-case           | `assembly-line.ts`, `storage-service.ts`        |
 | Functions           | camelCase            | `displayNum`, `serializeFactory`                 |
 | Constants           | SCREAMING_SNAKE_CASE | `CURRENT_SCHEMA_VERSION`, `AUTOSAVE_DEBOUNCE_MS` |
 | Props interfaces    | `XxxProps` suffix    | `AssemblyLineComponentProps`                     |

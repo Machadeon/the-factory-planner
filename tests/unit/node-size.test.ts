@@ -7,7 +7,7 @@ import {
   nodeSize,
 } from "@/app/components/logistics/node-size";
 import AssemblyLine from "@/app/models/assembly-line";
-import { recipes } from "@/app/models/library";
+import { recipes } from "@/app/models/game-data";
 import type Recipe from "@/app/models/recipe";
 
 // Future revision: an "actual size" toggle. With it off, every assembly node collapses to

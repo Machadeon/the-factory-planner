@@ -13,12 +13,12 @@ import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
-import FactoryRecipe from "../models/factory-recipe";
+import FactoryRecipe, { factoryRecipeSlug } from "../models/factory-recipe";
 import type {
   SerializedFactory,
   StorageLibrary,
 } from "../models/factory-storage";
-import { recipeLookup } from "../models/library";
+import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { RecipeLike } from "../models/recipe-like";
@@ -66,7 +66,7 @@ export default function ProductionLineComponent(
   const productionRateDiff = actualProductionRate - props.productionLine.rate;
   const needMoreProduction =
     props.productionLine.assemblyLines.length === 0 ||
-    Math.abs(productionRateDiff) > 0.0001;
+    Math.abs(productionRateDiff) > RATE_EPSILON;
   const hasMoreRecipes =
     props.productionLine.assemblyLines.length <
     recipeLookup[props.productionLine.part.slug].length;
@@ -77,7 +77,7 @@ export default function ProductionLineComponent(
         ({ sf, factory: f }) =>
           f.allOutputs().some((p) => p.slug === part.slug) &&
           !props.productionLine.assemblyLines.some(
-            (al) => al.recipe.slug === `factory:${sf.id}`,
+            (al) => al.recipe.slug === factoryRecipeSlug(sf.id),
           ),
       ),
     [props.candidateFactories, part.slug, props.productionLine.assemblyLines],

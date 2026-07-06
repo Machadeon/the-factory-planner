@@ -4,10 +4,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useMemo } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
+import { factoryRecipeId } from "../models/factory-recipe";
 import {
   deserializeFactory,
   type StorageLibrary,
 } from "../models/factory-storage";
+import { RATE_EPSILON } from "../models/game-data";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
 import CollapsibleSection from "./ui/CollapsibleSection";
@@ -56,7 +58,7 @@ export default function FactoryOverviewComponent({
           const rate = consumerFactory.rateLookup[output.part.slug];
           if (!rate) continue;
           const net = rate.consumptionRate - rate.productionRate;
-          if (net <= 0.0001) continue;
+          if (net <= RATE_EPSILON) continue;
           const existing = map.get(output.part.slug) ?? [];
           existing.push({ id: sf.id, name: sf.name, rate: net });
           map.set(output.part.slug, existing);
@@ -293,7 +295,7 @@ export default function FactoryOverviewComponent({
                           type="button"
                           className="grow font-medium text-left underline cursor-pointer hover:opacity-70"
                           onClick={() =>
-                            onNavigateToFactory(fr.slug.replace("factory:", ""))
+                            onNavigateToFactory(factoryRecipeId(fr.slug))
                           }
                         >
                           {fr.name}
@@ -304,9 +306,7 @@ export default function FactoryOverviewComponent({
                       <IconButton
                         aria-label="Remove supplier"
                         onClick={() =>
-                          factory.removeSupplier(
-                            fr.slug.replace("factory:", ""),
-                          )
+                          factory.removeSupplier(factoryRecipeId(fr.slug))
                         }
                         className="inline p-1"
                       >

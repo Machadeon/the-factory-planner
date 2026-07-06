@@ -1,9 +1,21 @@
+import { RATE_EPSILON } from "./game-data/constants";
 import type Part from "./part";
 import type Recipe from "./recipe";
 import type { RecipeLike } from "./recipe-like";
 
-function shardsForClock(clock: number): number {
+export function shardsForClock(clock: number): number {
   return Math.max(0, Math.ceil((clock - 100) / 50));
+}
+
+export type MachineCount =
+  | { fullMachines: number; remainderClock: number }
+  | { machineCount: number; uniformClock: number };
+
+export function totalMachines(count: MachineCount): number {
+  if ("fullMachines" in count) {
+    return count.fullMachines + (count.remainderClock > 0 ? 1 : 0);
+  }
+  return count.machineCount;
 }
 
 /** Default routing space (metres) between machine rows in the graph view. */
@@ -160,9 +172,7 @@ export default class AssemblyLine {
     return 100 + 50 * this.powerShards;
   }
 
-  getMachineCount():
-    | { fullMachines: number; remainderClock: number }
-    | { machineCount: number; uniformClock: number } {
+  getMachineCount(): MachineCount {
     if (this.recipe.isFactoryRecipe) {
       return { fullMachines: 0, remainderClock: 0 };
     }
@@ -173,7 +183,7 @@ export default class AssemblyLine {
       const fullMachines = Math.floor(this.rate / perMachine);
       const leftover = this.rate - fullMachines * perMachine;
       const remainderClock =
-        leftover > 0.0001 ? (leftover / baseRate) * 100 : 0;
+        leftover > RATE_EPSILON ? (leftover / baseRate) * 100 : 0;
       return { fullMachines, remainderClock };
     }
 

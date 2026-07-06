@@ -7,6 +7,7 @@ import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
+import { shardsForClock, totalMachines } from "../models/assembly-line";
 import type Factory from "../models/factory";
 import type Recipe from "../models/recipe";
 import MachineCountDisplay from "./MachineCountDisplay";
@@ -27,7 +28,7 @@ export default function AssemblyLineControls({
   function setSpeed(raw: number) {
     const speed = Math.min(Math.max(raw, 1), 250);
     assemblyLine.machineSpeed = speed;
-    assemblyLine.powerShards = Math.max(0, Math.ceil((speed - 100) / 50));
+    assemblyLine.powerShards = shardsForClock(speed);
     factory.update();
   }
 
@@ -44,7 +45,7 @@ export default function AssemblyLineControls({
       assemblyLine.rate > 0 ? (assemblyLine.rate / (N * baseRate)) * 100 : 100;
     const clamped = Math.min(250, Math.max(1, newSpeed));
     assemblyLine.machineSpeed = clamped;
-    assemblyLine.powerShards = Math.max(0, Math.ceil((clamped - 100) / 50));
+    assemblyLine.powerShards = shardsForClock(clamped);
     assemblyLine.allowRemainder = false;
     factory.update();
   }
@@ -64,12 +65,8 @@ export default function AssemblyLineControls({
 
   const totalShards = assemblyLine.getTotalShards();
   const machineCountResult = assemblyLine.getMachineCount();
-  const totalMachines =
-    "fullMachines" in machineCountResult
-      ? machineCountResult.fullMachines +
-        (machineCountResult.remainderClock > 0 ? 1 : 0)
-      : machineCountResult.machineCount;
-  const totalSloops = assemblyLine.sloopedSlots * totalMachines;
+  const machineTotal = totalMachines(machineCountResult);
+  const totalSloops = assemblyLine.sloopedSlots * machineTotal;
 
   return (
     <div className="flex flex-col gap-y-2 px-3 py-2 border-l border-zinc-700 w-[280px] shrink-0 items-center">
@@ -106,7 +103,7 @@ export default function AssemblyLineControls({
           variant="outlined"
           size="small"
           className="w-17 shrink-0"
-          value={totalMachines}
+          value={machineTotal}
           onCalculate={setMachineCount}
           slotProps={{ htmlInput: { className: "text-right" } }}
         />

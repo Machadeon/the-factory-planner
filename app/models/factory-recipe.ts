@@ -1,5 +1,6 @@
+import { totalMachines } from "./assembly-line";
 import type Factory from "./factory";
-import { partSlugLookup } from "./library";
+import { partSlugLookup, RATE_EPSILON } from "./game-data";
 import type Part from "./part";
 import type Recipe from "./recipe";
 import type { RecipePart } from "./recipe";
@@ -24,15 +25,20 @@ function factoryFloorArea(factory: Factory, depth = 0): number {
       }
       const building = (al.recipe as Recipe).building;
       if (!building?.size) continue;
-      const count = al.getMachineCount();
-      const machines =
-        "fullMachines" in count
-          ? count.fullMachines + (count.remainderClock > 0 ? 1 : 0)
-          : count.machineCount;
+      const machines = totalMachines(al.getMachineCount());
       area += machines * building.size.width * building.size.length;
     }
   }
   return area;
+}
+
+export function factoryRecipeSlug(factoryId: string): string {
+  return `factory:${factoryId}`;
+}
+
+/** Extracts the factory id from a factory-recipe slug; non-prefixed input passes through. */
+export function factoryRecipeId(slug: string): string {
+  return slug.startsWith("factory:") ? slug.slice("factory:".length) : slug;
 }
 
 export default class FactoryRecipe implements RecipeLike {
@@ -53,7 +59,7 @@ export default class FactoryRecipe implements RecipeLike {
   private readonly _productLookup: Record<string, RecipePart> = {};
 
   constructor(factoryId: string, factoryName: string, factory: Factory) {
-    this.slug = `factory:${factoryId}`;
+    this.slug = factoryRecipeSlug(factoryId);
     this.name = factoryName;
     this.icon = factory.icon;
     const ingList: RecipePart[] = [];
@@ -63,11 +69,11 @@ export default class FactoryRecipe implements RecipeLike {
       const part = partSlugLookup[partSlug];
       if (!part) continue;
       const netOut = rate.productionRate - rate.consumptionRate;
-      if (netOut > 0.0001) {
+      if (netOut > RATE_EPSILON) {
         const rp: RecipePart = { part, quantity: netOut };
         prodList.push(rp);
         this._productLookup[partSlug] = rp;
-      } else if (netOut < -0.0001) {
+      } else if (netOut < -RATE_EPSILON) {
         const rp: RecipePart = { part, quantity: -netOut };
         ingList.push(rp);
         this._ingredientLookup[partSlug] = rp;

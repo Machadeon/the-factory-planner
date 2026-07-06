@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { displayNum, formatRate, rateUnit } from "@/app/lib/format";
-import { partSlugLookup } from "@/app/models/library";
+import { partSlugLookup } from "@/app/models/game-data";
 
 const power = partSlugLookup.power;
 const ironPlate = partSlugLookup["iron-plate"];

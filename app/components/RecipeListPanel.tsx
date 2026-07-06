@@ -3,7 +3,7 @@
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
-import { recipes } from "../models/library";
+import { recipes } from "../models/game-data";
 import type Recipe from "../models/recipe";
 import RecipeOverrideRow, { displayRecipeName } from "./RecipeOverrideRow";
 

@@ -9,7 +9,7 @@ import { Fragment, useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
-import { parts } from "../models/library";
+import { parts } from "../models/game-data";
 import {
   computeDefaultPointValues,
   resolveEffectivePointValues,

@@ -3,7 +3,7 @@
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import type { SyntheticEvent } from "react";
-import { parts } from "../models/library";
+import { parts } from "../models/game-data";
 import type Part from "../models/part";
 import Icon from "./ui/Icon";
 

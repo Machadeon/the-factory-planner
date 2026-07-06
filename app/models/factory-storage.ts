@@ -1,12 +1,15 @@
-import AssemblyLine, { DEFAULT_ROW_SPACING } from "./assembly-line";
+import AssemblyLine, {
+  DEFAULT_ROW_SPACING,
+  shardsForClock,
+} from "./assembly-line";
 import Factory, {
   type AvailablePart,
   defaultRecipeOptimizerConfig,
   type PartConstraint,
   type RecipeOptimizerConfig,
 } from "./factory";
-import FactoryRecipe from "./factory-recipe";
-import { partSlugLookup, recipes } from "./library";
+import FactoryRecipe, { factoryRecipeId } from "./factory-recipe";
+import { partSlugLookup, recipeSlugLookup } from "./game-data";
 import ProductionLine from "./production-line";
 
 export interface SerializedAssemblyLine {
@@ -158,9 +161,7 @@ export function serializeFactory(
     autoAddProductLines: factory.autoAddProductLines,
     supplierIds:
       factory.supplierFactories.length > 0
-        ? factory.supplierFactories.map((fr) =>
-            fr.slug.slice("factory:".length),
-          )
+        ? factory.supplierFactories.map((fr) => factoryRecipeId(fr.slug))
         : undefined,
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
@@ -186,7 +187,7 @@ export function serializeFactory(
         if (al.recipe.isFactoryRecipe) {
           // Reference the nested factory by id only — it lives as its own
           // independent library entry, not embedded here.
-          const nestedId = al.recipe.slug.slice("factory:".length);
+          const nestedId = factoryRecipeId(al.recipe.slug);
           return {
             id: al.id,
             rows: al.rows > 0 ? al.rows : undefined,
@@ -232,11 +233,6 @@ function normalizeRecipeOptimizer(
   return { ...base, ...raw, availableParts };
 }
 
-const recipeSlugLookup: Record<string, import("./recipe").default> = {};
-for (const recipe of recipes) {
-  recipeSlugLookup[recipe.slug] = recipe;
-}
-
 // When a cycle is detected, deserialize the factory using only its standard
 // recipe assembly lines (no nested factory links) to break the recursion while
 // still providing usable output rates.
@@ -270,7 +266,7 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
           alData.rate,
           alData.sloopedSlots,
           alData.machineSpeed,
-          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          shardsForClock(alData.machineSpeed),
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),
@@ -420,7 +416,7 @@ export function deserializeFactory(
             alData.rate,
             0,
             alData.machineSpeed,
-            Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+            shardsForClock(alData.machineSpeed),
             alData.allowRemainder,
             alData.autoCreated ?? false,
             alData.id ?? generateId(),
@@ -450,7 +446,7 @@ export function deserializeFactory(
           alData.rate,
           alData.sloopedSlots,
           alData.machineSpeed,
-          Math.max(0, Math.ceil((alData.machineSpeed - 100) / 50)),
+          shardsForClock(alData.machineSpeed),
           alData.allowRemainder,
           alData.autoCreated ?? false,
           alData.id ?? generateId(),

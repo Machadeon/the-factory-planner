@@ -9,7 +9,7 @@ import { rateUnit } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { Target } from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
-import { partSlugLookup } from "../models/library";
+import { partSlugLookup } from "../models/game-data";
 import PartSelector from "./PartSelector";
 import TextCalculatorField from "./TextCalculatorField";
 import AddItemControl from "./ui/AddItemControl";

@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { displayNum } from "@/app/lib/format";
+import { factoryRecipeId } from "../../models/factory-recipe";
 import type Recipe from "../../models/recipe";
 import Icon from "../ui/Icon";
 import { SCALE } from "./constants";
@@ -128,9 +129,7 @@ export default function AssemblyLineNode({ data }: NodeProps) {
             <button
               type="button"
               className="max-w-56 truncate text-center text-sm font-semibold underline hover:opacity-70"
-              onClick={() =>
-                onNavigateToFactory(recipe.slug.slice("factory:".length))
-              }
+              onClick={() => onNavigateToFactory(factoryRecipeId(recipe.slug))}
             >
               {name}
             </button>

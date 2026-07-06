@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import RateDisplay from "@/app/components/ui/RateDisplay";
-import { partSlugLookup } from "@/app/models/library";
+import { partSlugLookup } from "@/app/models/game-data";
 
 const power = partSlugLookup.power;
 const ironPlate = partSlugLookup["iron-plate"];

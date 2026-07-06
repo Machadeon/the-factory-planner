@@ -4,7 +4,7 @@ import type { ModelDefinition, SolveResult } from "javascript-lp-solver";
 import solver from "javascript-lp-solver";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Factory from "@/app/models/factory";
-import { partSlugLookup } from "@/app/models/library";
+import { partSlugLookup } from "@/app/models/game-data";
 import ProductionLine from "@/app/models/production-line";
 
 vi.mock("javascript-lp-solver", () => ({

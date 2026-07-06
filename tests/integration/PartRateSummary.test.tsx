@@ -4,7 +4,7 @@ import PartRateSummary from "@/app/components/PartRateSummary";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";

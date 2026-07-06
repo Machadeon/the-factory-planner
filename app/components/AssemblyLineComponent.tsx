@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import type AssemblyLine from "../models/assembly-line";
 import type Factory from "../models/factory";
-import { recipeLookup } from "../models/library";
+import { recipeLookup } from "../models/game-data";
 import type Part from "../models/part";
 import type Recipe from "../models/recipe";
 import type { RecipePart } from "../models/recipe";

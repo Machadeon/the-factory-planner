@@ -24,6 +24,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useState } from "react";
+import { downloadJson } from "../lib/download";
 import type {
   FactoryFolder,
   SerializedFactory,
@@ -33,7 +34,6 @@ import { generateId } from "../models/factory-storage";
 import {
   addFactory,
   addFolder,
-  downloadJson,
   moveFactory,
   removeFactory,
   removeFolder,

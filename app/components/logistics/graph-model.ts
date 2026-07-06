@@ -1,7 +1,9 @@
 import type AssemblyLine from "../../models/assembly-line";
 import type Factory from "../../models/factory";
+import { factoryRecipeId } from "../../models/factory-recipe";
 import type { StorageLibrary } from "../../models/factory-storage";
 import { deserializeFactory } from "../../models/factory-storage";
+import { RATE_EPSILON } from "../../models/game-data";
 import type Part from "../../models/part";
 import {
   buildPartEdges,
@@ -129,7 +131,7 @@ export function buildGraphModel(
 
   // Supplier factory nodes (distinct sources).
   for (const fr of factory.supplierFactories) {
-    const fid = fr.slug.slice("factory:".length);
+    const fid = factoryRecipeId(fr.slug);
     const id = supplierId(fid);
     const parts: { part: Part; rate: number }[] = [];
     for (const product of fr.products) {
@@ -272,7 +274,7 @@ export function deriveConsumers(
       const rate = consumerFactory.rateLookup[output.slug];
       if (!rate) continue;
       const net = rate.consumptionRate - rate.productionRate;
-      if (net <= 0.0001) continue;
+      if (net <= RATE_EPSILON) continue;
       const list = map.get(output.slug) ?? [];
       list.push({ id: sf.id, name: sf.name, rate: net });
       map.set(output.slug, list);

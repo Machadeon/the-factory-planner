@@ -14,7 +14,7 @@ import TerminalNode from "@/app/components/logistics/TerminalNode";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
-import { partSlugLookup, recipes } from "@/app/models/library";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
 import ProductionLine from "@/app/models/production-line";
 
 // React Flow needs a real canvas/layout the jsdom DOM can't provide; mock its primitives

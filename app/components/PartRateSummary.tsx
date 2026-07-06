@@ -8,6 +8,7 @@ import type Factory from "../models/factory";
 import type { Rate } from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
 import type { StorageLibrary } from "../models/factory-storage";
+import { RATE_EPSILON } from "../models/game-data";
 import type Part from "../models/part";
 import FactoryPickerDialog from "./FactoryPickerDialog";
 import Icon from "./ui/Icon";
@@ -38,19 +39,19 @@ export default function PartRateSummary({
   const [supplyPickerOpen, setSupplyPickerOpen] = useState(false);
   const netRate = rate.productionRate - rate.consumptionRate;
   const netRateDisplay = displayNum(
-    Math.abs(netRate) < 0.0001 ? rate.productionRate : Math.abs(netRate),
+    Math.abs(netRate) < RATE_EPSILON ? rate.productionRate : Math.abs(netRate),
   );
 
   // Get producers and consumers for this part
   const assemblyLines = factory._assemblyLineLookup[part.slug] || [];
   const producers = assemblyLines.filter(
     (line) =>
-      line.rate > 0.0001 &&
+      line.rate > RATE_EPSILON &&
       line.recipe.products.some((p) => p.part.slug === part.slug),
   );
   const consumers = assemblyLines.filter(
     (line) =>
-      line.rate > 0.0001 &&
+      line.rate > RATE_EPSILON &&
       line.recipe.ingredients.some((p) => p.part.slug === part.slug),
   );
 
@@ -74,7 +75,9 @@ export default function PartRateSummary({
         <RateDisplay
           part={part}
           rate={
-            Math.abs(netRate) < 0.0001 ? rate.productionRate : Math.abs(netRate)
+            Math.abs(netRate) < RATE_EPSILON
+              ? rate.productionRate
+              : Math.abs(netRate)
           }
           className="text-sm text-right min-w-16"
         />
