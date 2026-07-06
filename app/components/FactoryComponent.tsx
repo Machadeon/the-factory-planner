@@ -22,6 +22,7 @@ import {
   useState,
 } from "react";
 import { withBasePath } from "@/app/lib/base-path";
+import { sanitizeFilename } from "@/app/lib/filenames";
 import { formatSolverError } from "@/app/lib/format-solver-error";
 import { downloadJson } from "../lib/download";
 import Factory from "../models/factory";
@@ -32,11 +33,11 @@ import {
   deserializeFactory,
   generateId,
   generateSlug,
-  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
   serializeFactory,
 } from "../models/factory-storage";
+import { mergeLibrary, mergeSingleFactory } from "../models/library-ops";
 import type Part from "../models/part";
 import {
   addFactory,
@@ -667,7 +668,7 @@ export default function FactoryComponent() {
       factories,
       rootId: root.id,
     };
-    downloadJson(bundle, `${factoryName.replace(/[^a-z0-9]/gi, "_")}.json`);
+    downloadJson(bundle, `${sanitizeFilename(factoryName)}.json`);
   }
 
   // --- Import ---
@@ -694,63 +695,13 @@ export default function FactoryComponent() {
     reader.readAsText(file);
   }
 
-  // Migrate incoming data (hoists any legacy embedded factories), then assign
-  // fresh ids while preserving every cross-reference (folder parent, supplier,
-  // nested recipe). Returns the remapped entries plus the id mapping.
-  function remapImportedLibrary(data: StorageLibrary): {
-    folders: StorageLibrary["folders"];
-    factories: SerializedFactory[];
-    idMap: Map<string, string>;
-  } {
-    const migrated = migrateLibrary(data);
-    const now = new Date().toISOString();
-    const idMap = new Map<string, string>();
-    for (const folder of migrated.folders) idMap.set(folder.id, generateId());
-    for (const f of migrated.factories) idMap.set(f.id, generateId());
-
-    const folders = migrated.folders.map((f) => ({
-      ...f,
-      id: idMap.get(f.id) ?? generateId(),
-      parentId: f.parentId ? (idMap.get(f.parentId) ?? null) : null,
-    }));
-    const factories = migrated.factories.map((f) => ({
-      ...f,
-      id: idMap.get(f.id) ?? generateId(),
-      folderId: f.folderId ? (idMap.get(f.folderId) ?? null) : null,
-      supplierIds: f.supplierIds?.map((sid) => idMap.get(sid) ?? sid),
-      createdAt: now,
-      updatedAt: now,
-      productionLines: f.productionLines.map((pl) => ({
-        ...pl,
-        assemblyLines: pl.assemblyLines.map((al) => ({
-          ...al,
-          nestedFactoryId: al.nestedFactoryId
-            ? (idMap.get(al.nestedFactoryId) ?? al.nestedFactoryId)
-            : undefined,
-        })),
-      })),
-    }));
-    return { folders, factories, idMap };
-  }
-
   // Legacy single-factory files (schema <= 3) may embed nested factories. Run
   // them through the same bundle path so embedded copies become independent
   // entries, then load the imported factory.
   function importSingleFactory(data: SerializedFactory) {
-    const { folders, factories, idMap } = remapImportedLibrary({
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      folders: [],
-      factories: [data],
-    });
-    const rootId = idMap.get(data.id);
-    const root = factories.find((f) => f.id === rootId);
+    const { library: updatedLib, root } = mergeSingleFactory(library, data);
     if (!root) return;
 
-    const updatedLib: StorageLibrary = {
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      folders: [...library.folders, ...folders],
-      factories: [...library.factories, ...factories],
-    };
     if (hasConsent()) {
       saveLibrary(updatedLib);
       setLibrary(updatedLib);
@@ -767,21 +718,12 @@ export default function FactoryComponent() {
       return;
     }
 
-    const { folders, factories, idMap } = remapImportedLibrary(data);
-    const updatedLib: StorageLibrary = {
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      folders: [...library.folders, ...folders],
-      factories: [...library.factories, ...factories],
-    };
+    const { library: updatedLib, root } = mergeLibrary(library, data);
     saveLibrary(updatedLib);
     setLibrary(updatedLib);
 
     // Exported bundles carry the root factory's id — load it directly (resolving
     // references against the freshly merged library) instead of opening the drawer.
-    const newRootId = data.rootId ? idMap.get(data.rootId) : undefined;
-    const root = newRootId
-      ? factories.find((f) => f.id === newRootId)
-      : undefined;
     if (root) {
       loadFactoryFromSerialized(root, updatedLib);
     } else {

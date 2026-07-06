@@ -22,9 +22,9 @@ All stubs written first and confirmed failing (or failing-to-compile) before imp
 
 ## 2. Spike + pure extractions (design steps 1–2)
 
-- [ ] 2.1 Add `valtio` dependency (pinned); implement 1.1 spike test green
-- [ ] 2.2 Create `app/lib/filenames.ts` (`sanitizeFilename`); switch FactoryComponent export path to it (lib-utilities R7.S2); 1.2 green
-- [ ] 2.3 Create `app/models/library-ops.ts` — `remapImportedLibrary`, `mergeSingleFactory`, `mergeLibrary` per design D6; FactoryComponent's import handlers consume them (behavior identical, library-ops R5 wiring preserved); 1.3 green
+- [x] 2.1 Add `valtio` dependency (pinned); implement 1.1 spike test green
+- [x] 2.2 Create `app/lib/filenames.ts` (`sanitizeFilename`); switch FactoryComponent export path to it (lib-utilities R7.S2); 1.2 green
+- [x] 2.3 Create `app/models/library-ops.ts` — `remapImportedLibrary`, `mergeSingleFactory`, `mergeLibrary` per design D6; FactoryComponent's import handlers consume them (behavior identical, library-ops R5 wiring preserved); 1.3 green
 
 ## 3. Independent hooks (design step 3)
 
