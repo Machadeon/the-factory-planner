@@ -518,58 +518,6 @@ describe("autoCalculateRates() — deferred constraint verification", () => {
     expect(inputSlugs).toContain("iron-ore");
     expect(outputSlugs).not.toContain("iron-ore");
   });
-
-  // Regression: the equal-constraint violation message interpolated `constraint.min`
-  // instead of `constraint.equal`, so it always read "must be exactly undefined/min".
-  // These tests force each branch to fire by mutating rateLookup after the solve —
-  // the deferred verify closure reads `this.rateLookup` live when the setTimeout
-  // fires (per the test above), so this reliably targets one specific branch
-  // without depending on the LP solver producing an out-of-tolerance result.
-  it("equal-constraint violation message names the equal target, not min", async () => {
-    const factory = makeFactory();
-    addManualProductionLine(
-      factory,
-      ironIngotPart,
-      ironIngotRecipe,
-      1,
-      30, // fixed-rate target → { equal: 30 } constraint on iron-ingot
-    );
-
-    factory.autoCalculateRates();
-    // Force the solved net rate away from the equal target before verification runs.
-    factory.rateLookup["iron-ingot"].productionRate = 25;
-
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(factory.solverError).toContain("exactly 30/min");
-    expect(factory.solverError).not.toContain("undefined");
-  });
-
-  it("min-constraint violation message is unaffected by the equal-message fix", async () => {
-    const factory = makeFactory();
-    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1);
-    factory.constraints = [{ partSlug: "iron-ingot", min: 20 }];
-
-    factory.autoCalculateRates();
-    factory.rateLookup["iron-ingot"].productionRate = 10;
-
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(factory.solverError).toContain("20/min or greater");
-  });
-
-  it("max-constraint violation message is unaffected by the equal-message fix", async () => {
-    const factory = makeFactory();
-    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1);
-    factory.constraints = [{ partSlug: "iron-ingot", max: 40 }];
-
-    factory.autoCalculateRates();
-    factory.rateLookup["iron-ingot"].productionRate = 50;
-
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(factory.solverError).toContain("40/min or less");
-  });
 });
 
 describe("autoCalculateRates() — maximize output (Item 8)", () => {
@@ -716,36 +664,6 @@ describe("serialization — constraints + maximizeOutput", () => {
   });
 });
 
-describe("targetConstraints()", () => {
-  it("maps fixed-rate targets to the fixed map", () => {
-    const factory = makeFactory();
-    factory.optimizer.targets = [{ partSlug: "iron-plate", rate: 20 }];
-    const { fixed, maximize } = factory.targetConstraints();
-    expect(fixed.get("iron-plate")).toBe(20);
-    expect(maximize.size).toBe(0);
-  });
-
-  it("maps maximize targets to the maximize set and ignores their rate", () => {
-    const factory = makeFactory();
-    factory.optimizer.targets = [
-      { partSlug: "iron-plate", rate: 20, maximize: true },
-    ];
-    const { fixed, maximize } = factory.targetConstraints();
-    expect(maximize.has("iron-plate")).toBe(true);
-    expect(fixed.has("iron-plate")).toBe(false);
-  });
-
-  it("ignores fixed targets with missing or non-positive rate", () => {
-    const factory = makeFactory();
-    factory.optimizer.targets = [
-      { partSlug: "iron-plate" },
-      { partSlug: "iron-rod", rate: 0 },
-    ];
-    const { fixed } = factory.targetConstraints();
-    expect(fixed.size).toBe(0);
-  });
-});
-
 describe("serialization — optimizer targets", () => {
   const meta = {
     id: "test-id",
@@ -777,5 +695,69 @@ describe("serialization — optimizer targets", () => {
 
     const restored = deserializeFactory(serialized);
     expect(restored?.optimizer.targets).toEqual([]);
+  });
+});
+
+describe("M2 wrapper contracts — structured errors and single notification", () => {
+  it("rate-solver R2.S3: infeasible solve sets {kind:'infeasible-rates'} and leaves rates unchanged", () => {
+    const factory = makeFactory();
+    // Output target with no assembly lines → infeasible (matches the existing
+    // infeasible-target test, now asserting the structured kind).
+    const pl = new ProductionLine(ironIngotPart, 0, 100, true, false, true);
+    pl.assemblyLines = [];
+    factory.productionLines.push(pl);
+    factory._productionLineLookup[ironIngotPart.slug] = pl;
+    factory._updateRates();
+
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toEqual({ kind: "infeasible-rates" });
+  });
+
+  it("verification R2.S1: autoCalculateRates notifies exactly once (feasible path)", () => {
+    const factory = makeFactory();
+    addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1, 30);
+    let updates = 0;
+    factory.update = () => {
+      updates += 1;
+      factory._updateRates();
+    };
+
+    factory.autoCalculateRates();
+
+    expect(factory.solverError).toBeNull();
+    expect(updates).toBe(1);
+  });
+
+  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on success", () => {
+    const factory = makeFactory();
+    factory.optimizer.overwrite = true;
+    factory.optimizer.targets = [{ partSlug: "iron-plate", rate: 30 }];
+    let updates = 0;
+    factory.update = () => {
+      updates += 1;
+      factory._updateRates();
+    };
+
+    factory.optimizeRecipes();
+
+    expect(factory.solverError).toBeNull();
+    expect(updates).toBe(1);
+  });
+
+  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on the error path", () => {
+    const factory = makeFactory();
+    factory.optimizer.overwrite = true;
+    factory.optimizer.targets = [];
+    let updates = 0;
+    factory.update = () => {
+      updates += 1;
+      factory._updateRates();
+    };
+
+    factory.optimizeRecipes();
+
+    expect(factory.solverError).toEqual({ kind: "nothing-to-optimize" });
+    expect(updates).toBe(1);
   });
 });

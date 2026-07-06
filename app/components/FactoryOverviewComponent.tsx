@@ -4,6 +4,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useMemo } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
+import {
+  getTotalPower,
+  getTotalShards,
+  getTotalSloops,
+} from "../models/factory-metrics";
 import { factoryRecipeId } from "../models/factory-recipe";
 import {
   deserializeFactory,
@@ -222,9 +227,9 @@ export default function FactoryOverviewComponent({
         </div>
       </CollapsibleSection>
       {(() => {
-        const totalPower = factory.getTotalPower();
-        const totalShards = Math.round(factory.getTotalShards());
-        const totalSloops = Math.round(factory.getTotalSloops());
+        const totalPower = getTotalPower(factory);
+        const totalShards = Math.round(getTotalShards(factory));
+        const totalSloops = Math.round(getTotalSloops(factory));
         const variable = totalPower.max - totalPower.min > 0.01;
         return (
           <>

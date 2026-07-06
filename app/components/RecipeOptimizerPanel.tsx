@@ -16,18 +16,19 @@ import Tooltip from "@mui/material/Tooltip";
 import { useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
+import { availableOutputsFrom } from "../models/factory-metrics";
+import {
+  deserializeFactory,
+  type StorageLibrary,
+} from "../models/factory-storage";
+import { buildings, partSlugLookup, recipes } from "../models/game-data";
 import {
   MAX_GAME_PHASE,
   type RecipeOptimizerConfig,
   recipeMatchesFilters,
   type ScoringObjective,
   setRecipesEnabled,
-} from "../models/factory";
-import {
-  deserializeFactory,
-  type StorageLibrary,
-} from "../models/factory-storage";
-import { buildings, partSlugLookup, recipes } from "../models/game-data";
+} from "../models/optimizer-config";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
 import PointValuesPanel from "./PointValuesPanel";
@@ -262,10 +263,10 @@ export default function RecipeOptimizerPanel({
     return config.availableFactoryIds.map((id) => {
       const sf = library.factories.find((f) => f.id === id);
       const f = sf ? deserializeFactory(sf, library) : null;
-      const outputs = f ? factory.availableOutputsFrom(f) : [];
+      const outputs = f ? availableOutputsFrom(f) : [];
       return { id, name: sf?.name ?? id, outputs };
     });
-  }, [config.availableFactoryIds, library, factory]);
+  }, [config.availableFactoryIds, library]);
 
   const factoryOptions = useMemo(() => {
     if (!library) return [];

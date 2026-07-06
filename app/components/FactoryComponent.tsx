@@ -22,6 +22,7 @@ import {
   useState,
 } from "react";
 import { withBasePath } from "@/app/lib/base-path";
+import { formatSolverError } from "@/app/lib/format-solver-error";
 import { downloadJson } from "../lib/download";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
@@ -1079,7 +1080,7 @@ export default function FactoryComponent() {
 
           {currentFactory.solverError && (
             <Alert severity="warning" className="m-2 text-sm">
-              {currentFactory.solverError}
+              {formatSolverError(currentFactory.solverError)}
             </Alert>
           )}
 

@@ -5,8 +5,9 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Button from "@mui/material/Button";
 import { useState } from "react";
 import type Factory from "../models/factory";
-import type { ScoringObjective } from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
+import type { ScoringObjective } from "../models/optimizer-config";
+import { applyRejectSilent } from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
 import { HorizontalDivider } from "./Dividers";
 import ProductionTargetsBar from "./ProductionTargetsBar";
@@ -76,7 +77,7 @@ export default function OptimizationSection({
       });
       return true;
     });
-    factory.applyRejectSilent(slugs);
+    applyRejectSilent(factory.optimizer, slugs);
     setShowRejectAllConfirm(false);
     factory.update();
   }

@@ -2,14 +2,14 @@ import AssemblyLine, {
   DEFAULT_ROW_SPACING,
   shardsForClock,
 } from "./assembly-line";
-import Factory, {
-  type AvailablePart,
-  defaultRecipeOptimizerConfig,
-  type PartConstraint,
-  type RecipeOptimizerConfig,
-} from "./factory";
+import Factory, { type PartConstraint } from "./factory";
 import FactoryRecipe, { factoryRecipeId } from "./factory-recipe";
 import { partSlugLookup, recipeSlugLookup } from "./game-data";
+import {
+  type AvailablePart,
+  defaultRecipeOptimizerConfig,
+  type RecipeOptimizerConfig,
+} from "./optimizer-config";
 import ProductionLine from "./production-line";
 
 export interface SerializedAssemblyLine {
