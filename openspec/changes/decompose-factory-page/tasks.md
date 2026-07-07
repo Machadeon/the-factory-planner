@@ -42,7 +42,7 @@ All stubs written first and confirmed failing (or failing-to-compile) before imp
 
 ## 5. URL sync (design step 5)
 
-- [ ] 5.1 Extract `app/hooks/useFactoryUrlSync.ts` delegating restores to session API (url-sync R5); port suppress-push rAF, hash-capture-at-render, and popstate invariants; `activeSectionRef` moves in here; 1.9 green
+- [x] 5.1 Extract `app/hooks/useFactoryUrlSync.ts` delegating restores to session API (url-sync R5); port suppress-push rAF, hash-capture-at-render, and popstate invariants; `activeSectionRef` moves in here; 1.9 green
 
 ## 6. Composition root (design step 6)
 
