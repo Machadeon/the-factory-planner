@@ -21,45 +21,31 @@ import {
   useRef,
   useState,
 } from "react";
+import { useSnapshot } from "valtio";
 import { withBasePath } from "@/app/lib/base-path";
 import { sanitizeFilename } from "@/app/lib/filenames";
 import { formatSolverError } from "@/app/lib/format-solver-error";
+import useAutosave from "../hooks/useAutosave";
 import useConsentGate from "../hooks/useConsentGate";
 import useDragResize from "../hooks/useDragResize";
+import useFactorySession from "../hooks/useFactorySession";
 import useLibrary from "../hooks/useLibrary";
 import { downloadJson } from "../lib/download";
-import Factory from "../models/factory";
-import { generateFactoryName } from "../models/factory-names";
 import {
   CURRENT_SCHEMA_VERSION,
   collectFactoryBundle,
   deserializeFactory,
-  generateId,
-  generateSlug,
   type SerializedFactory,
   type StorageLibrary,
-  serializeFactory,
 } from "../models/factory-storage";
 import { mergeLibrary, mergeSingleFactory } from "../models/library-ops";
 import type Part from "../models/part";
 import {
-  addFactory,
-  clearAutosave,
-  clearCurrentFactoryId,
-  getAutosavePref,
   getCurrentFactoryId,
   getLibraryPinned,
-  getSidebarWidth,
   hasConsent,
-  loadLibrary,
-  setCurrentFactoryId as persistCurrentFactoryId,
   setLibraryPinned as persistLibraryPinned,
-  setSidebarWidth as persistSidebarWidth,
   readAutosave,
-  saveLibrary,
-  setAutosavePref,
-  updateFactory,
-  writeAutosave,
 } from "../models/storage-service";
 import FactoryHeader from "./FactoryHeader";
 import FactoryLibraryDrawer from "./FactoryLibraryDrawer";
@@ -71,8 +57,6 @@ import StorageConsentDialog from "./StorageConsentDialog";
 import ConfirmDialog from "./ui/ConfirmDialog";
 
 type Section = "planning" | "optimization" | "logistics";
-
-const AUTOSAVE_DEBOUNCE_MS = 400;
 
 export default function FactoryComponent() {
   const [activeSection, setActiveSection] = useState<Section>("planning");
@@ -95,29 +79,9 @@ export default function FactoryComponent() {
   const [libraryPinned, setLibraryPinned] = useState(false);
   const { sidebarWidth, handleResizeDividerMouseDown } = useDragResize();
 
-  const factoryRef = useRef<Factory>(new Factory());
-  const factory = factoryRef.current;
-  const [, setVersion] = useState(0);
-
-  const [factoryName, setFactoryName] = useState("");
-  const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
-  const [currentSlug, setCurrentSlug] = useState<string | null>(null);
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [createdAt, setCreatedAt] = useState<string>("");
-  const [isDirty, setIsDirty] = useState(false);
-
   // Set true in popstate handler to stop URL-sync effect from pushing a new
   // history entry (which would destroy the forward stack).
   const suppressNextUrlPush = useRef(false);
-
-  const [autosaveEnabled, setAutosaveEnabled] = useState(true);
-  const autosaveEnabledRef = useRef(true);
-  const doSaveRef = useRef<() => void>(() => {});
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const buildSerializedRef = useRef<
-    (overrideName?: string) => SerializedFactory
-  >(() => ({}) as SerializedFactory);
-  const flushAutosaveRef = useRef<() => void>(() => {});
 
   const {
     library,
@@ -126,6 +90,38 @@ export default function FactoryComponent() {
     replaceLibrary,
     updatePartPointOverrides,
   } = useLibrary();
+
+  const {
+    store,
+    factory,
+    factoryName,
+    setFactoryName,
+    currentFactoryId,
+    currentSlug,
+    currentFolderId,
+    createdAt,
+    isDirty,
+    loadSerialized,
+    clearTo,
+    rebuild,
+    buildSerialized,
+    doSave,
+    onFactoryMutate,
+    onSessionSwap,
+  } = useFactorySession({ library, setLibrary });
+
+  const { autosaveEnabled, setAutosaveEnabled, enableAutosave, cancelPending } =
+    useAutosave({
+      onFactoryMutate,
+      onSessionSwap,
+      buildSerialized,
+      doSave: () => performSave(),
+    });
+
+  // Re-render trigger only — children receive the proxy, not the snapshot.
+  // Every model mutation funnels through update() → _updateRates, which
+  // rebuilds rateLookup, so this single tracked read covers all edits.
+  const _rateTrigger = useSnapshot(store).factory.rateLookup;
   const [libraryOpen, setLibraryOpen] = useState(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const { consentOpen, requireConsent, handleAllow, handleCancel } =
@@ -168,74 +164,9 @@ export default function FactoryComponent() {
     [otherFactoriesKey],
   );
 
-  factory.update = () => {
-    factory._updateRates();
-    setIsDirty(true);
-    setVersion((v) => v + 1);
-    scheduleAutosave();
-  };
-
-  function buildSerialized(overrideName?: string): SerializedFactory {
-    const now = new Date().toISOString();
-    return serializeFactory(factory, {
-      id: currentFactoryId ?? generateId(),
-      slug: currentSlug ?? undefined,
-      name: overrideName ?? factoryName,
-      folderId: currentFolderId,
-      createdAt: createdAt || now,
-      updatedAt: now,
-    });
-  }
-
-  // Persisting on every edit serializes the whole library to localStorage (and,
-  // when autosave is on, re-derives other factories). Debounce it so a burst of
-  // edits coalesces into one write. Refs keep the fired callback current.
-  buildSerializedRef.current = buildSerialized;
-
-  function flushAutosave() {
-    if (autosaveTimerRef.current === null) return;
-    clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = null;
-    if (!hasConsent()) return;
-    if (autosaveEnabledRef.current) {
-      doSaveRef.current();
-    } else {
-      writeAutosave(buildSerializedRef.current());
-    }
-  }
-  flushAutosaveRef.current = flushAutosave;
-
-  function scheduleAutosave() {
-    if (!hasConsent()) return;
-    if (autosaveTimerRef.current !== null) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-    // Let flushAutosave clear the ref — nulling it here first would make
-    // flushAutosave's "nothing pending" guard short-circuit and never save.
-    autosaveTimerRef.current = setTimeout(() => {
-      flushAutosaveRef.current();
-    }, AUTOSAVE_DEBOUNCE_MS);
-  }
-
-  // If a saved factory has no slug, generate one and persist it so the URL
-  // immediately shows a human-readable slug instead of the raw UUID.
-  function ensureSlug(
-    sf: SerializedFactory,
-    lib: StorageLibrary,
-  ): { slug: string; lib: StorageLibrary } {
-    if (sf.slug) return { slug: sf.slug, lib };
-    const existingSlugs = lib.factories.flatMap((f) =>
-      f.slug && f.id !== sf.id ? [f.slug] : [],
-    );
-    const slug = generateSlug(sf.name, existingSlugs);
-    const withSlug = { ...sf, slug };
-    const updatedLib = updateFactory(lib, withSlug);
-    saveLibrary(updatedLib);
-    return { slug, lib: updatedLib };
-  }
-
-  // Load a factory from a serialized entry, falling back to autosave then lastId.
-  // Priority: ?factory= (slug) or ?factoryId= URL param → autosave → localStorage last factory.
+  // Restore priority: URL param → autosave → last saved factory. All three
+  // delegate to the session's loadSerialized; deserialization is pre-flighted
+  // so a corrupt entry falls through silently instead of alerting.
   function restoreFactory(lib: StorageLibrary): boolean {
     // Priority 1: URL param — ?factory=<slug> (new) or ?factoryId=<id> (legacy)
     const urlParams =
@@ -249,97 +180,50 @@ export default function FactoryComponent() {
       : urlFactoryId
         ? lib.factories.find((f) => f.id === urlFactoryId)
         : null;
-    if (saved) {
-      const restored = deserializeFactory(saved, lib);
-      if (restored) {
-        const { slug, lib: updatedLib } = ensureSlug(saved, lib);
-        factoryRef.current = restored;
-        restored.update = factory.update;
-        setFactoryName(saved.name);
-        setCurrentFactoryId(saved.id);
-        setCurrentSlug(slug);
-        setCurrentFolderId(saved.folderId);
-        setCreatedAt(saved.createdAt);
-        setIsDirty(false);
-        setVersion((v) => v + 1);
-        setLibrary(updatedLib);
-        persistCurrentFactoryId(saved.id);
-        // Stamp history state so popstate carries the factoryId
-        window.history.replaceState(
-          { factoryId: saved.id, slug },
-          "",
-          window.location.href,
-        );
-        return true;
-      }
+    if (saved && deserializeFactory(saved, lib)) {
+      loadSerialized(saved, lib);
+      // Stamp history state so popstate carries the factoryId
+      window.history.replaceState(
+        { factoryId: saved.id, slug: saved.slug ?? null },
+        "",
+        window.location.href,
+      );
+      return true;
     }
 
     // Priority 2: unsaved autosave
     const autosaved = readAutosave();
-    if (autosaved) {
-      const restored = deserializeFactory(autosaved, lib);
-      if (restored) {
-        factoryRef.current = restored;
-        restored.update = factory.update;
-        setFactoryName(autosaved.name);
-        setCurrentFactoryId(autosaved.id);
-        setCurrentFolderId(autosaved.folderId);
-        setCreatedAt(autosaved.createdAt);
-        setIsDirty(true);
-        setVersion((v) => v + 1);
-        if (!lib.factories.find((f) => f.id === autosaved.id)) {
-          setAutosaveEnabled(false);
-          autosaveEnabledRef.current = false;
-        }
-        return true;
+    if (autosaved && deserializeFactory(autosaved, lib)) {
+      loadSerialized(autosaved, lib, {
+        markDirty: true,
+        backfillSlug: false,
+        persistCurrentId: false,
+      });
+      if (!lib.factories.find((f) => f.id === autosaved.id)) {
+        setAutosaveEnabled(false, { persist: false });
       }
+      return true;
     }
 
     // Priority 3: last saved factory from localStorage
     const lastId = getCurrentFactoryId();
     if (lastId) {
       const saved = lib.factories.find((f) => f.id === lastId);
-      if (saved) {
-        const restored = deserializeFactory(saved, lib);
-        if (restored) {
-          const { slug, lib: updatedLib } = ensureSlug(saved, lib);
-          factoryRef.current = restored;
-          restored.update = factory.update;
-          setFactoryName(saved.name);
-          setCurrentFactoryId(saved.id);
-          setCurrentSlug(slug);
-          setCurrentFolderId(saved.folderId);
-          setCreatedAt(saved.createdAt);
-          setIsDirty(false);
-          setVersion((v) => v + 1);
-          setLibrary(updatedLib);
-          return true;
-        }
+      if (saved && deserializeFactory(saved, lib)) {
+        loadSerialized(saved, lib);
+        return true;
       }
     }
     return false;
   }
 
-  // On mount: load library and restore session if consent given.
+  // On mount: load library and restore session if consent given. A fresh
+  // session already has a generated name (useFactorySession).
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     setLibraryPinned(getLibraryPinned());
-
-    if (hasConsent()) {
-      const pref = getAutosavePref();
-      setAutosaveEnabled(pref);
-      autosaveEnabledRef.current = pref;
-    }
-
-    if (!hasConsent()) {
-      setFactoryName(generateFactoryName());
-      return;
-    }
-    const lib = reload();
-
-    // Restore from URL or session. Extracted so the popstate handler can reuse it.
-    // Nothing to restore → fresh factory gets a generated name.
-    if (!restoreFactory(lib)) setFactoryName(generateFactoryName());
+    if (!hasConsent()) return;
+    restoreFactory(reload());
   }, []);
 
   // Read initial tab from hash on mount. Uses initialHashRef (captured at render
@@ -422,18 +306,7 @@ export default function FactoryComponent() {
       );
 
       if (target) {
-        const restored = deserializeFactory(target, lib);
-        if (restored) {
-          factoryRef.current = restored;
-          setFactoryName(target.name);
-          setCurrentFactoryId(target.id);
-          setCurrentSlug(target.slug ?? null);
-          setCurrentFolderId(target.folderId);
-          setCreatedAt(target.createdAt);
-          setIsDirty(false);
-          setVersion((v) => v + 1);
-          persistCurrentFactoryId(target.id);
-        }
+        if (deserializeFactory(target, lib)) loadSerialized(target, lib);
       } else if (!id) {
         // No factoryId in history state — could be a hash-only navigation (e.g. Playwright
         // page.goto, browser address bar) that didn't carry our pushState payload. Check
@@ -446,54 +319,17 @@ export default function FactoryComponent() {
           : urlFactoryId
             ? lib.factories.find((f) => f.id === urlFactoryId)
             : null;
-        if (savedByUrl) {
-          const restored = deserializeFactory(savedByUrl, lib);
-          if (restored) {
-            const { slug, lib: updatedLib } = ensureSlug(savedByUrl, lib);
-            factoryRef.current = restored;
-            setFactoryName(savedByUrl.name);
-            setCurrentFactoryId(savedByUrl.id);
-            setCurrentSlug(slug);
-            setCurrentFolderId(savedByUrl.folderId);
-            setCreatedAt(savedByUrl.createdAt);
-            setIsDirty(false);
-            setVersion((v) => v + 1);
-            setLibrary(updatedLib);
-            persistCurrentFactoryId(savedByUrl.id);
-            return;
-          }
+        if (savedByUrl && deserializeFactory(savedByUrl, lib)) {
+          loadSerialized(savedByUrl, lib);
+          return;
         }
         // Navigated back to clean URL — treat as a new empty factory
-        factoryRef.current = new Factory();
-        setFactoryName(generateFactoryName());
-        setCurrentFactoryId(null);
-        setCurrentSlug(null);
-        setCurrentFolderId(null);
-        setCreatedAt("");
-        setIsDirty(false);
-        setVersion((v) => v + 1);
-        clearCurrentFactoryId();
+        clearTo(null);
       }
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
-
-  // Flush any pending debounced autosave before the tab closes or the component
-  // unmounts, so the last burst of edits isn't lost.
-  useEffect(() => {
-    const onBeforeUnload = () => flushAutosaveRef.current();
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      flushAutosaveRef.current();
-    };
-  }, []);
-
-  function rebuildFactory() {
-    factoryRef.current = new Factory(factoryRef.current);
-    setVersion((v) => v + 1);
-  }
 
   function addProductionLine(part: Part) {
     const libraryProducesIt = library.factories
@@ -533,87 +369,16 @@ export default function FactoryComponent() {
 
   // --- Save ---
 
-  // Keep ref current so factory.update (which closes over the ref) always calls the latest doSave
-  doSaveRef.current = doSave;
-
-  function enableAutosave() {
-    setAutosaveEnabled(true);
-    autosaveEnabledRef.current = true;
-    if (hasConsent()) setAutosavePref(true);
-  }
-
-  function doSave() {
-    // An explicit/flushed save supersedes any pending debounced autosave.
-    if (autosaveTimerRef.current !== null) {
-      clearTimeout(autosaveTimerRef.current);
-      autosaveTimerRef.current = null;
-    }
-    const now = new Date().toISOString();
-    const id = currentFactoryId ?? generateId();
-    const isFirstSave = !currentFactoryId;
-    if (!currentFactoryId) {
-      setCurrentFactoryId(id);
-      setCreatedAt(now);
-    }
-
-    // Assign a slug on first save (or if the loaded factory predates slugs).
-    // Slug is stable: never regenerated on rename so bookmarks don't break.
-    const existingSlugs = library.factories
-      .filter((f) => f.id !== id)
-      .flatMap((f) => (f.slug ? [f.slug] : []));
-    const slug = currentSlug ?? generateSlug(factoryName, existingSlugs);
-    if (!currentSlug) setCurrentSlug(slug);
-
-    const existingEntry = library.factories.find((f) => f.id === id);
-
-    if (currentFactoryId && !existingEntry) {
-      // Factory was deleted from the library while loaded — save as a new entry
-      const newId = generateId();
-      const newSlug = generateSlug(
-        factoryName,
-        library.factories.flatMap((f) => (f.slug ? [f.slug] : [])),
-      );
-      setCurrentFactoryId(newId);
-      setCurrentSlug(newSlug);
-      setCreatedAt(now);
-      const reserialised = serializeFactory(factory, {
-        id: newId,
-        slug: newSlug,
-        name: factoryName,
-        folderId: currentFolderId,
-        createdAt: now,
-        updatedAt: now,
-      });
-      const updatedLib = addFactory(library, reserialised);
-      replaceLibrary(updatedLib);
-      clearAutosave();
-      persistCurrentFactoryId(newId);
-      setIsDirty(false);
-      if (isFirstSave) enableAutosave();
-      return;
-    }
-
-    const serialized = serializeFactory(factory, {
-      id,
-      slug,
-      name: factoryName,
-      folderId: currentFolderId,
-      createdAt: currentFactoryId ? createdAt : now,
-      updatedAt: now,
-    });
-    const updatedLib = existingEntry
-      ? updateFactory(library, serialized)
-      : addFactory(library, serialized);
-
-    replaceLibrary(updatedLib);
-    clearAutosave();
-    persistCurrentFactoryId(id);
-    setIsDirty(false);
-    if (isFirstSave) enableAutosave();
+  // An explicit save supersedes any pending debounced autosave; the first
+  // successful save of a new factory enables autosave.
+  function performSave() {
+    cancelPending();
+    const { firstSave } = doSave();
+    if (firstSave) enableAutosave();
   }
 
   function handleSave() {
-    requireConsent(doSave);
+    requireConsent(performSave);
   }
 
   // --- Export ---
@@ -670,7 +435,7 @@ export default function FactoryComponent() {
 
     // Resolve nested references against the freshly merged library, not the
     // stale state snapshot.
-    loadFactoryFromSerialized(root, updatedLib);
+    loadSerialized(root, updatedLib);
   }
 
   function importLibrary(data: StorageLibrary) {
@@ -685,7 +450,7 @@ export default function FactoryComponent() {
     // Exported bundles carry the root factory's id — load it directly (resolving
     // references against the freshly merged library) instead of opening the drawer.
     if (root) {
-      loadFactoryFromSerialized(root, updatedLib);
+      loadSerialized(root, updatedLib);
     } else {
       handleOpenLibrary();
     }
@@ -698,39 +463,15 @@ export default function FactoryComponent() {
       setPendingLoadFactory(serialized);
       setUnsavedPromptOpen(true);
     } else {
-      loadFactoryFromSerialized(serialized);
+      loadSerialized(serialized, library);
       setLibraryOpen(false);
     }
   }
 
-  function loadFactoryFromSerialized(
-    serialized: SerializedFactory,
-    lib: StorageLibrary = library,
-  ) {
-    const loaded = deserializeFactory(serialized, lib);
-    if (!loaded) {
-      alert(
-        "Could not restore factory — some recipe or part data may be missing.",
-      );
-      return;
-    }
-    const { slug, lib: updatedLib } = ensureSlug(serialized, lib);
-    factoryRef.current = loaded;
-    setFactoryName(serialized.name);
-    setCurrentFactoryId(serialized.id);
-    setCurrentSlug(slug);
-    setCurrentFolderId(serialized.folderId);
-    setCreatedAt(serialized.createdAt);
-    setIsDirty(false);
-    setVersion((v) => v + 1);
-    setLibrary(updatedLib);
-    persistCurrentFactoryId(serialized.id);
-  }
-
   function handleUnsavedSaveAndLoad() {
-    doSave();
+    performSave();
     if (pendingLoadFactory) {
-      loadFactoryFromSerialized(pendingLoadFactory);
+      loadSerialized(pendingLoadFactory, library);
       setLibraryOpen(false);
     }
     setUnsavedPromptOpen(false);
@@ -739,7 +480,7 @@ export default function FactoryComponent() {
 
   function handleUnsavedDiscardAndLoad() {
     if (pendingLoadFactory) {
-      loadFactoryFromSerialized(pendingLoadFactory);
+      loadSerialized(pendingLoadFactory, library);
       setLibraryOpen(false);
     }
     setUnsavedPromptOpen(false);
@@ -752,7 +493,7 @@ export default function FactoryComponent() {
     if (isDirty) {
       if (autosaveEnabled && hasConsent()) {
         // Auto-save then clear without prompting — autosave is on so no data is lost
-        doSave();
+        performSave();
         performClearFactory(folderId);
         return;
       }
@@ -764,22 +505,13 @@ export default function FactoryComponent() {
   }
 
   function performClearFactory(folderId: string | null) {
-    factoryRef.current = new Factory();
-    setFactoryName(generateFactoryName());
-    setCurrentFactoryId(null);
-    setCurrentSlug(null);
-    setCurrentFolderId(folderId);
-    setCreatedAt("");
-    setIsDirty(false);
-    clearCurrentFactoryId();
-    setVersion((v) => v + 1);
+    clearTo(folderId);
     setLibraryOpen(false);
-    setAutosaveEnabled(false);
-    autosaveEnabledRef.current = false;
+    setAutosaveEnabled(false, { persist: false });
   }
 
   function handleClearSaveAndContinue() {
-    if (hasConsent()) doSave();
+    if (hasConsent()) performSave();
     setClearConfirmOpen(false);
     performClearFactory(pendingClearFolderId);
     setPendingClearFolderId(null);
@@ -807,15 +539,7 @@ export default function FactoryComponent() {
   }
 
   function handleToggleAutosave() {
-    const next = !autosaveEnabled;
-    setAutosaveEnabled(next);
-    autosaveEnabledRef.current = next;
-    if (hasConsent()) setAutosavePref(next);
-  }
-
-  function handleFactoryNameChange(name: string) {
-    setFactoryName(name);
-    setIsDirty(true);
+    setAutosaveEnabled(!autosaveEnabled);
   }
 
   function handleIconChange(icon: string | undefined) {
@@ -826,8 +550,6 @@ export default function FactoryComponent() {
   function handleUpdateGlobalPointOverrides(overrides: Record<string, number>) {
     updatePartPointOverrides(overrides);
   }
-
-  const currentFactory = factoryRef.current;
 
   return (
     <>
@@ -925,10 +647,10 @@ export default function FactoryComponent() {
         >
           <FactoryHeader
             factoryName={factoryName}
-            factoryIcon={currentFactory.icon}
+            factoryIcon={factory.icon}
             isDirty={isDirty}
             autosaveEnabled={autosaveEnabled}
-            onNameChange={handleFactoryNameChange}
+            onNameChange={setFactoryName}
             onIconChange={handleIconChange}
             onOpenLibrary={
               libraryPinned
@@ -943,7 +665,7 @@ export default function FactoryComponent() {
             onViewJson={() => setJsonDialogOpen(true)}
             onExpandAll={() => setForceExpanded(true)}
             onCollapseAll={() => setForceExpanded(false)}
-            productionLineCount={currentFactory.productionLines.length}
+            productionLineCount={factory.productionLines.length}
           />
 
           <Tabs
@@ -956,9 +678,9 @@ export default function FactoryComponent() {
             <Tab label="Logistics" value="logistics" />
           </Tabs>
 
-          {currentFactory.solverError && (
+          {factory.solverError && (
             <Alert severity="warning" className="m-2 text-sm">
-              {formatSolverError(currentFactory.solverError)}
+              {formatSolverError(factory.solverError)}
             </Alert>
           )}
 
@@ -966,7 +688,7 @@ export default function FactoryComponent() {
             <div className="flex flex-col grow min-w-0">
               {activeSection === "planning" && (
                 <PlanningSection
-                  factory={currentFactory}
+                  factory={factory}
                   library={library}
                   currentFactoryId={currentFactoryId}
                   candidateFactories={deserializedOtherFactories}
@@ -979,7 +701,7 @@ export default function FactoryComponent() {
               )}
               {activeSection === "optimization" && (
                 <OptimizationSection
-                  factory={currentFactory}
+                  factory={factory}
                   library={library}
                   currentFactoryId={currentFactoryId}
                   onUpdateLibrary={handleUpdateGlobalPointOverrides}
@@ -987,7 +709,7 @@ export default function FactoryComponent() {
               )}
               {activeSection === "logistics" && (
                 <LogisticsSection
-                  factory={currentFactory}
+                  factory={factory}
                   library={library}
                   currentFactoryId={currentFactoryId}
                   onNavigateToFactory={handleNavigateToFactory}
@@ -1004,8 +726,8 @@ export default function FactoryComponent() {
               className="flex-none overflow-y-auto"
             >
               <FactoryOverviewComponent
-                factory={currentFactory}
-                onRebuild={rebuildFactory}
+                factory={factory}
+                onRebuild={rebuild}
                 library={library}
                 currentFactoryId={currentFactoryId}
                 onNavigateToFactory={handleNavigateToFactory}

@@ -213,7 +213,8 @@ describe("useFactorySession", () => {
     await settle();
     expect(result.current.isDirty).toBe(false);
     act(() => {
-      result.current.factory.productionLines[0].setRate(60);
+      result.current.factory.productionLines[0].outputRate = 60;
+      result.current.factory.update();
     });
     await settle();
     expect(result.current.isDirty).toBe(true);
@@ -248,10 +249,15 @@ describe("useFactorySession", () => {
         false,
         false,
       );
-      result.current.factory.productionLines[0].setRate(45);
     });
     await settle();
-    const rate = result.current.factory.rateLookup["iron-ingot"];
-    expect(rate).toBeDefined();
+    const lookupBefore = result.current.factory.rateLookup;
+    act(() => {
+      result.current.factory.update();
+    });
+    await settle();
+    // _updateRates rebuilds rateLookup from scratch — a tracked write on the
+    // proxy, which is what makes dependent components re-render.
+    expect(result.current.factory.rateLookup).not.toBe(lookupBefore);
   });
 });

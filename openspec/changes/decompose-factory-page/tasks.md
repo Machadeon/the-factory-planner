@@ -34,11 +34,11 @@ All stubs written first and confirmed failing (or failing-to-compile) before imp
 
 ## 4. Session + autosave (design step 4 — one commit, kills version counter and ref machinery)
 
-- [ ] 4.1 Implement `useFactorySession` core: `proxy({ factory })` container (D2), raw-instance update-shim assignment (D3), identity state + dirty, sync `loadSerialized(sf, lib, opts)` with queueMicrotask muting (D4), single container subscription + `onFactoryMutate` seam (D4b)
-- [ ] 4.2 Implement `useFactorySession` flows: `buildSerialized`, `doSave` (first-save slug/id assignment, deleted-entry save-as-new, autosave-enable-on-first-save), clear flow with guards, `rebuild()`
-- [ ] 4.3 Implement `app/hooks/useAutosave.ts`: debounce/flush/enabled machinery on the `onFactoryMutate` seam; unload/unmount flush; session-swap timer cancellation
-- [ ] 4.4 Switch FactoryComponent to both hooks; delete the version counter, the React-coupled `factory.update` body, and the four autosave mirroring refs (`autosaveEnabledRef`, `doSaveRef`, `buildSerializedRef`, `flushAutosaveRef`) — `sidebarWidthRef` already died in 3.3; `activeSectionRef` dies in 5.1; 1.7 + 1.8 green (1.10–1.12 mount FactoryPage and go green at 6.2); `npm run test:e2e` milestone
-- [ ] 4.5 Profile eager-optimizer mode on a large factory before/after this commit (design risk: proxy overhead); record numbers in the PR description
+- [x] 4.1 Implement `useFactorySession` core: `proxy({ factory })` container (D2), raw-instance update-shim assignment (D3), identity state + dirty, sync `loadSerialized(sf, lib, opts)` with queueMicrotask muting (D4), single container subscription + `onFactoryMutate` seam (D4b)
+- [x] 4.2 Implement `useFactorySession` flows: `buildSerialized`, `doSave` (first-save slug/id assignment, deleted-entry save-as-new, autosave-enable-on-first-save), clear flow with guards, `rebuild()`
+- [x] 4.3 Implement `app/hooks/useAutosave.ts`: debounce/flush/enabled machinery on the `onFactoryMutate` seam; unload/unmount flush; session-swap timer cancellation
+- [x] 4.4 Switch FactoryComponent to both hooks; delete the version counter, the React-coupled `factory.update` body, and the four autosave mirroring refs (`autosaveEnabledRef`, `doSaveRef`, `buildSerializedRef`, `flushAutosaveRef`) — `sidebarWidthRef` already died in 3.3; `activeSectionRef` dies in 5.1; 1.7 + 1.8 green (1.10–1.12 mount FactoryPage and go green at 6.2); `npm run test:e2e` milestone
+- [x] 4.5 Profile eager-optimizer mode on a large factory before/after this commit (design risk: proxy overhead); record numbers in the PR description — measured raw vs proxied Factory, 20× eager autoCalculateRates+_updateRates on a 25-line factory: 5.3ms raw vs 6.2ms proxied (~16% relative, ~45µs/solve absolute) — negligible; no ref() exemption needed before model M4
 
 ## 5. URL sync (design step 5)
 
