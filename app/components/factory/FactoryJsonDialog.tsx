@@ -29,7 +29,7 @@ export default function FactoryJsonDialog({
         <Tooltip title="Copy to clipboard">
           <IconButton
             size="small"
-            aria-label="Copy factory JSON"
+            aria-label="Copy to clipboard"
             onClick={() =>
               navigator.clipboard.writeText(
                 JSON.stringify(buildJson(), null, 2),

@@ -231,7 +231,7 @@ describe("extracted components (1.12)", () => {
     );
     expect(screen.getByText(/"Imported Plant"/)).toBeTruthy();
     await user.click(
-      screen.getByRole("button", { name: /Copy factory JSON/i }),
+      screen.getByRole("button", { name: /Copy to clipboard/i }),
     );
     expect(writeText).toHaveBeenCalledWith(JSON.stringify(payload, null, 2));
   });
