@@ -218,7 +218,9 @@ describe("FactoryPage import wiring (1.11)", () => {
 
 describe("extracted components (1.12)", () => {
   it("page-structure R5.S1 — FactoryJsonDialog shows JSON and copies it", async () => {
+    // userEvent.setup() installs its own clipboard stub — spy on that one.
     const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
     const payload = sf();
     render(
       <FactoryJsonDialog
@@ -231,9 +233,7 @@ describe("extracted components (1.12)", () => {
     await user.click(
       screen.getByRole("button", { name: /Copy factory JSON/i }),
     );
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      JSON.stringify(payload, null, 2),
-    );
+    expect(writeText).toHaveBeenCalledWith(JSON.stringify(payload, null, 2));
   });
 
   it("page-structure R6.S1 — SectionTabs renders tabs and solver alert", () => {

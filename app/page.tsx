@@ -1,6 +1,6 @@
 "use client";
 
-import FactoryComponent from "./components/FactoryComponent";
+import FactoryPage from "./components/factory/FactoryPage";
 import { withBasePath } from "./lib/base-path";
 
 export default function Home() {
@@ -22,7 +22,7 @@ export default function Home() {
             Planner
           </span>
         </div>
-        <FactoryComponent />
+        <FactoryPage />
       </main>
     </div>
   );

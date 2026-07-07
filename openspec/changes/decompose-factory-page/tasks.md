@@ -46,9 +46,9 @@ All stubs written first and confirmed failing (or failing-to-compile) before imp
 
 ## 6. Composition root (design step 6)
 
-- [ ] 6.1 Extract `app/components/factory/FactoryJsonDialog.tsx` and `app/components/factory/SectionTabs.tsx` (page-structure R5, R6)
-- [ ] 6.2 Create `app/components/factory/FactoryPage.tsx` (≤150 lines, hooks + wiring + layout only); update `app/page.tsx`; delete `FactoryComponent.tsx`; update integration test imports (`FactoryComponent.test.tsx`, `history-base-path.test.tsx`); 1.10–1.12 green
-- [ ] 6.3 Inspection checklist (grep/code-walk, record results in PR): no `setVersion` (factory-session R1.S2); `.update =` assigned only in `useFactorySession` (R3.S2); exactly one restore path sets identity fields (R5.S5); autosave scheduling unreachable from `factory.update` (factory-autosave R1.S3); url-sync delegates restores to session, no duplicated restore logic (factory-url-sync R5.S1); no `FactoryComponent` import leftovers (page-structure R1.S1); FactoryPage line count ≤150
+- [x] 6.1 Extract `app/components/factory/FactoryJsonDialog.tsx` and `app/components/factory/SectionTabs.tsx` (page-structure R5, R6)
+- [x] 6.2 Create `app/components/factory/FactoryPage.tsx` (≤150 lines, hooks + wiring + layout only); update `app/page.tsx`; delete `FactoryComponent.tsx`; update integration test imports (`FactoryComponent.test.tsx`, `history-base-path.test.tsx`); 1.10–1.12 green
+- [x] 6.3 Inspection checklist (grep/code-walk, record results in PR): no `setVersion` (factory-session R1.S2); `.update =` assigned only in `useFactorySession` (R3.S2); exactly one restore path sets identity fields (R5.S5); autosave scheduling unreachable from `factory.update` (factory-autosave R1.S3); url-sync delegates restores to session, no duplicated restore logic (factory-url-sync R5.S1); no `FactoryComponent` import leftovers (page-structure R1.S1); FactoryPage line count ≤150
 
 ## 7. Verification
 

@@ -120,9 +120,9 @@ export default function useFactorySession({
     for (const cb of mutateListeners.current) cb();
   }
 
-  // The single restore path (replaces the four duplicated blocks in the old
-  // FactoryComponent). Persistence writes are unconditional, matching the old
-  // call sites — storage-service functions don't check consent themselves.
+  // The single restore path (replaces the four duplicated pre-refactor restore
+  // blocks). Persistence writes are unconditional, matching the old call
+  // sites — storage-service functions don't check consent themselves.
   function loadSerialized(
     sf: SerializedFactory,
     lib: StorageLibrary,
