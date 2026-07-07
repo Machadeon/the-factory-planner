@@ -5,7 +5,7 @@ Structural contract for the decomposition: FactoryPage composition root, hooks d
 ## ADDED Requirements
 
 ### Requirement: R1 — FactoryPage composition root
-`app/components/factory/FactoryPage.tsx` SHALL replace `app/components/FactoryComponent.tsx` (old file deleted, `app/page.tsx` updated). FactoryPage SHALL be ≤150 lines and contain only: hook calls, handler wiring, and layout JSX. No debounce timers, no history API calls, no serialization logic, no id-remapping in the component body.
+`app/components/factory/FactoryPage.tsx` SHALL replace `app/components/FactoryComponent.tsx` (old file deleted, `app/page.tsx` updated). FactoryPage SHALL be ≤150 lines and contain only: hook calls, handler wiring, and layout JSX. No debounce timers, no history API calls, no serialization logic, no id-remapping in the component body. Flow choreography MAY live in a colocated `useFactoryPageFlows` hook, and layout groups MAY be thin passthrough components under `app/components/factory/` (`FactoryPageDialogs`, `FactorySections`, `FactorySidebar`, `LibraryDrawerSlot`), provided child components keep their original prop contracts (R7).
 
 #### Scenario: R1.S1 — replacement complete
 - **WHEN** the change is complete

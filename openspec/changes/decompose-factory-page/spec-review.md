@@ -76,3 +76,16 @@
 
 ### Findings
 (none)
+
+## Pass 5 — 2026-07-06
+
+**Source: Reviewer** (scope: verify the factory-autosave R1 and factory-page-structure R1 amendments made to resolve implementation review.md Pass 1 findings)
+
+**Status: APPROVED**
+
+### Resolved from Previous Pass
+- factory-autosave R1 — verified: the ban is now scoped to the component-level state-mirroring machinery "as they existed in FactoryComponent" (refs mirroring React state because closures escaped the render cycle), with hook-internal latest-callback refs explicitly accepted as an implementation detail. Matches the built `useAutosave`/`useFactoryUrlSync`/FactoryPage refs; R1.S1–S3 unchanged and still testable.
+- factory-page-structure R1 — verified: MAY clauses added for the colocated `useFactoryPageFlows` hook and the four thin passthrough layout components (`FactoryPageDialogs`, `FactorySections`, `FactorySidebar`, `LibraryDrawerSlot`), conditioned on child prop contracts staying frozen per R7. Matches the built files; R2's six-hooks-in-`app/hooks/` requirement remains accurate (flows hook lives under `components/factory/`).
+
+### Findings
+(none)

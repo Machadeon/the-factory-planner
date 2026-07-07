@@ -5,7 +5,7 @@ Consent-aware debounced autosave, extracted to `app/hooks/useAutosave.ts` and dr
 ## ADDED Requirements
 
 ### Requirement: R1 — subscribe-driven debounce
-Autosave SHALL be scheduled by a valtio `subscribe(factory, …)` callback (and by factory-name edits' dirty transition — see factory-session R6), debounced at 400ms (`AUTOSAVE_DEBOUNCE_MS`), so a burst of edits coalesces into one write. Timer expiry SHALL apply the same write rule as flush (R3): autosave enabled → full library save; disabled → autosave-slot write. The ref-mirroring machinery (`autosaveEnabledRef`, `doSaveRef`, `buildSerializedRef`, `flushAutosaveRef`) SHALL NOT survive the extraction.
+Autosave SHALL be scheduled by a valtio `subscribe(factory, …)` callback (and by factory-name edits' dirty transition — see factory-session R6), debounced at 400ms (`AUTOSAVE_DEBOUNCE_MS`), so a burst of edits coalesces into one write. Timer expiry SHALL apply the same write rule as flush (R3): autosave enabled → full library save; disabled → autosave-slot write. The component-level state-mirroring machinery (`autosaveEnabledRef`, `doSaveRef`, `buildSerializedRef`, `flushAutosaveRef` as they existed in FactoryComponent — refs mirroring React state because closures escaped the render cycle) SHALL NOT survive the extraction. Hook-internal latest-callback refs (a hook keeping its own props/callbacks current for mount-once listeners and timers) are an accepted implementation detail, not the banned pattern.
 
 #### Scenario: R1.S1 — burst coalesces
 - **WHEN** three proxy mutations occur within 400ms with consent granted

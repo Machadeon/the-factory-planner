@@ -51,3 +51,29 @@
 
 ### Findings
 (none)
+
+## Pass 4 — 2026-07-06
+
+**Source: Reviewer** (scope: verify the D5/D7 amendments made to resolve implementation review.md Pass 1 findings, against the built code)
+
+**Status: CONCERNS**
+
+### Resolved from Previous Pass
+- [D5] latest-callback refs — verified: the surviving-refs enumeration now includes hook-internal latest-callback refs with the mount-once-listener rationale, distinguished from the banned component-level state mirroring. Matches `useAutosave`/`useFactoryUrlSync`/FactoryPage as built and the amended autosave R1 (spec-review Pass 5).
+- [D5] dependency inversion — verified: new paragraph documents the page → autosave save composition (`performSave` via render-assigned ref, because it composes autosave's own `cancelPending`/`enableAutosave` with the session save) while the mutation-seam direction stays session → autosave. Matches FactoryPage L33–49.
+- [D7] structural elements — verified: `useFactoryPageFlows` and the four thin layout components are documented with the ≤150-line rationale and the prop-contract-freeze condition; `FactorySidebar` owning `useDragResize` matches the code.
+
+### Findings
+- [D7] — amendment residue: the trailing sentence "`deserializedOtherFactories` memo and `addProductionLine`/`removeProductionLine`/`rebuildFactory` wrappers stay in FactoryPage (thin, layout-adjacent)" now contradicts the new paragraph ("flow choreography (… otherFactories memo) lives in a colocated hook") and the code (memo + wrappers live in `useFactoryPageFlows`; rebuild is `session.rebuild` passed straight through). fix: delete or reword the stale sentence, keeping the `rebuild()`-through-session clause.
+
+## Pass 5 — 2026-07-06
+
+**Source: Reviewer** (scope: verify the D7 residue fix from Pass 4)
+
+**Status: APPROVED**
+
+### Resolved from Previous Pass
+- [D7] amendment residue — resolved: the trailing sentence now states the `deserializedOtherFactories` memo and `addProductionLine`/`removeProductionLine` wrappers live in `useFactoryPageFlows`, and rebuild is the session-exposed `rebuild()` (swap inside the hook, preserving R1's swap-only-inside-the-hook clause) passed through to the overview. Verified against the code: `FactorySections` consumes `flows.deserializedOtherFactories`/`flows.addProductionLine`; `FactorySidebar` receives `onRebuild={session.rebuild}`. D7 is now internally consistent and matches the built structure.
+
+### Findings
+(none)
