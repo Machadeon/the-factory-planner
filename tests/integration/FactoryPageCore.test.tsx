@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import FactoryComponent from "@/app/components/FactoryComponent";
+import FactoryPage from "@/app/components/factory/FactoryPage";
 
 // Mock next/image
 vi.mock("next/image", () => ({
@@ -57,10 +57,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("FactoryComponent", () => {
+describe("FactoryPage", () => {
   it("selecting a part adds a ProductionLineComponent", async () => {
     const user = userEvent.setup();
-    render(<FactoryComponent />);
+    render(<FactoryPage />);
 
     // "Add Product" is a Clickable div, not a button — find by text
     const addButton = await screen.findByText(/Add Product/i);
@@ -88,7 +88,7 @@ describe("FactoryComponent", () => {
 
   it("expand all and collapse all toggle all production line rows", async () => {
     const user = userEvent.setup();
-    render(<FactoryComponent />);
+    render(<FactoryPage />);
 
     // Add Iron Rod
     const addButton = await screen.findByText(/Add Product/i);
@@ -135,7 +135,7 @@ describe("FactoryComponent", () => {
   // current solver state.
   it("solver warning appears and persists whenever the LP is infeasible", async () => {
     const user = userEvent.setup();
-    render(<FactoryComponent />);
+    render(<FactoryPage />);
 
     // Add Iron Plate (no recipe). Multi-recipe parts don't auto-select a recipe.
     const addButton = await screen.findByText(/Add Product/i);
