@@ -2,7 +2,10 @@
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useMemo } from "react";
-import { useFactory } from "@/app/contexts/FactoryContext";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
@@ -29,6 +32,7 @@ export default function FactoryOverviewComponent(
   _props: FactoryOverviewComponentProps,
 ) {
   const factory = useFactory();
+  useFactoryUpdateSubscription();
   const { library, currentFactoryId } = useLibraryContext();
   const { navigateToFactory } = useNavigation();
   const factoryOutputs = factory.getOutputInfo().sort((a, b) => {

@@ -38,14 +38,14 @@ Write all stubs failing first (they reference contexts/components that don't yet
 
 ## 5. Drop root trigger + land render-count tripwire (same commit)
 
-- [ ] 5.1 Add the render-count integration tests (stubs 1.5–1.7 and 1.11) as real assertions.
-- [ ] 5.2 In the SAME commit, remove FactoryPage's `useSnapshot(...).factory.rateLookup` trigger; replace with `const snap = useFactorySnapshot()` reading only `snap.icon`, `snap.solverError`, `snap.productionLines.length`.
-- [ ] 5.3 Fix any leaf the tripwire/e2e exposes as having lost its subscription. `npm run test:run` + `npm run test:e2e`.
+- [x] 5.1 Add the render-count integration tests (stubs 1.5–1.7 and 1.11) as real assertions.
+- [x] 5.2 In the SAME commit, remove FactoryPage's `useSnapshot(...).factory.rateLookup` trigger; replace with `const snap = useFactorySnapshot()` reading only `snap.icon`, `snap.solverError`, `snap.productionLines.length`.
+- [x] 5.3 Fix any leaf the tripwire/e2e exposes as having lost its subscription. `npm run test:run` + `npm run test:e2e`.
 
 ## 6. Verification
 
-- [ ] 6.1 All structural/unit/integration stubs (1.1–1.12) implemented and passing.
-- [ ] 6.2 `npm run test:run` green.
-- [ ] 6.3 `npm run test:e2e` green; assert `git diff --stat` shows zero modified files under `tests/e2e/` — no selector edits (R8.S1, factory-page R7.S1).
-- [ ] 6.4 `npm run lint-fix` clean; `npm run build` clean.
-- [ ] 6.5 Lighthouse audit N/A (no visual surface changed — behavior frozen per R8); note in review.
+- [x] 6.1 All structural/unit/integration stubs (1.1–1.12) implemented and passing.
+- [x] 6.2 `npm run test:run` green.
+- [x] 6.3 `npm run test:e2e` green; assert `git diff --stat` shows zero modified files under `tests/e2e/` — no selector edits (R8.S1, factory-page R7.S1).
+- [x] 6.4 `npm run lint-fix` clean; `npm run build` clean.
+- [x] 6.5 Lighthouse audit N/A (no visual surface changed — behavior frozen per R8); note in review.

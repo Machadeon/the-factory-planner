@@ -1,8 +1,9 @@
 "use client";
 
-import { useFactory } from "@/app/contexts/FactoryContext";
-import { useLibraryContext } from "@/app/contexts/LibraryContext";
-import { useNavigation } from "@/app/contexts/NavigationContext";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import type Factory from "../models/factory";
 import type { SerializedFactory } from "../models/factory-storage";
 import type Part from "../models/part";
@@ -27,8 +28,7 @@ export default function PlanningSection({
   onRemoveProduct,
 }: PlanningSectionProps) {
   const factory = useFactory();
-  const { library, currentFactoryId } = useLibraryContext();
-  const { navigateToFactory } = useNavigation();
+  useFactoryUpdateSubscription();
   return (
     <div className="flex flex-col grow">
       {factory.productionLines.length === 0 ? (
@@ -40,14 +40,10 @@ export default function PlanningSection({
           <div key={product.part.slug}>
             <ProductionLineComponent
               productionLine={product}
-              factory={factory}
-              library={library}
-              currentFactoryId={currentFactoryId}
               candidateFactories={candidateFactories}
               onDeleteClicked={() => onRemoveProduct(product.part)}
               forceExpanded={forceExpanded}
               onToggle={onToggle}
-              onNavigateToFactory={navigateToFactory}
             />
             <HorizontalDivider />
           </div>

@@ -44,3 +44,13 @@ export function useFactorySnapshot(): Factory {
   const store = useStore();
   return useSnapshot(store).factory as Factory;
 }
+
+// Subtree-level reactivity for panels that render broadly-derived model data
+// (the overview, planning list, optimizer, logistics graph). Subscribes to the
+// `rateLookup` object, which `factory.update()` / `autoCalculateRates()` rebuild
+// on every mutation — so the calling component and its subtree re-render on any
+// model change, without the old whole-page root trigger. Leaf-level scoping uses
+// `useSnapshot(subObject)` directly instead.
+export function useFactoryUpdateSubscription(): unknown {
+  return useFactorySnapshot().rateLookup;
+}

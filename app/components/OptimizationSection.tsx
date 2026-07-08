@@ -4,7 +4,10 @@ import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Button from "@mui/material/Button";
 import { useState } from "react";
-import { useFactory } from "@/app/contexts/FactoryContext";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import type { ScoringObjective } from "../models/optimizer-config";
 import { applyRejectSilent } from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
@@ -24,6 +27,7 @@ const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
 
 export default function OptimizationSection() {
   const factory = useFactory();
+  useFactoryUpdateSubscription();
   const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
   const suggestedLineCount = factory.productionLines.filter(

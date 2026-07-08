@@ -10,6 +10,7 @@ import useConsentGate from "@/app/hooks/useConsentGate";
 import useFactorySession from "@/app/hooks/useFactorySession";
 import useFactoryUrlSync, { type Section } from "@/app/hooks/useFactoryUrlSync";
 import useLibrary from "@/app/hooks/useLibrary";
+import type { SolverError } from "@/app/models/solver/errors";
 import {
   getLibraryPinned,
   setLibraryPinned as persistLibraryPinned,
@@ -59,11 +60,11 @@ export default function FactoryPage() {
       autosave.setAutosaveEnabled(false, { persist: false }),
   });
 
-  // Re-render trigger only — children receive the proxy, not the snapshot;
-  // every mutation reaches _updateRates, which rebuilds this tracked lookup.
-  // Retained until step 5 drops it in the same commit as the render-count tripwire.
-  const _rateTrigger = useSnapshot(session.store).factory.rateLookup;
-  const { factory, currentFactoryId } = session;
+  // Scoped snapshot: FactoryPage re-renders only for the fields its own JSX reads
+  // (icon, solverError, productionLines.length). The old whole-tree re-render
+  // trigger is gone — each consumer subscribes to what it renders via context.
+  const snap = useSnapshot(session.store).factory;
+  const { currentFactoryId } = session;
 
   // Stable navigation callback: flows.* are fresh each render, so bind through a
   // ref updated in an effect and expose a referentially-stable wrapper.
@@ -113,7 +114,7 @@ export default function FactoryPage() {
             >
               <FactoryHeader
                 factoryName={session.factoryName}
-                factoryIcon={factory.icon}
+                factoryIcon={snap.icon}
                 isDirty={session.isDirty}
                 autosaveEnabled={autosave.autosaveEnabled}
                 onNameChange={session.setFactoryName}
@@ -131,12 +132,12 @@ export default function FactoryPage() {
                 onViewJson={() => setJsonDialogOpen(true)}
                 onExpandAll={() => setForceExpanded(true)}
                 onCollapseAll={() => setForceExpanded(false)}
-                productionLineCount={factory.productionLines.length}
+                productionLineCount={snap.productionLines.length}
               />
               <SectionTabs
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}
-                solverError={factory.solverError}
+                solverError={snap.solverError as SolverError | null}
               />
               <div className="flex flex-row grow">
                 <FactorySections

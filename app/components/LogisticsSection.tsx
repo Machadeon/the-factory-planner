@@ -18,7 +18,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFactory } from "@/app/contexts/FactoryContext";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
@@ -255,6 +258,7 @@ function Graph({ factory, library, currentFactoryId, actualSize }: GraphProps) {
 
 export default function LogisticsSection() {
   const factory = useFactory();
+  useFactoryUpdateSubscription();
   const { library, currentFactoryId } = useLibraryContext();
   const [maximized, setMaximized] = useState(false);
   const [actualSize, setActualSize] = useState(true);
