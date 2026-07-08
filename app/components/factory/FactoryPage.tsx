@@ -141,21 +141,11 @@ export default function FactoryPage() {
               <div className="flex flex-row grow">
                 <FactorySections
                   activeSection={activeSection}
-                  factory={factory}
-                  library={libraryApi.library}
-                  currentFactoryId={currentFactoryId}
                   forceExpanded={forceExpanded}
                   onToggleExpanded={() => setForceExpanded(null)}
-                  onUpdateLibrary={libraryApi.updatePartPointOverrides}
                   flows={flows}
                 />
-                <FactorySidebar
-                  factory={factory}
-                  library={libraryApi.library}
-                  currentFactoryId={currentFactoryId}
-                  onRebuild={session.rebuild}
-                  onNavigateToFactory={flows.handleNavigateToFactory}
-                />
+                <FactorySidebar onRebuild={session.rebuild} />
               </div>
             </div>
           </div>

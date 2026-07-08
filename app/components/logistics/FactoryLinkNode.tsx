@@ -1,15 +1,15 @@
 import FactoryIcon from "@mui/icons-material/Factory";
 import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
 import Icon from "../ui/Icon";
-import { useLogistics } from "./context";
 import type { FactoryNodeData } from "./graph-model";
 
 // A supplier (incoming) or consumer (outgoing) factory: a distinct cross-factory
 // terminal, visually separate from a raw source/sink, and a link to that factory.
 export default function FactoryLinkNode({ data }: NodeProps) {
   const { kind, factoryId, name, parts } = data as unknown as FactoryNodeData;
-  const { onNavigateToFactory } = useLogistics();
+  const { navigateToFactory } = useNavigation();
   const isSupplier = kind === "supplier";
 
   return (
@@ -21,7 +21,7 @@ export default function FactoryLinkNode({ data }: NodeProps) {
       <button
         type="button"
         className="flex items-center gap-1 text-left text-[11px] font-semibold underline hover:opacity-70"
-        onClick={() => onNavigateToFactory?.(factoryId)}
+        onClick={() => navigateToFactory(factoryId)}
       >
         <FactoryIcon sx={{ fontSize: 14 }} />
         <span className="truncate">{name}</span>

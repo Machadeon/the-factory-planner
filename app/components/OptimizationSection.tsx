@@ -4,8 +4,8 @@ import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Button from "@mui/material/Button";
 import { useState } from "react";
-import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type { ScoringObjective } from "../models/optimizer-config";
 import { applyRejectSilent } from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
@@ -23,19 +23,10 @@ const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   inputValue: "Min input value",
 };
 
-interface OptimizationSectionProps {
-  factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
-  onUpdateLibrary?: (overrides: Record<string, number>) => void;
-}
-
-export default function OptimizationSection({
-  factory,
-  library,
-  currentFactoryId,
-  onUpdateLibrary,
-}: OptimizationSectionProps) {
+export default function OptimizationSection() {
+  const factory = useFactory();
+  const { library, currentFactoryId, updatePartPointOverrides } =
+    useLibraryContext();
   const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
   const suggestedLineCount = factory.productionLines.filter(
@@ -136,7 +127,7 @@ export default function OptimizationSection({
         factory={factory}
         library={library}
         currentFactoryId={currentFactoryId}
-        onUpdateLibrary={onUpdateLibrary}
+        onUpdateLibrary={updatePartPointOverrides}
       />
 
       <ConfirmDialog

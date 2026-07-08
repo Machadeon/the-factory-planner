@@ -1,25 +1,19 @@
 "use client";
 
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import useDragResize from "@/app/hooks/useDragResize";
-import type Factory from "@/app/models/factory";
-import type { StorageLibrary } from "@/app/models/factory-storage";
 import FactoryOverviewComponent from "../FactoryOverviewComponent";
 
 interface FactorySidebarProps {
-  factory: Factory;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   onRebuild: () => void;
-  onNavigateToFactory: (id: string) => void;
 }
 
-export default function FactorySidebar({
-  factory,
-  library,
-  currentFactoryId,
-  onRebuild,
-  onNavigateToFactory,
-}: FactorySidebarProps) {
+export default function FactorySidebar({ onRebuild }: FactorySidebarProps) {
+  const factory = useFactory();
+  const { library, currentFactoryId } = useLibraryContext();
+  const { navigateToFactory } = useNavigation();
   const { sidebarWidth, handleResizeDividerMouseDown } = useDragResize();
   return (
     <>
@@ -37,7 +31,7 @@ export default function FactorySidebar({
           onRebuild={onRebuild}
           library={library}
           currentFactoryId={currentFactoryId}
-          onNavigateToFactory={onNavigateToFactory}
+          onNavigateToFactory={navigateToFactory}
         />
       </div>
     </>

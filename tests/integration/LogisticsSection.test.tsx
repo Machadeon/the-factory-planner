@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import LogisticsSection from "@/app/components/LogisticsSection";
 import AssemblyLineNode from "@/app/components/logistics/AssemblyLineNode";
-import { LogisticsContext } from "@/app/components/logistics/context";
 import FactoryLinkNode from "@/app/components/logistics/FactoryLinkNode";
 import type {
   AssemblyNodeData,
@@ -16,6 +15,7 @@ import Factory from "@/app/models/factory";
 import FactoryRecipe from "@/app/models/factory-recipe";
 import { partSlugLookup, recipes } from "@/app/models/game-data";
 import ProductionLine from "@/app/models/production-line";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 // React Flow needs a real canvas/layout the jsdom DOM can't provide; mock its primitives
 // so the custom node components render as plain DOM we can assert on.
@@ -36,14 +36,10 @@ describe("LogisticsSection graph view", () => {
   it("AC8: empty factory shows an empty-state, no crash", () => {
     const factory = new Factory();
     factory.update = () => {};
-    render(
-      <LogisticsSection
-        factory={factory}
-        library={{ schemaVersion: 5, folders: [], factories: [] }}
-        currentFactoryId={null}
-        onNavigateToFactory={() => {}}
-      />,
-    );
+    renderWithProviders(<LogisticsSection />, {
+      factory,
+      library: { schemaVersion: 5, folders: [], factories: [] },
+    });
     expect(screen.getByTestId("logistics-empty")).toBeInTheDocument();
   });
 
@@ -57,7 +53,7 @@ describe("LogisticsSection graph view", () => {
       primaryPartSlug: "iron-ingot",
       factory,
     };
-    render(<AssemblyLineNode {...nodeProps(data)} />);
+    renderWithProviders(<AssemblyLineNode {...nodeProps(data)} />);
     expect(screen.getByTestId("port-in-iron-ore")).toBeInTheDocument();
     expect(screen.getByTestId("port-out-iron-ingot")).toBeInTheDocument();
   });
@@ -99,11 +95,9 @@ describe("LogisticsSection graph view", () => {
       name: "Ore Supply",
       parts: [{ part: partSlugLookup["iron-ore"], rate: 30 }],
     };
-    render(
-      <LogisticsContext.Provider value={{ onNavigateToFactory: onNav }}>
-        <FactoryLinkNode {...nodeProps(data)} />
-      </LogisticsContext.Provider>,
-    );
+    renderWithProviders(<FactoryLinkNode {...nodeProps(data)} />, {
+      navigateToFactory: onNav,
+    });
     fireEvent.click(screen.getByText("Ore Supply"));
     expect(onNav).toHaveBeenCalledWith("sup-1");
   });
@@ -128,11 +122,9 @@ describe("LogisticsSection graph view", () => {
       factory,
     };
     const onNav = vi.fn();
-    render(
-      <LogisticsContext.Provider value={{ onNavigateToFactory: onNav }}>
-        <AssemblyLineNode {...nodeProps(data)} />
-      </LogisticsContext.Provider>,
-    );
+    renderWithProviders(<AssemblyLineNode {...nodeProps(data)} />, {
+      navigateToFactory: onNav,
+    });
     fireEvent.click(screen.getByText("Iron Sub"));
     expect(onNav).toHaveBeenCalledWith("nested-1");
   });
@@ -148,7 +140,7 @@ describe("LogisticsSection graph view", () => {
       primaryPartSlug: "iron-ingot",
       factory,
     };
-    render(<AssemblyLineNode {...nodeProps(data)} />);
+    renderWithProviders(<AssemblyLineNode {...nodeProps(data)} />);
     const input = screen.getByRole("spinbutton") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "2" } });
     expect(al.rows).toBe(2);

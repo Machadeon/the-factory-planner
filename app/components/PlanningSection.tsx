@@ -1,10 +1,10 @@
 "use client";
 
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import type Factory from "../models/factory";
-import type {
-  SerializedFactory,
-  StorageLibrary,
-} from "../models/factory-storage";
+import type { SerializedFactory } from "../models/factory-storage";
 import type Part from "../models/part";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
@@ -12,28 +12,23 @@ import ProductionLineComponent from "./ProductionLineComponent";
 import AddItemControl from "./ui/AddItemControl";
 
 interface PlanningSectionProps {
-  factory: Factory;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   candidateFactories: { sf: SerializedFactory; factory: Factory }[];
   forceExpanded: boolean | null;
   onToggle: () => void;
   onAddProduct: (part: Part) => void;
   onRemoveProduct: (part: Part) => void;
-  onNavigateToFactory: (id: string) => void;
 }
 
 export default function PlanningSection({
-  factory,
-  library,
-  currentFactoryId,
   candidateFactories,
   forceExpanded,
   onToggle,
   onAddProduct,
   onRemoveProduct,
-  onNavigateToFactory,
 }: PlanningSectionProps) {
+  const factory = useFactory();
+  const { library, currentFactoryId } = useLibraryContext();
+  const { navigateToFactory } = useNavigation();
   return (
     <div className="flex flex-col grow">
       {factory.productionLines.length === 0 ? (
@@ -52,7 +47,7 @@ export default function PlanningSection({
               onDeleteClicked={() => onRemoveProduct(product.part)}
               forceExpanded={forceExpanded}
               onToggle={onToggle}
-              onNavigateToFactory={onNavigateToFactory}
+              onNavigateToFactory={navigateToFactory}
             />
             <HorizontalDivider />
           </div>
