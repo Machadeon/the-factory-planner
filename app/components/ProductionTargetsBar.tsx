@@ -5,9 +5,9 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { rateUnit } from "@/app/lib/format";
-import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
 import { partSlugLookup } from "../models/game-data";
 import type { Target } from "../models/optimizer-config";
 import PartSelector from "./PartSelector";
@@ -16,18 +16,9 @@ import AddItemControl from "./ui/AddItemControl";
 import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
-interface ProductionTargetsBarProps {
-  factory: Factory;
-  // Accepted for caller/test compatibility; targets bar no longer needs them
-  // since the optimizer config moved inline into OptimizationSection.
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
-}
-
-export default function ProductionTargetsBar({
-  factory,
-  library,
-}: ProductionTargetsBarProps) {
+export default function ProductionTargetsBar() {
+  const factory = useFactory();
+  const { library } = useLibraryContext();
   const targets = factory.optimizer.targets;
 
   function setTargets(next: Target[]) {
@@ -62,7 +53,7 @@ export default function ProductionTargetsBar({
   }
 
   function solve() {
-    factory.optimizeRecipes(library?.partPointOverrides ?? {});
+    factory.optimizeRecipes(library.partPointOverrides ?? {});
     factory.update();
   }
 

@@ -9,9 +9,15 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(__dirname, "..", "..", "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
-// Extract the body of the first `interface XxxProps { ... }` block.
-function propsInterface(src: string): string {
-  const start = src.search(/interface \w+Props\s*(?:<[^>]*>)?\s*\{/);
+// Extract the body of the component's own `interface <ComponentName>Props { ... }`
+// block (named after the file), ignoring unrelated internal Props interfaces
+// (e.g. LogisticsSection's internal GraphProps). Returns "" when the component
+// declares no props interface of its own.
+function propsInterface(src: string, componentName: string): string {
+  const re = new RegExp(
+    `interface ${componentName}Props\\s*(?:<[^>]*>)?\\s*\\{`,
+  );
+  const start = src.search(re);
   if (start === -1) return "";
   let depth = 0;
   let i = src.indexOf("{", start);
@@ -25,6 +31,12 @@ function propsInterface(src: string): string {
   }
   return "";
 }
+
+const baseName = (rel: string): string =>
+  rel
+    .split("/")
+    .pop()
+    ?.replace(/\.tsx$/, "") ?? "";
 
 const DRILLED = ["library", "currentFactoryId", "onNavigateToFactory"] as const;
 
@@ -47,7 +59,7 @@ const COMPONENTS = [
 describe("prop-contract: drilled props removed (R4.S1)", () => {
   for (const rel of COMPONENTS) {
     it(`${rel} props declares none of the drilled non-factory props`, () => {
-      const body = propsInterface(read(rel));
+      const body = propsInterface(read(rel), baseName(rel));
       for (const prop of DRILLED) {
         expect(body).not.toMatch(new RegExp(`(^|\\W)${prop}\\s*[?:]`, "m"));
       }
@@ -59,6 +71,7 @@ describe("ProductionTargetsBar dead props gone (R8.S2)", () => {
   it("declares no library or currentFactoryId prop", () => {
     const body = propsInterface(
       read("app/components/ProductionTargetsBar.tsx"),
+      "ProductionTargetsBar",
     );
     expect(body).not.toMatch(/library\s*[?:]/);
     expect(body).not.toMatch(/currentFactoryId\s*[?:]/);

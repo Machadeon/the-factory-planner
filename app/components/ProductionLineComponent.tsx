@@ -9,15 +9,13 @@ import LinkIcon from "@mui/icons-material/Link";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextField from "@mui/material/TextField";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { useFactory } from "@/app/contexts/FactoryContext";
 import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
 import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
 import FactoryRecipe, { factoryRecipeSlug } from "../models/factory-recipe";
-import type {
-  SerializedFactory,
-  StorageLibrary,
-} from "../models/factory-storage";
+import type { SerializedFactory } from "../models/factory-storage";
 import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
@@ -43,19 +41,16 @@ import {
 
 interface ProductionLineComponentProps {
   productionLine: ProductionLine;
-  factory: Factory;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   candidateFactories: Array<{ sf: SerializedFactory; factory: Factory }>;
   onDeleteClicked: () => void;
   forceExpanded?: boolean | null;
   onToggle?: () => void;
-  onNavigateToFactory?: (id: string) => void;
 }
 
 export default function ProductionLineComponent(
   props: ProductionLineComponentProps,
 ) {
+  const factory = useFactory();
   const [showFactoryPicker, setShowFactoryPicker] = useState<boolean>(false);
   const [showSupplyPicker, setShowSupplyPicker] = useState<boolean>(false);
   const [rejectTarget, setRejectTarget] = useState<
@@ -107,7 +102,7 @@ export default function ProductionLineComponent(
       assemblyLine.setPartProductionRate(part, props.productionLine.rate);
     }
 
-    props.factory.setPartRate(part, props.productionLine.rate);
+    factory.setPartRate(part, props.productionLine.rate);
   }
 
   function updateProductionRate(newValue: number) {
@@ -117,7 +112,7 @@ export default function ProductionLineComponent(
 
   function updateOutputRate(newValue: number) {
     props.productionLine.outputRate = newValue;
-    props.factory.autoCalculateRates();
+    factory.autoCalculateRates();
   }
 
   function addAssemblyLine(recipe: Recipe) {
@@ -148,7 +143,7 @@ export default function ProductionLineComponent(
     name: string,
     supplierFactory: Factory,
   ) {
-    props.factory.addSupplier(new FactoryRecipe(id, name, supplierFactory));
+    factory.addSupplier(new FactoryRecipe(id, name, supplierFactory));
     setShowSupplyPicker(false);
   }
 
@@ -182,15 +177,15 @@ export default function ProductionLineComponent(
     e.stopPropagation();
     props.productionLine.autoCreated = false;
     for (const al of props.productionLine.assemblyLines) al.autoCreated = false;
-    props.factory.update();
+    factory.update();
   }
 
   function rejectLine(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
-    if (shouldPromptReject(props.factory.optimizer)) {
+    if (shouldPromptReject(factory.optimizer)) {
       setRejectTarget({ kind: "line" });
     } else {
-      applyRejectSilent(props.factory.optimizer, lineRecipeSlugs());
+      applyRejectSilent(factory.optimizer, lineRecipeSlugs());
       props.onDeleteClicked();
     }
   }
@@ -200,15 +195,15 @@ export default function ProductionLineComponent(
       (a) => a.recipe.slug === recipe.slug,
     );
     if (al) al.autoCreated = false;
-    props.factory.update();
+    factory.update();
   }
 
   function rejectAssembly(recipe: RecipeLike) {
     const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
-    if (shouldPromptReject(props.factory.optimizer)) {
+    if (shouldPromptReject(factory.optimizer)) {
       setRejectTarget({ kind: "assembly", recipe });
     } else {
-      applyRejectSilent(props.factory.optimizer, slugs);
+      applyRejectSilent(factory.optimizer, slugs);
       removeAssemblyLine(recipe);
     }
   }
@@ -216,13 +211,13 @@ export default function ProductionLineComponent(
   function onRejectChoice(choice: RejectChoice) {
     if (!rejectTarget) return;
     if (rejectTarget.kind === "line") {
-      applyRejectChoice(props.factory.optimizer, lineRecipeSlugs(), choice);
+      applyRejectChoice(factory.optimizer, lineRecipeSlugs(), choice);
       setRejectTarget(null);
       props.onDeleteClicked();
     } else {
       const recipe = rejectTarget.recipe;
       const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
-      applyRejectChoice(props.factory.optimizer, slugs, choice);
+      applyRejectChoice(factory.optimizer, slugs, choice);
       setRejectTarget(null);
       removeAssemblyLine(recipe);
     }
@@ -234,16 +229,16 @@ export default function ProductionLineComponent(
       !props.productionLine.autoCalculateRate;
 
     if (props.productionLine.autoCalculateRate) {
-      props.factory.autoSetPartRate(part);
+      factory.autoSetPartRate(part);
     } else {
-      props.factory.update();
+      factory.update();
     }
   }
 
   function toggleMaximizeOutput(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     props.productionLine.maximizeOutput = !props.productionLine.maximizeOutput;
-    props.factory.autoCalculateRates();
+    factory.autoCalculateRates();
   }
 
   function splitRecipes() {
@@ -456,8 +451,6 @@ export default function ProductionLineComponent(
               <AssemblyLine
                 assemblyLine={assemblyLine}
                 mainPart={part}
-                factory={props.factory}
-                onNavigateToFactory={props.onNavigateToFactory}
                 belowRecipeName={
                   assemblyLine.autoCreated ? (
                     <SuggestedActions
@@ -538,16 +531,12 @@ export default function ProductionLineComponent(
         />
         <FactoryPickerDialog
           open={showFactoryPicker}
-          library={props.library}
-          currentFactoryId={props.currentFactoryId}
           targetPartSlug={part.slug}
           onPick={addFactoryAssemblyLine}
           onClose={() => setShowFactoryPicker(false)}
         />
         <FactoryPickerDialog
           open={showSupplyPicker}
-          library={props.library}
-          currentFactoryId={props.currentFactoryId}
           targetPartSlug={part.slug}
           onPick={addSupplierFactory}
           onClose={() => setShowSupplyPicker(false)}

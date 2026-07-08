@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import ProductionTargetsBar from "@/app/components/ProductionTargetsBar";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -34,7 +35,10 @@ describe("ProductionTargetsBar", () => {
     const factory = buildFactory();
     factory.optimizer.targets = [{ partSlug: "power" }];
 
-    render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<ProductionTargetsBar />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // Unit label for power is MW
     expect(screen.getByText("MW")).toBeInTheDocument();
@@ -54,7 +58,10 @@ describe("ProductionTargetsBar", () => {
     factory.optimizer.targets = [{ partSlug: "power", rate: 100000 }];
     const solveSpy = vi.spyOn(factory, "optimizeRecipes");
 
-    render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<ProductionTargetsBar />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     await user.click(screen.getByRole("button", { name: "Optimize recipes" }));
     expect(solveSpy).toHaveBeenCalled();
@@ -62,7 +69,10 @@ describe("ProductionTargetsBar", () => {
 
   it("disables Solve when there are no targets", () => {
     const factory = buildFactory();
-    render(<ProductionTargetsBar factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<ProductionTargetsBar />, {
+      factory,
+      library: emptyLibrary(),
+    });
     expect(
       screen.getByRole("button", { name: "Optimize recipes" }),
     ).toBeDisabled();

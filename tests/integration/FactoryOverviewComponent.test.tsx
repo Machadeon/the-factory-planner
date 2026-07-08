@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import FactoryOverviewComponent from "@/app/components/FactoryOverviewComponent";
@@ -9,6 +9,7 @@ import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -70,13 +71,10 @@ function buildFactory(): Factory {
 describe("FactoryOverviewComponent", () => {
   it("renders Outputs section for a factory with net outputs", () => {
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // Iron Plate is an output (produced 20, consumed 0)
     expect(screen.getByText(/Outputs/i)).toBeInTheDocument();
@@ -87,13 +85,10 @@ describe("FactoryOverviewComponent", () => {
 
   it("renders Inputs section for raw materials consumed", () => {
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // Iron Ore is a net input (consumed 30, produced 0)
     expect(screen.getByText(/Inputs/i)).toBeInTheDocument();
@@ -103,13 +98,10 @@ describe("FactoryOverviewComponent", () => {
   it("can show intermediate parts when the visibility toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // The Intermediate Parts section has a Clickable div (role=generic) containing
     // a VisibilityIcon. It is in a flex row alongside the "Intermediate Parts" heading.
@@ -130,13 +122,10 @@ describe("FactoryOverviewComponent", () => {
   it("hides Outputs section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     const outputsHeader = screen.getByText(/Outputs/i).closest(".flex");
     expect(outputsHeader).not.toBeNull();
@@ -152,13 +141,10 @@ describe("FactoryOverviewComponent", () => {
   it("hides Inputs section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     const inputsHeader = screen.getByText(/Inputs/i).closest(".flex");
     expect(inputsHeader).not.toBeNull();
@@ -173,13 +159,10 @@ describe("FactoryOverviewComponent", () => {
   it("shows Intermediate Parts section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     const intermediateHeading = screen.getByText(/Intermediate Parts/i);
     const row = intermediateHeading.closest(".flex");
@@ -198,13 +181,10 @@ describe("FactoryOverviewComponent", () => {
 
   it("renders Power & Modules section", () => {
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // The power section heading is "Power & Modules"
     expect(screen.getByText(/Power & Modules/i)).toBeInTheDocument();
@@ -213,13 +193,10 @@ describe("FactoryOverviewComponent", () => {
 
   it("starts with Intermediates collapsed and the other sections expanded", () => {
     const factory = buildFactory();
-    render(
-      <FactoryOverviewComponent
-        factory={factory}
-        library={emptyLibrary()}
-        currentFactoryId={null}
-      />,
-    );
+    renderWithProviders(<FactoryOverviewComponent />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     const expectExpanded = (name: RegExp, expanded: boolean) =>
       expect(screen.getByRole("button", { name })).toHaveAttribute(
