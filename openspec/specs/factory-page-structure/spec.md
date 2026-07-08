@@ -1,9 +1,9 @@
 # factory-page-structure
 
+## Purpose
+
 Structural contract for the decomposition: FactoryPage composition root, hooks directory, extracted dialogs/tabs, and behavior-freeze guarantees.
-
 ## Requirements
-
 ### Requirement: R1 — FactoryPage composition root
 `app/components/factory/FactoryPage.tsx` SHALL replace `app/components/FactoryComponent.tsx` (old file deleted, `app/page.tsx` updated). FactoryPage SHALL be ≤150 lines and contain only: hook calls, handler wiring, and layout JSX. No debounce timers, no history API calls, no serialization logic, no id-remapping in the component body. Flow choreography MAY live in a colocated `useFactoryPageFlows` hook, and layout groups MAY be thin passthrough components under `app/components/factory/` (`FactoryPageDialogs`, `FactorySections`, `FactorySidebar`, `LibraryDrawerSlot`), provided child components keep their original prop contracts (R7).
 
@@ -47,7 +47,7 @@ The section tab bar plus the solver-error alert SHALL be extracted to `app/compo
 - **THEN** the warning alert shows the formatted error and the three tabs behave as today
 
 ### Requirement: R7 — behavior freeze
-This change SHALL NOT alter observable behavior: child components (FactoryHeader, PlanningSection, OptimizationSection, LogisticsSection, FactoryOverviewComponent, FactoryLibraryDrawer, StorageConsentDialog, ConfirmDialogs) keep their prop contracts; all aria-labels and `data-testid`s are unchanged; storage keys/formats and URL formats are unchanged; the full unit, integration, and e2e suites pass; `npm run build` is clean. The `valtio` runtime dependency is added.
+This change SHALL NOT alter observable behavior: all aria-labels and `data-testid`s are unchanged; storage keys/formats and URL formats are unchanged; the full unit, integration, and e2e suites pass; `npm run build` is clean. Child component **prop contracts MAY change only** by removing the four drilled values (`factory`, `library`, `currentFactoryId`, `onNavigateToFactory`) in favor of the `app-contexts` seams (`FactoryContext`, `LibraryContext`, `NavigationContext`); all other props and all observable behavior remain frozen. No new runtime dependency is added (`valtio` is already present from the prior decompose-factory-page change).
 
 #### Scenario: R7.S1 — suites green
 - **WHEN** `npm run test:run` and `npm run test:e2e` run after the change
@@ -56,3 +56,7 @@ This change SHALL NOT alter observable behavior: child components (FactoryHeader
 #### Scenario: R7.S2 — snapshot spike coverage
 - **WHEN** class-method reads (`getMachineCount`, `getPartProductionRate`) are exercised through a valtio snapshot in a unit test
 - **THEN** they return the same values as direct proxy reads (guards the snapshot-vs-class-instance risk)
+
+#### Scenario: R7.S3 — prop-contract relaxation is scoped
+- **WHEN** a child component's props interface is compared before and after this change
+- **THEN** the only removed props are `factory`, `library`, `currentFactoryId`, and/or `onNavigateToFactory` (now sourced from context), and every per-instance prop (`part`, `assemblyLine`, `productionLine`, `rate`, …) is unchanged
