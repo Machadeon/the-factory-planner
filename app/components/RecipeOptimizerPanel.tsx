@@ -14,13 +14,11 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import { useMemo, useState } from "react";
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { displayNum } from "@/app/lib/format";
-import type Factory from "../models/factory";
 import { availableOutputsFrom } from "../models/factory-metrics";
-import {
-  deserializeFactory,
-  type StorageLibrary,
-} from "../models/factory-storage";
+import { deserializeFactory } from "../models/factory-storage";
 import { buildings, partSlugLookup, recipes } from "../models/game-data";
 import {
   MAX_GAME_PHASE,
@@ -110,22 +108,13 @@ const recipeBuildingGroups = recipeBuildings
   )
   .sort((a, b) => (GROUP_ORDER[a.group] ?? 99) - (GROUP_ORDER[b.group] ?? 99));
 
-interface RecipeOptimizerPanelProps {
-  factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
-  onUpdateLibrary?: (overrides: Record<string, number>) => void;
-}
-
 // Inline, always-visible optimizer config (formerly RecipeOptimizerOptionsDialog).
 // Live-write: edits write straight to factory.optimizer. Config only affects the
 // next Solve/Optimize, so we do not auto-solve here (eager handles auto-rerun).
-export default function RecipeOptimizerPanel({
-  factory,
-  library,
-  currentFactoryId,
-  onUpdateLibrary,
-}: RecipeOptimizerPanelProps) {
+export default function RecipeOptimizerPanel() {
+  const factory = useFactory();
+  const { library, currentFactoryId, updatePartPointOverrides } =
+    useLibraryContext();
   const [showRecipeList, setShowRecipeList] = useState(false);
   const [showPointValues, setShowPointValues] = useState(false);
 
@@ -342,7 +331,7 @@ export default function RecipeOptimizerPanel({
         <PointValuesPanel
           factory={factory}
           library={library}
-          onUpdateLibrary={onUpdateLibrary ?? (() => {})}
+          onUpdateLibrary={updatePartPointOverrides}
         />
       )}
 

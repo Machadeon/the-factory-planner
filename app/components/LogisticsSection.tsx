@@ -18,6 +18,11 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import AssemblyLineNode from "./logistics/AssemblyLineNode";
@@ -34,11 +39,11 @@ import LogisticEdge from "./logistics/LogisticEdge";
 import { nodeSize } from "./logistics/node-size";
 import TerminalNode from "./logistics/TerminalNode";
 
-interface LogisticsSectionProps {
+interface GraphProps {
   factory: Factory;
   library?: StorageLibrary;
   currentFactoryId?: string | null;
-  onNavigateToFactory?: (id: string) => void;
+  actualSize: boolean;
 }
 
 const nodeTypes: NodeTypes = {
@@ -88,14 +93,7 @@ function computeLayout(
   return out;
 }
 
-function Graph({
-  factory,
-  library,
-  currentFactoryId,
-  actualSize,
-}: Omit<LogisticsSectionProps, "onNavigateToFactory"> & {
-  actualSize: boolean;
-}) {
+function Graph({ factory, library, currentFactoryId, actualSize }: GraphProps) {
   // Deserializing consumer factories is expensive; memoize it so rate edits don't
   // re-derive the whole consumer set every render (same key the overview uses).
   const outputKey = factory
@@ -258,12 +256,10 @@ function Graph({
   );
 }
 
-export default function LogisticsSection({
-  factory,
-  library,
-  currentFactoryId,
-  onNavigateToFactory,
-}: LogisticsSectionProps) {
+export default function LogisticsSection() {
+  const factory = useFactory();
+  useFactoryUpdateSubscription();
+  const { library, currentFactoryId } = useLibraryContext();
   const [maximized, setMaximized] = useState(false);
   const [actualSize, setActualSize] = useState(true);
 
@@ -295,7 +291,7 @@ export default function LogisticsSection({
   }
 
   return (
-    <LogisticsContext.Provider value={{ onNavigateToFactory, actualSize }}>
+    <LogisticsContext.Provider value={{ actualSize }}>
       <div
         className={
           maximized

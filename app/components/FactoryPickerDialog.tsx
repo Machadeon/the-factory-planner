@@ -7,15 +7,13 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { useMemo } from "react";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
 import { deserializeFactory } from "../models/factory-storage";
 import Icon from "./ui/Icon";
 
 interface FactoryPickerDialogProps {
   open: boolean;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   targetPartSlug: string;
   onPick: (id: string, name: string, factory: Factory) => void;
   onClose: () => void;
@@ -23,12 +21,11 @@ interface FactoryPickerDialogProps {
 
 export default function FactoryPickerDialog({
   open,
-  library,
-  currentFactoryId,
   targetPartSlug,
   onPick,
   onClose,
 }: FactoryPickerDialogProps) {
+  const { library, currentFactoryId } = useLibraryContext();
   // Deserializing the whole library is expensive; skip it when the dialog is
   // closed and memoize otherwise (inputs are all stable refs/primitives).
   const candidates = useMemo(() => {

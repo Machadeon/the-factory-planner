@@ -1,25 +1,13 @@
 "use client";
 
 import useDragResize from "@/app/hooks/useDragResize";
-import type Factory from "@/app/models/factory";
-import type { StorageLibrary } from "@/app/models/factory-storage";
 import FactoryOverviewComponent from "../FactoryOverviewComponent";
 
 interface FactorySidebarProps {
-  factory: Factory;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   onRebuild: () => void;
-  onNavigateToFactory: (id: string) => void;
 }
 
-export default function FactorySidebar({
-  factory,
-  library,
-  currentFactoryId,
-  onRebuild,
-  onNavigateToFactory,
-}: FactorySidebarProps) {
+export default function FactorySidebar({ onRebuild }: FactorySidebarProps) {
   const { sidebarWidth, handleResizeDividerMouseDown } = useDragResize();
   return (
     <>
@@ -32,13 +20,7 @@ export default function FactorySidebar({
         style={{ width: sidebarWidth }}
         className="flex-none overflow-y-auto"
       >
-        <FactoryOverviewComponent
-          factory={factory}
-          onRebuild={onRebuild}
-          library={library}
-          currentFactoryId={currentFactoryId}
-          onNavigateToFactory={onNavigateToFactory}
-        />
+        <FactoryOverviewComponent onRebuild={onRebuild} />
       </div>
     </>
   );

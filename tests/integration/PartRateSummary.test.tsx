@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import PartRateSummary from "@/app/components/PartRateSummary";
 import AssemblyLine from "@/app/models/assembly-line";
@@ -8,6 +8,7 @@ import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -71,9 +72,9 @@ describe("PartRateSummary", () => {
     const factory = buildFactory();
     // Iron Ingot: produced 30/min, consumed 30/min → netRate = 0 → should show 30/min
     const rate = factory.rateLookup[ironIngotPart.slug];
-    render(
-      <PartRateSummary part={ironIngotPart} rate={rate} factory={factory} />,
-    );
+    renderWithProviders(<PartRateSummary part={ironIngotPart} rate={rate} />, {
+      factory,
+    });
     expect(screen.getByText(/30/)).toBeInTheDocument();
   });
 
@@ -81,14 +82,9 @@ describe("PartRateSummary", () => {
     const factory = buildFactory();
     // Iron Ore: consumed 30, produced 0 → netRate = -30
     const rate = factory.rateLookup[ironOrePart.slug];
-    const { container } = render(
-      <PartRateSummary
-        part={ironOrePart}
-        rate={rate}
-        factory={factory}
-        library={emptyLibrary()}
-        hideActions={false}
-      />,
+    const { container } = renderWithProviders(
+      <PartRateSummary part={ironOrePart} rate={rate} hideActions={false} />,
+      { factory, library: emptyLibrary() },
     );
     // Action buttons render as cursor-pointer Clickable divs
     const clickables = container.querySelectorAll(".cursor-pointer");
@@ -98,14 +94,9 @@ describe("PartRateSummary", () => {
   it("hides action buttons when hideActions=true", () => {
     const factory = buildFactory();
     const rate = factory.rateLookup[ironOrePart.slug];
-    const { container } = render(
-      <PartRateSummary
-        part={ironOrePart}
-        rate={rate}
-        factory={factory}
-        library={emptyLibrary()}
-        hideActions={true}
-      />,
+    const { container } = renderWithProviders(
+      <PartRateSummary part={ironOrePart} rate={rate} hideActions={true} />,
+      { factory, library: emptyLibrary() },
     );
     const clickables = container.querySelectorAll(".cursor-pointer");
     expect(clickables.length).toBe(0);
@@ -115,13 +106,9 @@ describe("PartRateSummary", () => {
     const factory = buildFactory();
     // Iron Ingot is produced by Iron Ingot recipe and consumed by Iron Plate recipe
     const rate = factory.rateLookup[ironIngotPart.slug];
-    render(
-      <PartRateSummary
-        part={ironIngotPart}
-        rate={rate}
-        factory={factory}
-        showDetail={true}
-      />,
+    renderWithProviders(
+      <PartRateSummary part={ironIngotPart} rate={rate} showDetail={true} />,
+      { factory },
     );
     expect(screen.getByText(/Produced by:/i)).toBeInTheDocument();
     expect(screen.getByText(/Consumed by:/i)).toBeInTheDocument();
@@ -132,13 +119,9 @@ describe("PartRateSummary", () => {
   it("does not render producer/consumer detail when showDetail=false", () => {
     const factory = buildFactory();
     const rate = factory.rateLookup[ironIngotPart.slug];
-    render(
-      <PartRateSummary
-        part={ironIngotPart}
-        rate={rate}
-        factory={factory}
-        showDetail={false}
-      />,
+    renderWithProviders(
+      <PartRateSummary part={ironIngotPart} rate={rate} showDetail={false} />,
+      { factory },
     );
     expect(screen.queryByText(/Produced by:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Consumed by:/i)).not.toBeInTheDocument();

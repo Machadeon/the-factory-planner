@@ -2,18 +2,20 @@
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useMemo } from "react";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
+import { useLibraryContext } from "@/app/contexts/LibraryContext";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
-import type Factory from "../models/factory";
 import {
   getTotalPower,
   getTotalShards,
   getTotalSloops,
 } from "../models/factory-metrics";
 import { factoryRecipeId } from "../models/factory-recipe";
-import {
-  deserializeFactory,
-  type StorageLibrary,
-} from "../models/factory-storage";
+import { deserializeFactory } from "../models/factory-storage";
 import { RATE_EPSILON } from "../models/game-data";
 import { HorizontalDivider } from "./Dividers";
 import PartRateSummary from "./PartRateSummary";
@@ -22,19 +24,17 @@ import Icon from "./ui/Icon";
 import IconButton from "./ui/IconButton";
 
 interface FactoryOverviewComponentProps {
-  factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
-  onNavigateToFactory?: (id: string) => void;
+  // Kept for the existing (unused) caller contract; overview reads state from context.
   onRebuild?: () => void;
 }
 
-export default function FactoryOverviewComponent({
-  factory,
-  library,
-  currentFactoryId,
-  onNavigateToFactory,
-}: FactoryOverviewComponentProps) {
+export default function FactoryOverviewComponent(
+  _props: FactoryOverviewComponentProps,
+) {
+  const factory = useFactory();
+  useFactoryUpdateSubscription();
+  const { library, currentFactoryId } = useLibraryContext();
+  const { navigateToFactory } = useNavigation();
   const factoryOutputs = factory.getOutputInfo().sort((a, b) => {
     const primaryDiff = (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0);
     return primaryDiff !== 0
@@ -92,9 +92,6 @@ export default function FactoryOverviewComponent({
               <PartRateSummary
                 part={output.part}
                 rate={output.rate}
-                factory={factory}
-                library={library}
-                currentFactoryId={currentFactoryId}
                 highlight={!output.isPrimary}
               />
             </div>
@@ -159,17 +156,13 @@ export default function FactoryOverviewComponent({
                         key={c.name}
                         className="flex flex-row items-center gap-x-1 pl-1 py-0.5"
                       >
-                        {onNavigateToFactory ? (
-                          <button
-                            type="button"
-                            className="grow text-sm text-left underline cursor-pointer hover:opacity-70"
-                            onClick={() => onNavigateToFactory(c.id)}
-                          >
-                            {c.name}
-                          </button>
-                        ) : (
-                          <span className="grow text-sm">{c.name}</span>
-                        )}
+                        <button
+                          type="button"
+                          className="grow text-sm text-left underline cursor-pointer hover:opacity-70"
+                          onClick={() => navigateToFactory(c.id)}
+                        >
+                          {c.name}
+                        </button>
                         <span className="text-sm text-right">
                           {displayNum(c.rate)}/min
                         </span>
@@ -198,9 +191,6 @@ export default function FactoryOverviewComponent({
               key={part.slug}
               part={part}
               rate={factory.rateLookup[part.slug]}
-              factory={factory}
-              library={library}
-              currentFactoryId={currentFactoryId}
             />
           ))}
         </div>
@@ -218,9 +208,6 @@ export default function FactoryOverviewComponent({
                 key={part.slug}
                 part={part}
                 rate={factory.rateLookup[part.slug]}
-                factory={factory}
-                library={library}
-                currentFactoryId={currentFactoryId}
                 showDetail
               />
             ))}
@@ -295,19 +282,15 @@ export default function FactoryOverviewComponent({
                       {fr.icon && (
                         <Icon src={fr.icon} alt={fr.name} size={24} />
                       )}
-                      {onNavigateToFactory ? (
-                        <button
-                          type="button"
-                          className="grow font-medium text-left underline cursor-pointer hover:opacity-70"
-                          onClick={() =>
-                            onNavigateToFactory(factoryRecipeId(fr.slug))
-                          }
-                        >
-                          {fr.name}
-                        </button>
-                      ) : (
-                        <span className="grow font-medium">{fr.name}</span>
-                      )}
+                      <button
+                        type="button"
+                        className="grow font-medium text-left underline cursor-pointer hover:opacity-70"
+                        onClick={() =>
+                          navigateToFactory(factoryRecipeId(fr.slug))
+                        }
+                      >
+                        {fr.name}
+                      </button>
                       <IconButton
                         aria-label="Remove supplier"
                         onClick={() =>

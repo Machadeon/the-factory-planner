@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import OptimizationSection from "@/app/components/OptimizationSection";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -32,7 +33,10 @@ describe("OptimizationSection", () => {
   // T4 (AC3): optimization controls render inline, no modal at rest.
   it("renders targets, constraints, optimizer, and recipe controls without a modal", () => {
     const factory = buildFactory();
-    render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<OptimizationSection />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     expect(screen.getByText(/Production Targets/i)).toBeInTheDocument();
     expect(screen.getByText(/Constraints/i)).toBeInTheDocument();
@@ -44,7 +48,10 @@ describe("OptimizationSection", () => {
   it("writes objective changes to the model immediately (no Apply)", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<OptimizationSection />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     await user.click(
       screen.getByRole("radio", { name: /Minimum power consumption/i }),
@@ -59,7 +66,10 @@ describe("OptimizationSection", () => {
     const factory = buildFactory();
     factory.constraints = [{ partSlug: "iron-ore", max: 60 }];
     const updateSpy = vi.spyOn(factory, "update");
-    render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<OptimizationSection />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     // Delete the constraint row → immediate model sync, no Apply/Cancel.
     await user.click(
@@ -76,7 +86,10 @@ describe("OptimizationSection", () => {
     // Mark a suggested line so the bulk actions render.
     const pl = factory.productionLines[0];
     if (pl) pl.autoCreated = true;
-    render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<OptimizationSection />, {
+      factory,
+      library: emptyLibrary(),
+    });
 
     const rejectAll = screen.queryByRole("button", { name: /Reject all/i });
     if (rejectAll) {
@@ -88,7 +101,10 @@ describe("OptimizationSection", () => {
   // T7: Solve gating.
   it("disables Solve with no targets", () => {
     const factory = buildFactory();
-    render(<OptimizationSection factory={factory} library={emptyLibrary()} />);
+    renderWithProviders(<OptimizationSection />, {
+      factory,
+      library: emptyLibrary(),
+    });
     expect(
       screen.getByRole("button", { name: "Optimize recipes" }),
     ).toBeDisabled();

@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useFactory } from "@/app/contexts/FactoryContext";
 import type AssemblyLine from "../models/assembly-line";
-import type Factory from "../models/factory";
 import { recipeLookup } from "../models/game-data";
 import type Part from "../models/part";
 import type Recipe from "../models/recipe";
@@ -14,20 +14,14 @@ import RecipeComponent from "./RecipeComponent";
 interface AssemblyLineComponentProps {
   assemblyLine: AssemblyLine;
   mainPart: Part;
-  factory: Factory;
-  onNavigateToFactory?: (id: string) => void;
   belowRecipeName?: ReactNode;
 }
 
 function AssemblyLineComponent(props: AssemblyLineComponentProps) {
+  const factory = useFactory();
+
   if (props.assemblyLine.recipe.isFactoryRecipe) {
-    return (
-      <NestedFactoryRow
-        assemblyLine={props.assemblyLine}
-        factory={props.factory}
-        onNavigateToFactory={props.onNavigateToFactory}
-      />
-    );
+    return <NestedFactoryRow assemblyLine={props.assemblyLine} />;
   }
 
   const recipe = props.assemblyLine.recipe as Recipe;
@@ -40,10 +34,10 @@ function AssemblyLineComponent(props: AssemblyLineComponentProps) {
     if (isProduct)
       props.assemblyLine.setPartProductionRate(recipePart.part, newValue);
     else props.assemblyLine.setPartConsumptionRate(recipePart.part, newValue);
-    props.factory.update();
+    factory.update();
   }
 
-  const allOutputs = props.factory.recipeOutputs().map((part) => part.slug);
+  const allOutputs = factory.recipeOutputs().map((part) => part.slug);
   const partsNeeded = recipe.ingredients
     .map((ing) => ing.part.slug)
     .filter(
@@ -61,12 +55,12 @@ function AssemblyLineComponent(props: AssemblyLineComponentProps) {
         setPartRate={adjustProductionRate}
         partRateEditable={recipeLookup[props.mainPart.slug].length > 1}
         partsNeeded={partsNeeded}
-        factory={props.factory}
+        factory={factory}
         belowRecipeName={props.belowRecipeName}
       />
       <AssemblyLineControls
         assemblyLine={props.assemblyLine}
-        factory={props.factory}
+        factory={factory}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import AssemblyLineComponent from "@/app/components/AssemblyLineComponent";
@@ -8,6 +8,7 @@ import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
+import { renderWithProviders } from "../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -67,12 +68,12 @@ describe("AssemblyLineComponent — clock speed", () => {
   it("machine count input back-calculates clock speed", async () => {
     const user = userEvent.setup();
     const props = buildProps(30);
-    render(
+    renderWithProviders(
       <AssemblyLineComponent
         assemblyLine={props.assemblyLine}
         mainPart={props.mainPart}
-        factory={props.factory}
       />,
+      { factory: props.factory },
     );
 
     // The machine count field displays '1' (30/min at 100% clock → 1 machine)
@@ -97,12 +98,12 @@ describe("AssemblyLineComponent — somersloop slider", () => {
       .spyOn(props.factory, "autoCalculateRates")
       .mockImplementation(() => {});
 
-    render(
+    renderWithProviders(
       <AssemblyLineComponent
         assemblyLine={props.assemblyLine}
         mainPart={props.mainPart}
-        factory={props.factory}
       />,
+      { factory: props.factory },
     );
 
     // The sloop slider has an MUI Slider; find hidden input with aria-label or find by role

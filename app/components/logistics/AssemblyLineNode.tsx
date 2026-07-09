@@ -1,4 +1,5 @@
 import type { NodeProps } from "@xyflow/react";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
 import { factoryRecipeId } from "../../models/factory-recipe";
 import type Recipe from "../../models/recipe";
@@ -36,7 +37,8 @@ function portStyle(
 // lines size from the sub-factory's total floor area and link to that factory.
 export default function AssemblyLineNode({ data }: NodeProps) {
   const { assemblyLine: al, factory } = data as unknown as AssemblyNodeData;
-  const { onNavigateToFactory, actualSize = true } = useLogistics();
+  const { actualSize = true } = useLogistics();
+  const { navigateToFactory } = useNavigation();
   const recipe = al.recipe;
   const isFactory = recipe.isFactoryRecipe;
   const machines = Math.max(1, machineCountOf(al));
@@ -125,11 +127,11 @@ export default function AssemblyLineNode({ data }: NodeProps) {
 
         <div className="relative flex flex-col items-center gap-0.5 rounded-md bg-[#1b2230]/80 px-3 pt-2 pb-1">
           {icon ? <Icon src={icon} label={name} size={36} /> : null}
-          {isFactory && onNavigateToFactory ? (
+          {isFactory ? (
             <button
               type="button"
               className="max-w-56 truncate text-center text-sm font-semibold underline hover:opacity-70"
-              onClick={() => onNavigateToFactory(factoryRecipeId(recipe.slug))}
+              onClick={() => navigateToFactory(factoryRecipeId(recipe.slug))}
             >
               {name}
             </button>

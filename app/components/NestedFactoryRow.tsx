@@ -1,24 +1,23 @@
 "use client";
 
 import EastIcon from "@mui/icons-material/East";
+import { useFactory } from "@/app/contexts/FactoryContext";
+import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
-import type Factory from "../models/factory";
 import { factoryRecipeId } from "../models/factory-recipe";
 import TextCalculatorField from "./TextCalculatorField";
 import Icon from "./ui/Icon";
 
 interface NestedFactoryRowProps {
   assemblyLine: AssemblyLine;
-  factory: Factory;
-  onNavigateToFactory?: (id: string) => void;
 }
 
 export default function NestedFactoryRow({
   assemblyLine,
-  factory,
-  onNavigateToFactory,
 }: NestedFactoryRowProps) {
+  const factory = useFactory();
+  const { navigateToFactory } = useNavigation();
   const recipe = assemblyLine.recipe;
   const rate = assemblyLine.rate;
   const factoryId = factoryRecipeId(recipe.slug);
@@ -31,17 +30,13 @@ export default function NestedFactoryRow({
 
   return (
     <div className="sp-recipe-component flex flex-row grow items-center gap-x-2 p-2">
-      {onNavigateToFactory ? (
-        <button
-          type="button"
-          className="w-3xs font-medium text-left underline cursor-pointer hover:opacity-70"
-          onClick={() => onNavigateToFactory(factoryId)}
-        >
-          {recipe.name}
-        </button>
-      ) : (
-        <span className="w-3xs font-medium">{recipe.name}</span>
-      )}
+      <button
+        type="button"
+        className="w-3xs font-medium text-left underline cursor-pointer hover:opacity-70"
+        onClick={() => navigateToFactory(factoryId)}
+      >
+        {recipe.name}
+      </button>
       <div className="flex items-center gap-x-1">
         <TextCalculatorField
           variant="outlined"

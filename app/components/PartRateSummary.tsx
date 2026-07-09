@@ -3,11 +3,11 @@
 import AddIcon from "@mui/icons-material/Add";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import { useState } from "react";
+import { useFactory } from "@/app/contexts/FactoryContext";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../models/factory";
 import type { Rate } from "../models/factory";
 import FactoryRecipe from "../models/factory-recipe";
-import type { StorageLibrary } from "../models/factory-storage";
 import { RATE_EPSILON } from "../models/game-data";
 import type Part from "../models/part";
 import FactoryPickerDialog from "./FactoryPickerDialog";
@@ -18,9 +18,6 @@ import RateDisplay from "./ui/RateDisplay";
 interface PartRateSummaryProps {
   part: Part;
   rate: Rate;
-  factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
   showDetail?: boolean;
   hideActions?: boolean;
   highlight?: boolean;
@@ -29,13 +26,11 @@ interface PartRateSummaryProps {
 export default function PartRateSummary({
   part,
   rate,
-  factory,
-  library,
-  currentFactoryId,
   showDetail,
   hideActions,
   highlight,
 }: PartRateSummaryProps) {
+  const factory = useFactory();
   const [supplyPickerOpen, setSupplyPickerOpen] = useState(false);
   const netRate = rate.productionRate - rate.consumptionRate;
   const netRateDisplay = displayNum(
@@ -90,15 +85,13 @@ export default function PartRateSummary({
             >
               <AddIcon fontSize="small" />
             </IconButton>
-            {library && (
-              <IconButton
-                aria-label="Supply from factory"
-                onClick={() => setSupplyPickerOpen(true)}
-                className="inline p-0.5"
-              >
-                <WarehouseIcon fontSize="small" />
-              </IconButton>
-            )}
+            <IconButton
+              aria-label="Supply from factory"
+              onClick={() => setSupplyPickerOpen(true)}
+              className="inline p-0.5"
+            >
+              <WarehouseIcon fontSize="small" />
+            </IconButton>
           </>
         )}
       </div>
@@ -142,16 +135,12 @@ export default function PartRateSummary({
           </div>
         </div>
       )}
-      {library && (
-        <FactoryPickerDialog
-          open={supplyPickerOpen}
-          library={library}
-          currentFactoryId={currentFactoryId ?? null}
-          targetPartSlug={part.slug}
-          onPick={handleAddSupplier}
-          onClose={() => setSupplyPickerOpen(false)}
-        />
-      )}
+      <FactoryPickerDialog
+        open={supplyPickerOpen}
+        targetPartSlug={part.slug}
+        onPick={handleAddSupplier}
+        onClose={() => setSupplyPickerOpen(false)}
+      />
     </div>
   );
 }

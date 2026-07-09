@@ -4,8 +4,10 @@ import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import Button from "@mui/material/Button";
 import { useState } from "react";
-import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import type { ScoringObjective } from "../models/optimizer-config";
 import { applyRejectSilent } from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
@@ -23,19 +25,9 @@ const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   inputValue: "Min input value",
 };
 
-interface OptimizationSectionProps {
-  factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
-  onUpdateLibrary?: (overrides: Record<string, number>) => void;
-}
-
-export default function OptimizationSection({
-  factory,
-  library,
-  currentFactoryId,
-  onUpdateLibrary,
-}: OptimizationSectionProps) {
+export default function OptimizationSection() {
+  const factory = useFactory();
+  useFactoryUpdateSubscription();
   const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
 
   const suggestedLineCount = factory.productionLines.filter(
@@ -84,11 +76,7 @@ export default function OptimizationSection({
 
   return (
     <div className="flex flex-col overflow-y-auto p-4 gap-y-2">
-      <ProductionTargetsBar
-        factory={factory}
-        library={library}
-        currentFactoryId={currentFactoryId}
-      />
+      <ProductionTargetsBar />
 
       <HorizontalDivider />
       <div>
@@ -132,12 +120,7 @@ export default function OptimizationSection({
       <ConstraintsPanel factory={factory} />
 
       <HorizontalDivider />
-      <RecipeOptimizerPanel
-        factory={factory}
-        library={library}
-        currentFactoryId={currentFactoryId}
-        onUpdateLibrary={onUpdateLibrary}
-      />
+      <RecipeOptimizerPanel />
 
       <ConfirmDialog
         open={showRejectAllConfirm}

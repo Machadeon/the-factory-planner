@@ -1,10 +1,11 @@
 "use client";
 
+import {
+  useFactory,
+  useFactoryUpdateSubscription,
+} from "@/app/contexts/FactoryContext";
 import type Factory from "../models/factory";
-import type {
-  SerializedFactory,
-  StorageLibrary,
-} from "../models/factory-storage";
+import type { SerializedFactory } from "../models/factory-storage";
 import type Part from "../models/part";
 import { HorizontalDivider } from "./Dividers";
 import PartSelector from "./PartSelector";
@@ -12,28 +13,22 @@ import ProductionLineComponent from "./ProductionLineComponent";
 import AddItemControl from "./ui/AddItemControl";
 
 interface PlanningSectionProps {
-  factory: Factory;
-  library: StorageLibrary;
-  currentFactoryId: string | null;
   candidateFactories: { sf: SerializedFactory; factory: Factory }[];
   forceExpanded: boolean | null;
   onToggle: () => void;
   onAddProduct: (part: Part) => void;
   onRemoveProduct: (part: Part) => void;
-  onNavigateToFactory: (id: string) => void;
 }
 
 export default function PlanningSection({
-  factory,
-  library,
-  currentFactoryId,
   candidateFactories,
   forceExpanded,
   onToggle,
   onAddProduct,
   onRemoveProduct,
-  onNavigateToFactory,
 }: PlanningSectionProps) {
+  const factory = useFactory();
+  useFactoryUpdateSubscription();
   return (
     <div className="flex flex-col grow">
       {factory.productionLines.length === 0 ? (
@@ -45,14 +40,10 @@ export default function PlanningSection({
           <div key={product.part.slug}>
             <ProductionLineComponent
               productionLine={product}
-              factory={factory}
-              library={library}
-              currentFactoryId={currentFactoryId}
               candidateFactories={candidateFactories}
               onDeleteClicked={() => onRemoveProduct(product.part)}
               forceExpanded={forceExpanded}
               onToggle={onToggle}
-              onNavigateToFactory={onNavigateToFactory}
             />
             <HorizontalDivider />
           </div>
