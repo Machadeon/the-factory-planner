@@ -137,6 +137,7 @@ export default function PartRateSummary({
       )}
       <FactoryPickerDialog
         open={supplyPickerOpen}
+        mode="supplier"
         targetPartSlug={part.slug}
         onPick={handleAddSupplier}
         onClose={() => setSupplyPickerOpen(false)}

@@ -70,3 +70,51 @@ describe("rate reflects sum of assembly line production rates", () => {
     expect(total).toBeCloseTo(45);
   });
 });
+
+describe("recipeInstanceRate (R2.S1)", () => {
+  it("returns (rate − Σ getPartProductionRate) / recipe.productLookup[slug]", () => {
+    const pl = new ProductionLine(ironIngotPart, 90, 90, false, false);
+    pl.assemblyLines = [
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 30,
+        allowRemainder: false,
+      }),
+    ];
+    const actual = pl.assemblyLines.reduce(
+      (sum, al) => sum + al.getPartProductionRate(ironIngotPart),
+      0,
+    );
+    const expected =
+      (pl.rate - actual) / ironIngotRecipe.productLookup[ironIngotPart.slug];
+    expect(pl.recipeInstanceRate(ironIngotRecipe)).toBeCloseTo(expected);
+  });
+
+  it("with no assembly lines equals rate / product quantity", () => {
+    const pl = new ProductionLine(ironIngotPart, 60, 60, false, false);
+    expect(pl.recipeInstanceRate(ironIngotRecipe)).toBeCloseTo(
+      60 / ironIngotRecipe.productLookup[ironIngotPart.slug],
+    );
+  });
+});
+
+describe("splitRecipeRates (R2.S2)", () => {
+  it("scales each assembly line rate by n/(n+1) and changes nothing else", () => {
+    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+    pl.assemblyLines = [
+      new AssemblyLine({ recipe: ironIngotRecipe, rate: 30 }),
+      new AssemblyLine({ recipe: ironIngotRecipe, rate: 15 }),
+      new AssemblyLine({ recipe: ironIngotRecipe, rate: 9 }),
+    ];
+    const n = pl.assemblyLines.length; // 3
+    const before = pl.assemblyLines.map((al) => al.rate);
+    pl.splitRecipeRates();
+    pl.assemblyLines.forEach((al, i) => {
+      expect(al.rate).toBeCloseTo((before[i] * n) / (n + 1));
+    });
+    // recipes untouched
+    expect(pl.assemblyLines.every((al) => al.recipe === ironIngotRecipe)).toBe(
+      true,
+    );
+  });
+});

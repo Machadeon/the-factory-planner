@@ -14,13 +14,20 @@ import Icon from "./ui/Icon";
 
 interface FactoryPickerDialogProps {
   open: boolean;
+  mode: "recipe" | "supplier";
   targetPartSlug: string;
   onPick: (id: string, name: string, factory: Factory) => void;
   onClose: () => void;
 }
 
+const MODE_TITLES: Record<FactoryPickerDialogProps["mode"], string> = {
+  recipe: "Use Factory as Recipe",
+  supplier: "Supply from Factory",
+};
+
 export default function FactoryPickerDialog({
   open,
+  mode,
   targetPartSlug,
   onPick,
   onClose,
@@ -42,7 +49,7 @@ export default function FactoryPickerDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Use Factory</DialogTitle>
+      <DialogTitle>{MODE_TITLES[mode]}</DialogTitle>
       <DialogContent>
         {candidates.length === 0 ? (
           <p className="text-sm text-gray-400">
