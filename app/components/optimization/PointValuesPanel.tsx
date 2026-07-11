@@ -7,15 +7,15 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import { Fragment, useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
-import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
-import { parts } from "../models/game-data";
+import type Factory from "../../models/factory";
+import type { StorageLibrary } from "../../models/factory-storage";
+import { parts } from "../../models/game-data";
 import {
   computeDefaultPointValues,
   resolveEffectivePointValues,
-} from "../models/point-values";
-import TextCalculatorField from "./TextCalculatorField";
-import Icon from "./ui/Icon";
+} from "../../models/point-values";
+import TextCalculatorField from "../TextCalculatorField";
+import Icon from "../ui/Icon";
 
 interface PointValuesPanelProps {
   factory: Factory;

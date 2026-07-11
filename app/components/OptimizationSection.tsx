@@ -15,8 +15,8 @@ import {
 } from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
 import { HorizontalDivider } from "./Dividers";
+import OptimizerPanel from "./optimization/OptimizerPanel";
 import ProductionTargetsBar from "./ProductionTargetsBar";
-import RecipeOptimizerPanel from "./RecipeOptimizerPanel";
 import ConfirmDialog from "./ui/ConfirmDialog";
 
 const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
@@ -103,7 +103,7 @@ export default function OptimizationSection() {
       <ConstraintsPanel factory={factory} />
 
       <HorizontalDivider />
-      <RecipeOptimizerPanel />
+      <OptimizerPanel />
 
       <ConfirmDialog
         open={showRejectAllConfirm}

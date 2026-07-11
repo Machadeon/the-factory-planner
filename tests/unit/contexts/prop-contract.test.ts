@@ -53,7 +53,7 @@ const COMPONENTS = [
   "app/components/OptimizationSection.tsx",
   "app/components/LogisticsSection.tsx",
   "app/components/ProductionTargetsBar.tsx",
-  "app/components/RecipeOptimizerPanel.tsx",
+  "app/components/optimization/OptimizerPanel.tsx",
 ];
 
 describe("prop-contract: drilled props removed (R4.S1)", () => {

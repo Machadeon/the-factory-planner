@@ -3,9 +3,9 @@
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
-import { recipes } from "../models/game-data";
-import type Recipe from "../models/recipe";
-import RecipeOverrideRow, { displayRecipeName } from "./RecipeOverrideRow";
+import { recipes } from "../../models/game-data";
+import type Recipe from "../../models/recipe";
+import RecipeOverrideRow, { displayRecipeName } from "../RecipeOverrideRow";
 
 const sortedRecipes = [...recipes].sort((a, b) =>
   displayRecipeName(a).localeCompare(displayRecipeName(b)),
