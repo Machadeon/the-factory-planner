@@ -1,6 +1,6 @@
 # Satisfactory Planner — Roadmap
 
-Planned major changes, with notes on how each fits the existing domain model (`Factory → ProductionLine → AssemblyLine → Recipe`) and state model (all state in `FactoryComponent`, mutations committed via `factory.update()`).
+Planned major changes
 
 ## Backlog
 
@@ -18,10 +18,9 @@ Planned major changes, with notes on how each fits the existing domain model (`F
 ### Improvements
 
 - Logistics auto-layout is still bad. Need an algorithm that minimizes crossing edges and keeps edges from going behind nodes.
-- The library button should be hidden if the library drawer is pinned open
+- When a node has too many buildings to render all of them, just render the buildings on the border
 
 ### Optimizations
 
 - Why is deserializeFactory being called in a render thread? (Discovered in Task 5)
 - prevent occasional freeze for some optimization runs (run solver on background thread, time out, display error)
-- make everything client-side
