@@ -41,7 +41,7 @@ All review artifacts are **append-only** — each pass adds a new section record
 ```bash
 npm run dev          # start dev server (localhost:3000)
 npm run build        # production build
-npm run lint-fix     # auto-fix Biome findings (always before commit)
+npm run lint-fix     # auto-fix Biome findings
 npm run test         # watch mode unit tests (vitest)
 npm run test:run     # one-shot unit tests
 npm run test:e2e     # Playwright E2E tests (requires running dev server)
@@ -52,6 +52,21 @@ npx vitest run tests/unit/utils.test.ts
 # Run a single Playwright test file
 npx playwright test tests/e2e/seed.spec.ts
 ```
+
+### Pre-commit verification (REQUIRED)
+
+Before committing any changes, **must run and pass**:
+
+```bash
+make verify
+```
+
+This command runs:
+- Biome formatting/linting check
+- Unit test suite
+- Build validation
+
+Commit hooks enforce this automatically, but verify explicitly to catch issues early.
 
 ## Domain model
 
