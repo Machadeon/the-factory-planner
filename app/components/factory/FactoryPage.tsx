@@ -145,7 +145,7 @@ export default function FactoryPage() {
                   onToggleExpanded={() => setForceExpanded(null)}
                   flows={flows}
                 />
-                <FactorySidebar onRebuild={session.rebuild} />
+                <FactorySidebar />
               </div>
             </div>
           </div>

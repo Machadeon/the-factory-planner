@@ -47,9 +47,9 @@ const COMPONENTS = [
   "app/components/ProductionLineComponent.tsx",
   "app/components/AssemblyLineComponent.tsx",
   "app/components/NestedFactoryRow.tsx",
-  "app/components/PartRateSummary.tsx",
+  "app/components/overview/PartRateSummary.tsx",
   "app/components/FactoryPickerDialog.tsx",
-  "app/components/FactoryOverviewComponent.tsx",
+  "app/components/overview/OverviewSidebar.tsx",
   "app/components/OptimizationSection.tsx",
   "app/components/LogisticsSection.tsx",
   "app/components/ProductionTargetsBar.tsx",
@@ -75,6 +75,40 @@ describe("ProductionTargetsBar dead props gone (R8.S2)", () => {
     );
     expect(body).not.toMatch(/library\s*[?:]/);
     expect(body).not.toMatch(/currentFactoryId\s*[?:]/);
+  });
+});
+
+describe("FactorySidebar has no dangling onRebuild prop (overview-sidebar-structure R1.S3, R4)", () => {
+  it("declares no onRebuild prop", () => {
+    const body = propsInterface(
+      read("app/components/factory/FactorySidebar.tsx"),
+      "FactorySidebar",
+    );
+    expect(body).not.toMatch(/onRebuild\s*[?:]/);
+  });
+
+  it("FactoryPage does not pass onRebuild to FactorySidebar", () => {
+    expect(read("app/components/factory/FactoryPage.tsx")).not.toMatch(
+      /onRebuild/,
+    );
+  });
+});
+
+describe("single deriveConsumers implementation (consumer-links R1.S1, R1.S2)", () => {
+  it("graph-model.ts does not define deriveConsumers locally", () => {
+    const src = read("app/components/logistics/graph-model.ts");
+    expect(src).not.toMatch(/export function deriveConsumers/);
+    expect(src).toMatch(
+      /import \{ deriveConsumers \} from "..\/..\/models\/consumer-links"/,
+    );
+  });
+
+  it("ConsumersSection.tsx contains no inline consumer-derivation loop", () => {
+    const src = read("app/components/overview/ConsumersSection.tsx");
+    expect(src).not.toMatch(/for \(const sf of library\.factories\)/);
+    expect(src).toMatch(
+      /deriveConsumers\(factory, \{ library, currentFactoryId \}\)/,
+    );
   });
 });
 

@@ -23,6 +23,7 @@ import {
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
+import { deriveConsumers } from "../models/consumer-links";
 import type Factory from "../models/factory";
 import type { StorageLibrary } from "../models/factory-storage";
 import AssemblyLineNode from "./logistics/AssemblyLineNode";
@@ -30,11 +31,7 @@ import { GRID } from "./logistics/constants";
 import { LogisticsContext } from "./logistics/context";
 import FactoryLinkNode from "./logistics/FactoryLinkNode";
 import { assignColumns } from "./logistics/graph-layout";
-import {
-  buildGraphModel,
-  deriveConsumers,
-  type GraphNode,
-} from "./logistics/graph-model";
+import { buildGraphModel, type GraphNode } from "./logistics/graph-model";
 import LogisticEdge from "./logistics/LogisticEdge";
 import { nodeSize } from "./logistics/node-size";
 import TerminalNode from "./logistics/TerminalNode";

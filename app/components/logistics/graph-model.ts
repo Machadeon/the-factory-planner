@@ -1,9 +1,8 @@
 import type AssemblyLine from "../../models/assembly-line";
+import { deriveConsumers } from "../../models/consumer-links";
 import type Factory from "../../models/factory";
 import { factoryRecipeId } from "../../models/factory-recipe";
 import type { StorageLibrary } from "../../models/factory-storage";
-import { deserializeFactory } from "../../models/factory-storage";
-import { RATE_EPSILON } from "../../models/game-data";
 import type Part from "../../models/part";
 import {
   buildPartEdges,
@@ -248,36 +247,6 @@ function buildPartIndex(factory: Factory): Map<string, Part> {
     for (const al of pl.assemblyLines) {
       for (const p of al.recipe.products) map.set(p.part.slug, p.part);
       for (const i of al.recipe.ingredients) map.set(i.part.slug, i.part);
-    }
-  }
-  return map;
-}
-
-/**
- * Consumer factories per output part, derived exactly as the overview's Consumers
- * section: library factories whose supplierIds include this factory, net-consuming one
- * of its outputs.
- */
-export function deriveConsumers(
-  factory: Factory,
-  opts: { library?: StorageLibrary; currentFactoryId?: string | null },
-): Map<string, { id: string; name: string; rate: number }[]> {
-  const map = new Map<string, { id: string; name: string; rate: number }[]>();
-  const { library, currentFactoryId } = opts;
-  if (!library || !currentFactoryId) return map;
-  const outputs = factory.allOutputs();
-  for (const sf of library.factories) {
-    if (!sf.supplierIds?.includes(currentFactoryId)) continue;
-    const consumerFactory = deserializeFactory(sf, library);
-    if (!consumerFactory) continue;
-    for (const output of outputs) {
-      const rate = consumerFactory.rateLookup[output.slug];
-      if (!rate) continue;
-      const net = rate.consumptionRate - rate.productionRate;
-      if (net <= RATE_EPSILON) continue;
-      const list = map.get(output.slug) ?? [];
-      list.push({ id: sf.id, name: sf.name, rate: net });
-      map.set(output.slug, list);
     }
   }
   return map;

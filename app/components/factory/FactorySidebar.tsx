@@ -1,13 +1,9 @@
 "use client";
 
 import useDragResize from "@/app/hooks/useDragResize";
-import FactoryOverviewComponent from "../FactoryOverviewComponent";
+import OverviewSidebar from "../overview/OverviewSidebar";
 
-interface FactorySidebarProps {
-  onRebuild: () => void;
-}
-
-export default function FactorySidebar({ onRebuild }: FactorySidebarProps) {
+export default function FactorySidebar() {
   const { sidebarWidth, handleResizeDividerMouseDown } = useDragResize();
   return (
     <>
@@ -20,7 +16,7 @@ export default function FactorySidebar({ onRebuild }: FactorySidebarProps) {
         style={{ width: sidebarWidth }}
         className="flex-none overflow-y-auto"
       >
-        <FactoryOverviewComponent onRebuild={onRebuild} />
+        <OverviewSidebar />
       </div>
     </>
   );
