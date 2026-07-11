@@ -1,12 +1,10 @@
-import type Part from "./part";
-import type { RecipePart } from "./recipe";
+import type FactoryRecipe from "./factory-recipe";
+import type Recipe from "./recipe";
 
-export interface RecipeLike {
-  readonly slug: string;
-  readonly name: string;
-  readonly ingredients: RecipePart[];
-  readonly products: RecipePart[];
-  readonly isFactoryRecipe: boolean;
-  getIngredient(part: Part | string): RecipePart | undefined;
-  getProduct(part: Part | string): RecipePart | undefined;
-}
+/**
+ * A recipe usable by an assembly line: either a game {@link Recipe} or a nested
+ * {@link FactoryRecipe} (a supplier factory presented as a recipe). Both carry a
+ * literal-typed `isFactoryRecipe` discriminant, so guarding on it narrows this
+ * union to the concrete type — no casts.
+ */
+export type AnyRecipe = Recipe | FactoryRecipe;

@@ -25,10 +25,13 @@ function makeFactoryWithTarget(outputRate: number): Factory {
     outputRate,
     true,
     false,
-    true,
   );
   pl.assemblyLines = [
-    new AssemblyLine(ironIngotRecipe as Recipe, 0, 0, 100, 0, false),
+    new AssemblyLine({
+      recipe: ironIngotRecipe as Recipe,
+      rate: 0,
+      allowRemainder: false,
+    }),
   ];
   factory.productionLines.push(pl);
   factory._updateRates();

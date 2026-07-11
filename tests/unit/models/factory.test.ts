@@ -51,15 +51,10 @@ function addManualProductionLine(
   rate: number,
   outputRate = 0,
 ): ProductionLine {
-  const pl = new ProductionLine(
-    part,
-    0,
-    outputRate,
-    outputRate > 0,
-    false,
-    true,
-  );
-  pl.assemblyLines = [new AssemblyLine(recipe, rate, 0, 100, 0, false)];
+  const pl = new ProductionLine(part, 0, outputRate, outputRate > 0, false);
+  pl.assemblyLines = [
+    new AssemblyLine({ recipe: recipe, rate: rate, allowRemainder: false }),
+  ];
   factory.productionLines.push(pl);
   factory._productionLineLookup[part.slug] = pl;
   factory._updateRates();
@@ -69,10 +64,18 @@ function addManualProductionLine(
 describe("_updateRates()", () => {
   it("sums production rates across all assembly lines for a part", () => {
     const factory = makeFactory();
-    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
+    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
     pl.assemblyLines = [
-      new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
-      new AssemblyLine(ironIngotRecipe, 15, 0, 100, 0, false),
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 30,
+        allowRemainder: false,
+      }),
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 15,
+        allowRemainder: false,
+      }),
     ];
     factory.productionLines = [pl];
     factory._updateRates();
@@ -369,7 +372,7 @@ describe("autoCalculateRates()", () => {
 
     // Actually, request output for a part whose recipe also requires itself (impossible).
     // The cleanest approach: set an outputRate but provide no assembly lines.
-    const pl = new ProductionLine(ironIngotPart, 0, 100, true, false, true);
+    const pl = new ProductionLine(ironIngotPart, 0, 100, true, false);
     pl.assemblyLines = []; // no assembly lines to produce iron ingot
     factory.productionLines.push(pl);
     factory._productionLineLookup[ironIngotPart.slug] = pl;
@@ -703,7 +706,7 @@ describe("M2 wrapper contracts — structured errors and single notification", (
     const factory = makeFactory();
     // Output target with no assembly lines → infeasible (matches the existing
     // infeasible-target test, now asserting the structured kind).
-    const pl = new ProductionLine(ironIngotPart, 0, 100, true, false, true);
+    const pl = new ProductionLine(ironIngotPart, 0, 100, true, false);
     pl.assemblyLines = [];
     factory.productionLines.push(pl);
     factory._productionLineLookup[ironIngotPart.slug] = pl;

@@ -46,14 +46,17 @@ function buildProps(rate = 30, outputRate = 0) {
     _version++;
   };
 
-  const al = new AssemblyLine(ironIngotRecipe, rate, 0, 100, 0, false);
+  const al = new AssemblyLine({
+    recipe: ironIngotRecipe,
+    rate: rate,
+    allowRemainder: false,
+  });
   const pl = new ProductionLine(
     ironIngotPart,
     rate,
     outputRate,
     outputRate > 0,
     false,
-    true,
   );
   pl.assemblyLines = [al];
   factory.productionLines = [pl];

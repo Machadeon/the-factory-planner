@@ -22,8 +22,14 @@ beforeAll(() => {
 function ironSubFactoryRecipe(): FactoryRecipe {
   const nested = new Factory();
   nested.update = () => nested._updateRates();
-  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-  pl.assemblyLines = [new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false)];
+  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+  pl.assemblyLines = [
+    new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    }),
+  ];
   pl.rate = pl.assemblyLines[0].getPartProductionRate(ironIngotPart);
   nested.productionLines = [pl];
   nested._productionLineLookup[ironIngotPart.slug] = pl;
@@ -36,8 +42,8 @@ function outerWithSub(): { factory: Factory; al: AssemblyLine } {
   const factory = new Factory();
   factory.update = () => factory._updateRates();
   const fr = ironSubFactoryRecipe();
-  const al = new AssemblyLine(fr, 1, 0, 100, 0, false);
-  const pl = new ProductionLine(ironIngotPart, 0, 0, true, false, true);
+  const al = new AssemblyLine({ recipe: fr, rate: 1, allowRemainder: false });
+  const pl = new ProductionLine(ironIngotPart, 0, 0, true, false);
   pl.assemblyLines = [al];
   factory.productionLines = [pl];
   factory._productionLineLookup[ironIngotPart.slug] = pl;
@@ -69,8 +75,12 @@ describe("AC4: building recipes stay continuous", () => {
   it("a building-recipe line solves to a fractional rate when demanded", () => {
     const factory = new Factory();
     factory.update = () => factory._updateRates();
-    const al = new AssemblyLine(ironIngotRecipe, 1, 0, 100, 0, false);
-    const pl = new ProductionLine(ironIngotPart, 0, 0, true, false, true);
+    const al = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 1,
+      allowRemainder: false,
+    });
+    const pl = new ProductionLine(ironIngotPart, 0, 0, true, false);
     pl.assemblyLines = [al];
     pl.outputRate = 45.5; // fractional completions/min — must NOT be forced integer
     factory.productionLines = [pl];

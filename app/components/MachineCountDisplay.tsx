@@ -13,7 +13,7 @@ export default function MachineCountDisplay({
   const count = assemblyLine.getMachineCount();
 
   let label: React.ReactNode;
-  if ("fullMachines" in count) {
+  if (count.kind === "remainder") {
     if (count.fullMachines === 0 && count.remainderClock === 0) {
       label = <span className="text-gray-400">0 machines</span>;
     } else if (count.remainderClock > 0) {

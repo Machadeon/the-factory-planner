@@ -1,5 +1,4 @@
-import AssemblyLine from "./assembly-line";
-import { recipeLookup } from "./game-data";
+import type AssemblyLine from "./assembly-line";
 import type Part from "./part";
 
 export default class ProductionLine {
@@ -45,7 +44,6 @@ export default class ProductionLine {
     factoryOutputRate: number,
     autoCalculateRate: boolean,
     autoCreated: boolean,
-    suppressAutoRecipe = false,
   ) {
     this.part = part;
     this.rate = productionRate;
@@ -54,19 +52,5 @@ export default class ProductionLine {
     this.autoCreated = autoCreated;
     this.maximizeOutput = false;
     this.assemblyLines = [];
-
-    const recipes = recipeLookup[part.slug];
-    if (recipes.length === 1 && !suppressAutoRecipe) {
-      this.assemblyLines.push(
-        new AssemblyLine(
-          recipes[0],
-          productionRate / recipes[0].productLookup[part.slug],
-          0,
-          100,
-          0,
-          true,
-        ),
-      );
-    }
   }
 }

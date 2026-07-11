@@ -23,7 +23,7 @@ import type Part from "../part";
 import { resolveEffectivePointValues } from "../point-values";
 import ProductionLine from "../production-line";
 import type Recipe from "../recipe";
-import type { RecipeLike } from "../recipe-like";
+import type { AnyRecipe } from "../recipe-like";
 import { createBaseModel, mergeConstraint } from "./base-model";
 import type { SolverError } from "./errors";
 
@@ -37,7 +37,7 @@ export interface RecipeSelectionInput {
 }
 
 export interface RecipeSelection {
-  selected: { recipe: RecipeLike; rate: number }[];
+  selected: { recipe: AnyRecipe; rate: number }[];
   targetFixed: Map<string, number>;
   targetMax: Set<string>;
   /** Solved completions/min per candidate recipe slug (0 for unused). */
@@ -51,7 +51,7 @@ export type RecipeSelectionResult =
   | { ok: false; error: SolverError };
 
 /** Total part throughput (ingredients + products) per recipe completion. */
-function recipeFlow(recipe: RecipeLike): number {
+function recipeFlow(recipe: AnyRecipe): number {
   let total = 0;
   for (const ing of recipe.ingredients) total += ing.quantity;
   for (const prod of recipe.products) total += prod.quantity;
@@ -85,7 +85,7 @@ function targetConstraints(targets: Target[]): {
 function buildScoringObjective(
   objective: ScoringObjective,
   model: ModelDefinition,
-  candidates: RecipeLike[],
+  candidates: AnyRecipe[],
   partPointOverrides: Record<string, number>,
   globalPointOverrides: Record<string, number>,
 ) {
@@ -125,8 +125,7 @@ function buildScoringObjective(
   for (const recipe of candidates) {
     let v = 0;
     if (recipe.isFactoryRecipe) {
-      const fr = recipe as unknown as { avgPowerPerInstance: number };
-      if (objective === "power") v = fr.avgPowerPerInstance ?? 0;
+      if (objective === "power") v = recipe.avgPowerPerInstance ?? 0;
       else if (objective === "logistics") v = recipeFlow(recipe);
       else if (objective === "minResources") {
         for (const ing of recipe.ingredients) {
@@ -228,7 +227,7 @@ export function solveRecipeSelection(
   // ====================================================================================================
   // Define recipes
 
-  const candidates: RecipeLike[] = [];
+  const candidates: AnyRecipe[] = [];
 
   // Gap-fill mode: parts already produced by kept lines are off-limits to new
   // recipes.
@@ -395,7 +394,7 @@ export function solveRecipeSelection(
   // ====================================================================================================
   // Collect selection
 
-  const selected: { recipe: RecipeLike; rate: number }[] = [];
+  const selected: { recipe: AnyRecipe; rate: number }[] = [];
   const ratesBySlug = new Map<string, number>();
   for (const recipe of candidates) {
     const rate =
@@ -431,7 +430,7 @@ export function materializeSelection(
   const ensureLine = (part: Part): ProductionLine => {
     let pl = lineBySlug.get(part.slug);
     if (!pl) {
-      pl = new ProductionLine(part, 0, 0, true, true, true);
+      pl = new ProductionLine(part, 0, 0, true, true);
       factory.productionLines.push(pl);
       lineBySlug.set(part.slug, pl);
     }
@@ -452,7 +451,13 @@ export function materializeSelection(
     }
     if (!alExists) {
       pl.assemblyLines.push(
-        new AssemblyLine(recipe, rate, 0, 100, 0, true, true),
+        new AssemblyLine({
+          recipe,
+          rate,
+          machineSpeed: 100,
+          allowRemainder: true,
+          autoCreated: true,
+        }),
       );
     }
   }

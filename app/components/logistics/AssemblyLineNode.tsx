@@ -1,7 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { displayNum } from "@/app/lib/format";
 import { factoryRecipeId } from "../../models/factory-recipe";
-import type Recipe from "../../models/recipe";
 import Icon from "../ui/Icon";
 import { SCALE } from "./constants";
 import { useLogistics } from "./context";
@@ -48,9 +47,7 @@ export default function AssemblyLineNode({ data }: NodeProps) {
   // size off it collapses to the minimum. Ports sit on this box's border.
   const { width: boxW, height: boxH } = assemblyNodeBox(al, actualSize);
 
-  const icon = isFactory
-    ? (recipe as unknown as { icon?: string }).icon
-    : (recipe as Recipe).building.iconSmall;
+  const icon = recipe.isFactoryRecipe ? recipe.icon : recipe.building.iconSmall;
   // "Alternate:" prefix is redundant noise in the graph — drop it for the label.
   const name = recipe.name.replace(/^Alternate:\s*/, "");
 
@@ -70,12 +67,10 @@ export default function AssemblyLineNode({ data }: NodeProps) {
   function startResize(e: React.PointerEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (recipe.isFactoryRecipe) return; // resize handle only shown for non-factory lines
     const startY = e.clientY;
     const startRows = rows;
-    const perRowPx = Math.max(
-      1,
-      (recipe as Recipe).building.size.length * SCALE,
-    );
+    const perRowPx = Math.max(1, recipe.building.size.length * SCALE);
     const onMove = (ev: PointerEvent) =>
       setRows(startRows + Math.round((ev.clientY - startY) / perRowPx));
     const onUp = () => {

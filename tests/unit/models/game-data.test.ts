@@ -65,7 +65,11 @@ describe("auto-created line cleanup threshold widening (R4.S2)", () => {
     if (!plateRecipe) throw new Error("no base iron-plate recipe");
     const ingotPerCraft = plateRecipe.ingredientLookup["iron-ingot"];
     plateLine.assemblyLines = [
-      new AssemblyLine(plateRecipe, 5e-5 / ingotPerCraft, 0, 100, 0, false),
+      new AssemblyLine({
+        recipe: plateRecipe,
+        rate: 5e-5 / ingotPerCraft,
+        allowRemainder: false,
+      }),
     ];
     factory._updateRates();
 

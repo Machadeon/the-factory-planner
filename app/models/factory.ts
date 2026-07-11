@@ -1,8 +1,8 @@
 import type { ConstraintBound } from "javascript-lp-solver";
-import type AssemblyLine from "./assembly-line";
+import AssemblyLine from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import { factoryRecipeSlug } from "./factory-recipe";
-import { partSlugLookup, parts, RATE_EPSILON } from "./game-data";
+import { partSlugLookup, parts, RATE_EPSILON, recipeLookup } from "./game-data";
 import {
   defaultRecipeOptimizerConfig,
   type RecipeOptimizerConfig,
@@ -350,8 +350,19 @@ export default class Factory {
       outputRate,
       true,
       autoCreated,
-      suppressAutoRecipe,
     );
+    // Auto-add the sole recipe unless suppressed (e.g. another library factory
+    // already exports this part). Relocated from the ProductionLine constructor.
+    const recipes = recipeLookup[part.slug];
+    if (!suppressAutoRecipe && recipes.length === 1) {
+      newProductionLine.assemblyLines.push(
+        new AssemblyLine({
+          recipe: recipes[0],
+          rate: productionRate / recipes[0].productLookup[part.slug],
+          autoCreated: true,
+        }),
+      );
+    }
     this.productionLines.push(newProductionLine);
     if (!this.icon) this.icon = part.iconLarge;
     this._productionLineLookup[part.slug] = newProductionLine;

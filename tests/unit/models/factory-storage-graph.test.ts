@@ -13,7 +13,7 @@ import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
 
 // AC6/AC7 (R7): graph layout, per-line id, and rows round-trip through serialization;
-// pre-v5 factories migrate cleanly (fresh ids, rows default 1, schema bumped to 5).
+// pre-v5 factories migrate cleanly (fresh ids, rows default 0 = auto, schema bumped to 5).
 let ironIngotRecipe: Recipe;
 let ironIngotPart: Part;
 
@@ -26,8 +26,14 @@ beforeAll(() => {
 function buildFactory(): Factory {
   const factory = new Factory();
   factory.update = () => factory._updateRates();
-  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-  pl.assemblyLines = [new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false)];
+  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+  pl.assemblyLines = [
+    new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    }),
+  ];
   factory.productionLines = [pl];
   factory._productionLineLookup[ironIngotPart.slug] = pl;
   factory._updateRates();
@@ -146,5 +152,55 @@ describe("graph layout serialization", () => {
     expect((al as unknown as { id: string }).id.length).toBeGreaterThan(0);
     // rows defaults to 0 (auto: the graph picks an aspect-fit row count).
     expect((al as unknown as { rows: number }).rows).toBe(0);
+  });
+
+  it("nested-factory line with no rows deserializes to rows 0 (assembly-line-construction R3.S1)", () => {
+    // A nested (FactoryRecipe) assembly line embedded via nestedFactoryData, no rows field.
+    const nestedSer = serializeFactory(buildFactory(), {
+      ...meta,
+      id: "nested",
+      name: "Nested",
+    });
+    const outer = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      id: "outer",
+      name: "Outer",
+      folderId: null,
+      autoAddProductLines: false,
+      createdAt: meta.createdAt,
+      updatedAt: meta.updatedAt,
+      productionLines: [
+        {
+          partSlug: "iron-ingot",
+          rate: 30,
+          outputRate: 30,
+          autoCalculateRate: false,
+          autoCreated: false,
+          assemblyLines: [
+            {
+              nestedFactoryId: "nested",
+              nestedFactoryData: nestedSer,
+              rate: 1,
+              sloopedSlots: 0,
+              machineSpeed: 100,
+              allowRemainder: true,
+              // no rows field on purpose
+            },
+          ],
+        },
+      ],
+    } as unknown as SerializedFactory;
+
+    const back = deserializeFactory(outer);
+    const al = back?.productionLines[0].assemblyLines[0];
+    expect(al?.recipe.isFactoryRecipe).toBe(true);
+    expect((al as unknown as { rows: number }).rows).toBe(0);
+  });
+
+  it("a sole-recipe line deserializes to exactly its persisted lines (production-line-auto-recipe R3.S1)", () => {
+    const back = deserializeFactory(serializeFactory(buildFactory(), meta));
+    // buildFactory's iron-ingot production line has exactly one persisted line;
+    // the constructor no longer auto-adds, so no extra line appears.
+    expect(back?.productionLines[0].assemblyLines).toHaveLength(1);
   });
 });

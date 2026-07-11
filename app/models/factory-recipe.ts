@@ -8,7 +8,6 @@ import {
 import { partSlugLookup, RATE_EPSILON } from "./game-data";
 import type Part from "./part";
 import type { RecipePart } from "./recipe";
-import type { RecipeLike } from "./recipe-like";
 
 export function factoryRecipeSlug(factoryId: string): string {
   return `factory:${factoryId}`;
@@ -19,7 +18,7 @@ export function factoryRecipeId(slug: string): string {
   return slug.startsWith("factory:") ? slug.slice("factory:".length) : slug;
 }
 
-export default class FactoryRecipe implements RecipeLike {
+export default class FactoryRecipe {
   readonly isFactoryRecipe = true as const;
   readonly slug: string;
   readonly name: string;

@@ -5,7 +5,7 @@ import type {
 } from "javascript-lp-solver";
 import type { PartConstraint } from "../factory";
 import { defaultResourceLimits, notAutomatable } from "../game-data";
-import type { RecipeLike } from "../recipe-like";
+import type { AnyRecipe } from "../recipe-like";
 
 export function mergeConstraint(
   constraints: Record<string, ConstraintBound>,
@@ -51,7 +51,7 @@ export function mergeConstraint(
 }
 
 export function createBaseModel(
-  recipes: RecipeLike[],
+  recipes: AnyRecipe[],
   factoryConstraints: PartConstraint[],
 ): ModelDefinition {
   const constraints: Record<string, ConstraintBound> = {};

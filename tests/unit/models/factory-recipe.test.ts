@@ -24,8 +24,12 @@ function buildIronIngotFactory(rate: number): Factory {
     factory._updateRates();
   };
 
-  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-  const al = new AssemblyLine(ironIngotRecipe, rate, 0, 100, 0, false);
+  const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+  const al = new AssemblyLine({
+    recipe: ironIngotRecipe,
+    rate: rate,
+    allowRemainder: false,
+  });
   pl.assemblyLines = [al];
   pl.rate = al.getPartProductionRate(ironIngotPart);
   factory.productionLines = [pl];
@@ -60,9 +64,13 @@ describe("FactoryRecipe", () => {
     // A factory that produces AND consumes iron-ingot at equal rates
     const factory = new Factory();
     factory.update = () => {};
-    const pl1 = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
+    const pl1 = new ProductionLine(ironIngotPart, 0, 0, false, false);
     pl1.assemblyLines = [
-      new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 30,
+        allowRemainder: false,
+      }),
     ];
     // This is a degenerate case; just verify zero-net parts are excluded
     factory.productionLines = [pl1];

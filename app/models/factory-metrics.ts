@@ -2,7 +2,6 @@ import { totalMachines } from "./assembly-line";
 import type Factory from "./factory";
 import { RATE_EPSILON } from "./game-data";
 import type Part from "./part";
-import type Recipe from "./recipe";
 
 export function getTotalPower(factory: Factory): {
   avg: number;
@@ -27,11 +26,9 @@ export function getTotalShards(factory: Factory): number {
   let total = 0;
   for (const pl of factory.productionLines) {
     for (const al of pl.assemblyLines) {
-      if (al.recipe.isFactoryRecipe) {
-        total +=
-          al.rate *
-          (al.recipe as unknown as { shardsPerInstance: number })
-            .shardsPerInstance;
+      const recipe = al.recipe;
+      if (recipe.isFactoryRecipe) {
+        total += al.rate * recipe.shardsPerInstance;
       } else {
         total += al.getTotalShards();
       }
@@ -44,11 +41,9 @@ export function getTotalSloops(factory: Factory): number {
   let total = 0;
   for (const pl of factory.productionLines) {
     for (const al of pl.assemblyLines) {
-      if (al.recipe.isFactoryRecipe) {
-        total +=
-          al.rate *
-          (al.recipe as unknown as { sloopsPerInstance: number })
-            .sloopsPerInstance;
+      const recipe = al.recipe;
+      if (recipe.isFactoryRecipe) {
+        total += al.rate * recipe.sloopsPerInstance;
       } else {
         const machines = totalMachines(al.getMachineCount());
         total += al.sloopedSlots * machines;
@@ -67,14 +62,12 @@ export function factoryFloorArea(factory: Factory): number {
   let area = 0;
   for (const pl of factory.productionLines) {
     for (const al of pl.assemblyLines) {
-      if (al.recipe.isFactoryRecipe) {
-        const nested = (
-          al.recipe as unknown as { footprintAreaPerInstance: number }
-        ).footprintAreaPerInstance;
-        area += al.rate * (nested ?? 0);
+      const recipe = al.recipe;
+      if (recipe.isFactoryRecipe) {
+        area += al.rate * (recipe.footprintAreaPerInstance ?? 0);
         continue;
       }
-      const building = (al.recipe as Recipe).building;
+      const building = recipe.building;
       if (!building?.size) continue;
       const machines = totalMachines(al.getMachineCount());
       area += machines * building.size.width * building.size.length;

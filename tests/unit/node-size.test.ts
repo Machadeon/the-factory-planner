@@ -4,10 +4,14 @@ import type { GraphNode } from "@/app/components/logistics/graph-model";
 import {
   assemblyBodySize,
   assemblyNodeBox,
+  effectiveRows,
   nodeSize,
 } from "@/app/components/logistics/node-size";
 import AssemblyLine from "@/app/models/assembly-line";
-import { recipes } from "@/app/models/game-data";
+import Factory from "@/app/models/factory";
+import FactoryRecipe from "@/app/models/factory-recipe";
+import { partSlugLookup, recipes } from "@/app/models/game-data";
+import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
 
 // Future revision: an "actual size" toggle. With it off, every assembly node collapses to
@@ -23,7 +27,11 @@ beforeAll(() => {
 describe("assemblyNodeBox actual-size toggle", () => {
   it("collapses to the minimum width when actual size is off", () => {
     // A big single-row bank: real footprint is much wider than the minimum.
-    const al = new AssemblyLine(ironIngotRecipe, 6000, 0, 100, 0, false);
+    const al = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 6000,
+      allowRemainder: false,
+    });
     al.rows = 1;
     const real = assemblyNodeBox(al, true);
     const min = assemblyNodeBox(al, false);
@@ -32,7 +40,11 @@ describe("assemblyNodeBox actual-size toggle", () => {
   });
 
   it("nodeSize tracks the toggle (off is never larger than on)", () => {
-    const al = new AssemblyLine(ironIngotRecipe, 6000, 0, 100, 0, false);
+    const al = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 6000,
+      allowRemainder: false,
+    });
     al.rows = 1;
     const node = {
       id: al.id,
@@ -44,9 +56,37 @@ describe("assemblyNodeBox actual-size toggle", () => {
   });
 });
 
+describe("effectiveRows on FactoryRecipe lines (assembly-line-construction R3.S2)", () => {
+  it("returns 1 regardless of the stored rows value", () => {
+    const nested = new Factory();
+    nested.update = () => nested._updateRates();
+    const ingotPart = partSlugLookup["iron-ingot"];
+    const pl = new ProductionLine(ingotPart, 0, 0, false, false);
+    pl.assemblyLines = [
+      new AssemblyLine({ recipe: ironIngotRecipe, rate: 30 }),
+    ];
+    pl.rate = pl.assemblyLines[0].getPartProductionRate(ingotPart);
+    nested.productionLines = [pl];
+    nested._productionLineLookup[ingotPart.slug] = pl;
+    nested._updateRates();
+
+    const fr = new FactoryRecipe("nested", "Iron", nested);
+    const al = new AssemblyLine({ recipe: fr, rate: 2 });
+
+    al.rows = 0;
+    expect(effectiveRows(al)).toBe(1);
+    al.rows = 1;
+    expect(effectiveRows(al)).toBe(1);
+  });
+});
+
 describe("rowSpacing", () => {
   it("adds routing height between rows (n-1 gaps), none for a single row", () => {
-    const al = new AssemblyLine(ironIngotRecipe, 6000, 0, 100, 0, false);
+    const al = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 6000,
+      allowRemainder: false,
+    });
     al.rows = 4;
     const base = assemblyBodySize(al, true).height;
     al.rowSpacing += 10;

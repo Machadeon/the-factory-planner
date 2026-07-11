@@ -23,18 +23,14 @@ beforeAll(() => {
       .find(Boolean) ?? partSlugLookup["packaged-rocket-fuel"];
 });
 
-describe("constructor", () => {
-  it("auto-creates one AssemblyLine when exactly one recipe exists", () => {
+describe("constructor (side-effect-free)", () => {
+  // Auto-recipe ownership moved to Factory.addProductionLine (see factory.test.ts).
+  it("does not auto-create an AssemblyLine for a sole-recipe part", () => {
     const pl = new ProductionLine(singleRecipePart, 10, 10, false, false);
-    expect(pl.assemblyLines).toHaveLength(1);
-  });
-
-  it("does not auto-create when suppressAutoRecipe=true", () => {
-    const pl = new ProductionLine(singleRecipePart, 10, 10, false, false, true);
     expect(pl.assemblyLines).toHaveLength(0);
   });
 
-  it("does not auto-create when part has multiple recipes", () => {
+  it("does not auto-create for a multi-recipe part", () => {
     // iron-ingot has 5 recipes
     expect(recipeLookup[multiRecipePart.slug].length).toBeGreaterThan(1);
     const pl = new ProductionLine(multiRecipePart, 10, 10, false, false);
@@ -42,7 +38,7 @@ describe("constructor", () => {
   });
 
   it("stores the part, rate, outputRate, and flags correctly", () => {
-    const pl = new ProductionLine(ironIngotPart, 30, 60, true, false, true);
+    const pl = new ProductionLine(ironIngotPart, 30, 60, true, false);
     expect(pl.part).toBe(ironIngotPart);
     expect(pl.rate).toBe(30);
     expect(pl.outputRate).toBe(60);
@@ -53,10 +49,18 @@ describe("constructor", () => {
 
 describe("rate reflects sum of assembly line production rates", () => {
   it("rate from two assembly lines sums correctly via manual update", () => {
-    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
+    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
     pl.assemblyLines = [
-      new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false), // 30/min
-      new AssemblyLine(ironIngotRecipe, 15, 0, 100, 0, false), // 15/min
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 30,
+        allowRemainder: false,
+      }), // 30/min
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 15,
+        allowRemainder: false,
+      }), // 15/min
     ];
     // Production rate from all assembly lines is 30 + 15 = 45
     const total = pl.assemblyLines.reduce(

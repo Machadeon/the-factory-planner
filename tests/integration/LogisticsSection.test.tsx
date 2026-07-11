@@ -50,7 +50,11 @@ describe("LogisticsSection graph view", () => {
   it("AC9: an assembly-line node renders input and output ports", () => {
     const factory = new Factory();
     factory.update = () => {};
-    const al = new AssemblyLine(ironIngot, 30, 0, 100, 0, false);
+    const al = new AssemblyLine({
+      recipe: ironIngot,
+      rate: 30,
+      allowRemainder: false,
+    });
     const data: AssemblyNodeData = {
       kind: "assembly",
       assemblyLine: al,
@@ -111,8 +115,10 @@ describe("LogisticsSection graph view", () => {
   it("AC15: a factory-recipe node title navigates to the nested factory", () => {
     const nested = new Factory();
     nested.update = () => nested._updateRates();
-    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
-    pl.assemblyLines = [new AssemblyLine(ironIngot, 30, 0, 100, 0, false)];
+    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+    pl.assemblyLines = [
+      new AssemblyLine({ recipe: ironIngot, rate: 30, allowRemainder: false }),
+    ];
     nested.productionLines = [pl];
     nested._productionLineLookup["iron-ingot"] = pl;
     nested._updateRates();
@@ -120,7 +126,7 @@ describe("LogisticsSection graph view", () => {
 
     const factory = new Factory();
     factory.update = () => {};
-    const al = new AssemblyLine(fr, 1, 0, 100, 0, false);
+    const al = new AssemblyLine({ recipe: fr, rate: 1, allowRemainder: false });
     const data: AssemblyNodeData = {
       kind: "assembly",
       assemblyLine: al,
@@ -141,7 +147,11 @@ describe("LogisticsSection graph view", () => {
     const factory = new Factory();
     const update = vi.fn();
     factory.update = update;
-    const al = new AssemblyLine(ironIngot, 90, 0, 100, 0, false); // 3 machines
+    const al = new AssemblyLine({
+      recipe: ironIngot,
+      rate: 90,
+      allowRemainder: false,
+    }); // 3 machines
     const data: AssemblyNodeData = {
       kind: "assembly",
       assemblyLine: al,

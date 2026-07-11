@@ -1,13 +1,13 @@
 import type { ConstraintBound } from "javascript-lp-solver";
 import { describe, expect, it, vi } from "vitest";
 import { defaultResourceLimits, recipes } from "@/app/models/game-data";
-import type { RecipeLike } from "@/app/models/recipe-like";
+import type { AnyRecipe } from "@/app/models/recipe-like";
 import {
   createBaseModel,
   mergeConstraint,
 } from "@/app/models/solver/base-model";
 
-function findRecipe(slug: string): RecipeLike {
+function findRecipe(slug: string): AnyRecipe {
   // biome-ignore lint/style/noNonNullAssertion: recipes exist in test data
   return recipes.find((r) => r.slug === slug)!;
 }
