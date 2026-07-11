@@ -255,24 +255,23 @@ function deserializeFactoryStub(data: SerializedFactory): Factory {
       plData.autoCreated,
     );
     pl.maximizeOutput = plData.maximizeOutput ?? false;
-    pl.assemblyLines = [];
     for (const alData of plData.assemblyLines) {
       if (alData.nestedFactoryId || !alData.recipeSlug) continue;
       const recipe = recipeSlugLookup[alData.recipeSlug];
       if (!recipe) continue;
       pl.assemblyLines.push(
-        new AssemblyLine(
+        new AssemblyLine({
           recipe,
-          alData.rate,
-          alData.sloopedSlots,
-          alData.machineSpeed,
-          shardsForClock(alData.machineSpeed),
-          alData.allowRemainder,
-          alData.autoCreated ?? false,
-          alData.id ?? generateId(),
-          alData.rows ?? 0,
-          alData.rowSpacing ?? DEFAULT_ROW_SPACING,
-        ),
+          rate: alData.rate,
+          sloopedSlots: alData.sloopedSlots,
+          machineSpeed: alData.machineSpeed,
+          powerShards: shardsForClock(alData.machineSpeed),
+          allowRemainder: alData.allowRemainder,
+          autoCreated: alData.autoCreated ?? false,
+          id: alData.id ?? generateId(),
+          rows: alData.rows ?? 0,
+          rowSpacing: alData.rowSpacing ?? DEFAULT_ROW_SPACING,
+        }),
       );
     }
     factory.productionLines.push(pl);
@@ -381,7 +380,6 @@ export function deserializeFactory(
       plData.autoCreated,
     );
     pl.maximizeOutput = plData.maximizeOutput ?? false;
-    pl.assemblyLines = [];
 
     for (const alData of plData.assemblyLines) {
       if (alData.nestedFactoryId) {
@@ -411,18 +409,18 @@ export function deserializeFactory(
           nestedFactory,
         );
         pl.assemblyLines.push(
-          new AssemblyLine(
-            fr,
-            alData.rate,
-            0,
-            alData.machineSpeed,
-            shardsForClock(alData.machineSpeed),
-            alData.allowRemainder,
-            alData.autoCreated ?? false,
-            alData.id ?? generateId(),
-            alData.rows ?? 1,
-            alData.rowSpacing ?? DEFAULT_ROW_SPACING,
-          ),
+          new AssemblyLine({
+            recipe: fr,
+            rate: alData.rate,
+            sloopedSlots: 0,
+            machineSpeed: alData.machineSpeed,
+            powerShards: shardsForClock(alData.machineSpeed),
+            allowRemainder: alData.allowRemainder,
+            autoCreated: alData.autoCreated ?? false,
+            id: alData.id ?? generateId(),
+            rows: alData.rows ?? 0,
+            rowSpacing: alData.rowSpacing ?? DEFAULT_ROW_SPACING,
+          }),
         );
         continue;
       }
@@ -441,18 +439,18 @@ export function deserializeFactory(
         continue;
       }
       pl.assemblyLines.push(
-        new AssemblyLine(
+        new AssemblyLine({
           recipe,
-          alData.rate,
-          alData.sloopedSlots,
-          alData.machineSpeed,
-          shardsForClock(alData.machineSpeed),
-          alData.allowRemainder,
-          alData.autoCreated ?? false,
-          alData.id ?? generateId(),
-          alData.rows ?? 0,
-          alData.rowSpacing ?? DEFAULT_ROW_SPACING,
-        ),
+          rate: alData.rate,
+          sloopedSlots: alData.sloopedSlots,
+          machineSpeed: alData.machineSpeed,
+          powerShards: shardsForClock(alData.machineSpeed),
+          allowRemainder: alData.allowRemainder,
+          autoCreated: alData.autoCreated ?? false,
+          id: alData.id ?? generateId(),
+          rows: alData.rows ?? 0,
+          rowSpacing: alData.rowSpacing ?? DEFAULT_ROW_SPACING,
+        }),
       );
     }
 

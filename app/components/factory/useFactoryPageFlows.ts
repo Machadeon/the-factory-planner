@@ -33,7 +33,7 @@ export default function useFactoryPageFlows({
   libraryApi,
   requireConsent,
 }: UseFactoryPageFlowsDeps) {
-  const { library, setLibrary, reload, replaceLibrary } = libraryApi;
+  const { library, reload, replaceLibrary } = libraryApi;
   const {
     factory,
     factoryName,

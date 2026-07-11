@@ -13,10 +13,18 @@ describe("shardsForClock (R1.S1)", () => {
 });
 
 describe("totalMachines (R2.S1)", () => {
-  it("handles all machine-count shapes", () => {
-    expect(totalMachines({ fullMachines: 3, remainderClock: 50 })).toBe(4);
-    expect(totalMachines({ fullMachines: 3, remainderClock: 0 })).toBe(3);
-    expect(totalMachines({ machineCount: 4, uniformClock: 75 })).toBe(4);
-    expect(totalMachines({ fullMachines: 0, remainderClock: 0 })).toBe(0);
+  it("handles all discriminated machine-count shapes", () => {
+    expect(
+      totalMachines({ kind: "remainder", fullMachines: 3, remainderClock: 50 }),
+    ).toBe(4);
+    expect(
+      totalMachines({ kind: "remainder", fullMachines: 3, remainderClock: 0 }),
+    ).toBe(3);
+    expect(
+      totalMachines({ kind: "uniform", machineCount: 4, uniformClock: 75 }),
+    ).toBe(4);
+    expect(
+      totalMachines({ kind: "remainder", fullMachines: 0, remainderClock: 0 }),
+    ).toBe(0);
   });
 });

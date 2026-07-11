@@ -1,18 +1,17 @@
 import { RATE_EPSILON } from "./game-data/constants";
 import type Part from "./part";
-import type Recipe from "./recipe";
-import type { RecipeLike } from "./recipe-like";
+import type { AnyRecipe } from "./recipe-like";
 
 export function shardsForClock(clock: number): number {
   return Math.max(0, Math.ceil((clock - 100) / 50));
 }
 
 export type MachineCount =
-  | { fullMachines: number; remainderClock: number }
-  | { machineCount: number; uniformClock: number };
+  | { kind: "remainder"; fullMachines: number; remainderClock: number }
+  | { kind: "uniform"; machineCount: number; uniformClock: number };
 
 export function totalMachines(count: MachineCount): number {
-  if ("fullMachines" in count) {
+  if (count.kind === "remainder") {
     return count.fullMachines + (count.remainderClock > 0 ? 1 : 0);
   }
   return count.machineCount;
@@ -20,6 +19,20 @@ export function totalMachines(count: MachineCount): number {
 
 /** Default routing space (metres) between machine rows in the graph view. */
 export const DEFAULT_ROW_SPACING = 8;
+
+/** Options for constructing an {@link AssemblyLine}; only `recipe` and `rate` are required. */
+export interface AssemblyLineOptions {
+  recipe: AnyRecipe;
+  rate: number;
+  sloopedSlots?: number;
+  machineSpeed?: number;
+  powerShards?: number;
+  allowRemainder?: boolean;
+  autoCreated?: boolean;
+  id?: string;
+  rows?: number;
+  rowSpacing?: number;
+}
 
 export default class AssemblyLine {
   /**
@@ -44,9 +57,9 @@ export default class AssemblyLine {
   rowSpacing: number;
 
   /**
-   * The {@link RecipeLike} used in this assembly line.
+   * The {@link AnyRecipe} used in this assembly line.
    */
-  readonly recipe: RecipeLike;
+  readonly recipe: AnyRecipe;
 
   /**
    * The number of times the recipe completes per minute (or factory instances for FactoryRecipe).
@@ -80,33 +93,23 @@ export default class AssemblyLine {
    */
   autoCreated: boolean;
 
-  constructor(
-    recipe: RecipeLike,
-    rate: number,
-    sloopedSlots: number,
-    machineSpeed: number,
-    powerShards: number,
-    allowRemainder: boolean,
-    autoCreated = false,
-    id: string = crypto.randomUUID(),
-    rows = 0,
-    rowSpacing = DEFAULT_ROW_SPACING,
-  ) {
-    this.recipe = recipe;
-    this.rate = rate;
-    this.sloopedSlots = sloopedSlots;
-    this.machineSpeed = machineSpeed;
-    this.powerShards = powerShards;
-    this.allowRemainder = allowRemainder;
-    this.autoCreated = autoCreated;
-    this.id = id;
-    this.rows = Math.max(0, Math.floor(rows));
-    this.rowSpacing = Math.max(0, rowSpacing);
+  constructor(options: AssemblyLineOptions) {
+    this.recipe = options.recipe;
+    this.rate = options.rate;
+    this.sloopedSlots = options.sloopedSlots ?? 0;
+    this.machineSpeed = options.machineSpeed ?? 100;
+    this.powerShards = options.powerShards ?? 0;
+    this.allowRemainder = options.allowRemainder ?? true;
+    this.autoCreated = options.autoCreated ?? false;
+    this.id = options.id ?? crypto.randomUUID();
+    this.rows = Math.max(0, Math.floor(options.rows ?? 0));
+    this.rowSpacing = Math.max(0, options.rowSpacing ?? DEFAULT_ROW_SPACING);
   }
 
   maxSloopSlots(): number {
-    if (this.recipe.isFactoryRecipe) return 0;
-    return (this.recipe as Recipe).building.somersloopSlots ?? 0;
+    const recipe = this.recipe;
+    if (recipe.isFactoryRecipe) return 0;
+    return recipe.building.somersloopSlots ?? 0;
   }
 
   getSloopMultiplier(): number {
@@ -173,10 +176,11 @@ export default class AssemblyLine {
   }
 
   getMachineCount(): MachineCount {
-    if (this.recipe.isFactoryRecipe) {
-      return { fullMachines: 0, remainderClock: 0 };
+    const recipe = this.recipe;
+    if (recipe.isFactoryRecipe) {
+      return { kind: "remainder", fullMachines: 0, remainderClock: 0 };
     }
-    const baseRate = 60 / (this.recipe as Recipe).processingTime;
+    const baseRate = 60 / recipe.processingTime;
     const perMachine = baseRate * (this.machineSpeed / 100);
 
     if (this.allowRemainder) {
@@ -184,7 +188,7 @@ export default class AssemblyLine {
       const leftover = this.rate - fullMachines * perMachine;
       const remainderClock =
         leftover > RATE_EPSILON ? (leftover / baseRate) * 100 : 0;
-      return { fullMachines, remainderClock };
+      return { kind: "remainder", fullMachines, remainderClock };
     }
 
     const machineCount = Math.ceil(this.rate / perMachine);
@@ -192,12 +196,12 @@ export default class AssemblyLine {
       machineCount > 0
         ? (this.rate / (machineCount * baseRate)) * 100
         : this.machineSpeed;
-    return { machineCount, uniformClock };
+    return { kind: "uniform", machineCount, uniformClock };
   }
 
   getTotalShards(): number {
     const count = this.getMachineCount();
-    if ("fullMachines" in count) {
+    if (count.kind === "remainder") {
       return (
         count.fullMachines * this.powerShards +
         shardsForClock(count.remainderClock)
@@ -207,25 +211,20 @@ export default class AssemblyLine {
   }
 
   getPowerConsumption(): { avg: number; min: number; max: number } {
-    if (this.recipe.isFactoryRecipe) {
-      const fr = this.recipe as unknown as {
-        avgPowerPerInstance: number;
-        minPowerPerInstance: number;
-        maxPowerPerInstance: number;
-      };
+    const recipe = this.recipe;
+    if (recipe.isFactoryRecipe) {
       return {
-        avg: this.rate * fr.avgPowerPerInstance,
-        min: this.rate * fr.minPowerPerInstance,
-        max: this.rate * fr.maxPowerPerInstance,
+        avg: this.rate * recipe.avgPowerPerInstance,
+        min: this.rate * recipe.minPowerPerInstance,
+        max: this.rate * recipe.maxPowerPerInstance,
       };
     }
-    const recipe = this.recipe as Recipe;
     const maxSloops = this.maxSloopSlots();
     const sloopFactor =
       maxSloops > 0 ? (1 + this.sloopedSlots / maxSloops) ** 2 : 1;
     const count = this.getMachineCount();
     const calcPower = (basePower: number): number => {
-      if ("fullMachines" in count) {
+      if (count.kind === "remainder") {
         const bankPower =
           count.fullMachines > 0
             ? count.fullMachines *

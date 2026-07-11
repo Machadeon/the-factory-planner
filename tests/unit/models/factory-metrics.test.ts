@@ -28,10 +28,15 @@ function ingotFactory(rate: number, shards = 0, speed = 100): Factory {
     rate,
     true,
     false,
-    true,
   );
   pl.assemblyLines = [
-    new AssemblyLine(ironIngotRecipe, rate, 0, speed, shards, false),
+    new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate,
+      machineSpeed: speed,
+      powerShards: shards,
+      allowRemainder: false,
+    }),
   ];
   f.productionLines.push(pl);
   f._updateRates();
@@ -76,9 +81,10 @@ describe("factory-metrics (R1.S1, R2.S2)", () => {
       0,
       true,
       false,
-      true,
     );
-    pl.assemblyLines = [new AssemblyLine(fr, 2, 0, 100, 0, true)];
+    pl.assemblyLines = [
+      new AssemblyLine({ recipe: fr, rate: 2, allowRemainder: true }),
+    ];
     outer.productionLines.push(pl);
     outer._updateRates();
 

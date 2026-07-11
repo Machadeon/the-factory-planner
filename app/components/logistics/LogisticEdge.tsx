@@ -53,7 +53,9 @@ export default function LogisticEdge({
       />
       {/* Wide transparent hit area, rendered last so it sits above React Flow's own
           edge-interaction path (which otherwise steals the hover). */}
+      {/* biome-ignore lint/a11y/useSemanticElements: SVG path cannot be a button element */}
       <path
+        role="button"
         d={path}
         fill="none"
         stroke="transparent"
@@ -61,6 +63,7 @@ export default function LogisticEdge({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{ pointerEvents: "stroke", cursor: "pointer" }}
+        aria-label={`${d.partName} logistics: ${displayNum(d.rate)}${d.partName === "Power" ? " MW" : "/min"}`}
       />
       {hovered ? (
         <EdgeLabelRenderer>

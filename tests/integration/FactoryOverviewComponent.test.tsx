@@ -49,17 +49,25 @@ function buildFactory(): Factory {
   };
 
   // Iron Ingot line: 30 ore/min → 30 ingot/min
-  const ingotPl = new ProductionLine(ironIngotPart, 0, 0, false, false, true);
+  const ingotPl = new ProductionLine(ironIngotPart, 0, 0, false, false);
   ingotPl.assemblyLines = [
-    new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
+    new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    }),
   ];
   factory.productionLines.push(ingotPl);
   factory._productionLineLookup[ironIngotPart.slug] = ingotPl;
 
   // Iron Plate line: 30 ingot/min → 20 plate/min (consumes all ingots → iron ingot is intermediate)
-  const platePl = new ProductionLine(ironPlatePart, 0, 20, true, false, true);
+  const platePl = new ProductionLine(ironPlatePart, 0, 20, true, false);
   platePl.assemblyLines = [
-    new AssemblyLine(ironPlateRecipe, 10, 0, 100, 0, false),
+    new AssemblyLine({
+      recipe: ironPlateRecipe,
+      rate: 10,
+      allowRemainder: false,
+    }),
   ];
   factory.productionLines.push(platePl);
   factory._productionLineLookup[ironPlatePart.slug] = platePl;

@@ -26,7 +26,11 @@ describe("valtio snapshot spike (page-structure R7.S2)", () => {
     const line = store.factory.productionLines[0];
     line.outputRate = 60;
     line.assemblyLines.push(
-      new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false),
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 30,
+        allowRemainder: false,
+      }),
     );
     store.factory.update();
 

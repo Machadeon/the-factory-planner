@@ -142,7 +142,6 @@ export default function useFactoryUrlSync({
 
   // Read initial tab from hash on mount. Uses initialHashRef (captured at render
   // time) because layout effects have already overwritten window.location by now.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     const hash = initialHashRef.current;
     if (VALID_SECTIONS.includes(hash as Section)) {
@@ -190,11 +189,9 @@ export default function useFactoryUrlSync({
         withBasePath(`${base}${hash}`),
       );
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: identity change only — section hash comes from a ref on purpose
   }, [session.currentFactoryId, session.currentSlug]);
 
   // Listen for back/forward navigation and switch to the factory in the URL.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-once listener; latest callbacks via refs
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       const id = e.state?.factoryId as string | null | undefined;

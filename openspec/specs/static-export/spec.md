@@ -64,4 +64,3 @@ When `NEXT_PUBLIC_BASE_PATH` is unset, the Next.js config SHALL apply no `basePa
 #### Scenario: R4.S2 — No base path applied by default
 - **WHEN** the Next.js config is evaluated with `NEXT_PUBLIC_BASE_PATH` unset
 - **THEN** `basePath` and `assetPrefix` are absent/empty, and `playwright.config.ts` and `vitest.config.ts` require no base-path-related edits
-

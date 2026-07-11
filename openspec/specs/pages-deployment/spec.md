@@ -45,4 +45,3 @@ The published output SHALL include a `.nojekyll` file so GitHub Pages serves Nex
 #### Scenario: R3.S3 — Concurrent pushes
 - **WHEN** two pushes to `main` occur in quick succession
 - **THEN** the first deploy is not cancelled mid-flight, and the final live site reflects the newest commit
-

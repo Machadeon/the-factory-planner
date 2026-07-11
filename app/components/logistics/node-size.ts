@@ -1,6 +1,5 @@
 import type AssemblyLine from "../../models/assembly-line";
 import { totalMachines } from "../../models/assembly-line";
-import type Recipe from "../../models/recipe";
 import { MIN_BODY_H, MIN_BODY_W, SCALE } from "./constants";
 import type { GraphNode } from "./graph-model";
 
@@ -22,10 +21,11 @@ export function machineCountOf(al: AssemblyLine): number {
  * (clamped); 0 means auto — pick the rows that make the body closest to 16:9.
  */
 export function effectiveRows(al: AssemblyLine): number {
-  if (al.recipe.isFactoryRecipe) return 1;
+  const recipe = al.recipe;
+  if (recipe.isFactoryRecipe) return 1;
   const machines = Math.max(1, machineCountOf(al));
   if (al.rows > 0) return Math.min(al.rows, machines);
-  const { width, length } = (al.recipe as Recipe).building.size;
+  const { width, length } = recipe.building.size;
   // body aspect = (ceil(M/rows)*width) / (rows*length) ≈ 16/9
   // ⇒ rows ≈ sqrt(M * width * 9 / (16 * length))
   const r = Math.round(Math.sqrt((machines * width * 9) / (16 * length)));
@@ -45,17 +45,16 @@ export function assemblyBodySize(
   height: number;
 } {
   if (!actualSize) return { width: MIN_BODY_W, height: MIN_BODY_H };
-  if (al.recipe.isFactoryRecipe) {
-    const area =
-      (al.recipe as unknown as { footprintAreaPerInstance: number })
-        .footprintAreaPerInstance * Math.max(1, al.rate);
+  const recipe = al.recipe;
+  if (recipe.isFactoryRecipe) {
+    const area = recipe.footprintAreaPerInstance * Math.max(1, al.rate);
     const side = Math.sqrt(Math.max(1, area)) * SCALE;
     return {
       width: Math.max(MIN_BODY_W, side),
       height: Math.max(MIN_BODY_H, side),
     };
   }
-  const { width, length } = (al.recipe as Recipe).building.size;
+  const { width, length } = recipe.building.size;
   const rows = effectiveRows(al);
   const machines = Math.max(1, machineCountOf(al));
   const cols = Math.ceil(machines / rows);

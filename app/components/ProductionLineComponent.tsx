@@ -19,7 +19,7 @@ import type { SerializedFactory } from "../models/factory-storage";
 import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
-import type { RecipeLike } from "../models/recipe-like";
+import type { AnyRecipe } from "../models/recipe-like";
 import {
   applyRejectChoice,
   applyRejectSilent,
@@ -54,7 +54,7 @@ export default function ProductionLineComponent(
   const [showFactoryPicker, setShowFactoryPicker] = useState<boolean>(false);
   const [showSupplyPicker, setShowSupplyPicker] = useState<boolean>(false);
   const [rejectTarget, setRejectTarget] = useState<
-    null | { kind: "line" } | { kind: "assembly"; recipe: RecipeLike }
+    null | { kind: "line" } | { kind: "assembly"; recipe: AnyRecipe }
   >(null);
   const part = props.productionLine.part;
   const recipeList = recipeLookup[part.slug];
@@ -117,20 +117,19 @@ export default function ProductionLineComponent(
 
   function addAssemblyLine(recipe: Recipe) {
     props.productionLine.assemblyLines.push(
-      new AssemblyLineModel(
+      new AssemblyLineModel({
         recipe,
-        getProductionRateForRecipe(recipe),
-        0,
-        100,
-        0,
-        true,
-      ),
+        rate: getProductionRateForRecipe(recipe),
+        machineSpeed: 100,
+        allowRemainder: true,
+        autoCreated: true,
+      }),
     );
     updateProductionLine();
     setShowRecipes(false);
   }
 
-  function removeAssemblyLine(recipe: RecipeLike) {
+  function removeAssemblyLine(recipe: AnyRecipe) {
     const index = props.productionLine.assemblyLines
       .map((assemblyLine) => assemblyLine.recipe.slug)
       .indexOf(recipe.slug);
@@ -156,7 +155,13 @@ export default function ProductionLineComponent(
     const productionDeficit = props.productionLine.rate - actualProductionRate;
     const qty = fr.getProduct(part.slug)?.quantity ?? 1;
     props.productionLine.assemblyLines.push(
-      new AssemblyLineModel(fr, productionDeficit / qty, 0, 100, 0, true),
+      new AssemblyLineModel({
+        recipe: fr,
+        rate: productionDeficit / qty,
+        machineSpeed: 100,
+        allowRemainder: true,
+        autoCreated: true,
+      }),
     );
     setShowFactoryPicker(false);
     updateProductionLine();
@@ -190,7 +195,7 @@ export default function ProductionLineComponent(
     }
   }
 
-  function acceptAssembly(recipe: RecipeLike) {
+  function acceptAssembly(recipe: AnyRecipe) {
     const al = props.productionLine.assemblyLines.find(
       (a) => a.recipe.slug === recipe.slug,
     );
@@ -198,7 +203,7 @@ export default function ProductionLineComponent(
     factory.update();
   }
 
-  function rejectAssembly(recipe: RecipeLike) {
+  function rejectAssembly(recipe: AnyRecipe) {
     const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
     if (shouldPromptReject(factory.optimizer)) {
       setRejectTarget({ kind: "assembly", recipe });

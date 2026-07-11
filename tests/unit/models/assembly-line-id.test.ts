@@ -14,14 +14,26 @@ beforeAll(() => {
 
 describe("AssemblyLine.id", () => {
   it("is a non-empty string", () => {
-    const al = new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false);
+    const al = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    });
     expect(typeof (al as unknown as { id: string }).id).toBe("string");
     expect((al as unknown as { id: string }).id.length).toBeGreaterThan(0);
   });
 
   it("is unique across two lines with the same recipe", () => {
-    const a = new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false);
-    const b = new AssemblyLine(ironIngotRecipe, 30, 0, 100, 0, false);
+    const a = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    });
+    const b = new AssemblyLine({
+      recipe: ironIngotRecipe,
+      rate: 30,
+      allowRemainder: false,
+    });
     expect((a as unknown as { id: string }).id).not.toBe(
       (b as unknown as { id: string }).id,
     );

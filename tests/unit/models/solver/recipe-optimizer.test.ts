@@ -50,10 +50,13 @@ function makePlateLine(rate: number, outputRate: number): ProductionLine {
     outputRate,
     true,
     false,
-    true,
   );
   pl.assemblyLines = [
-    new AssemblyLine(ironPlateRecipe as Recipe, rate, 0, 100, 0, false),
+    new AssemblyLine({
+      recipe: ironPlateRecipe as Recipe,
+      rate: rate,
+      allowRemainder: false,
+    }),
   ];
   return pl;
 }
@@ -141,10 +144,13 @@ describe("materializeSelection (recipe-optimizer R3.S1)", () => {
       10,
       true,
       false,
-      true,
     );
     pl.assemblyLines = [
-      new AssemblyLine(copperIngotRecipe as Recipe, 10, 0, 100, 0, false),
+      new AssemblyLine({
+        recipe: copperIngotRecipe as Recipe,
+        rate: 10,
+        allowRemainder: false,
+      }),
     ];
     return pl;
   }

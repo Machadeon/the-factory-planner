@@ -4,12 +4,12 @@ import solver, {
 } from "javascript-lp-solver";
 import type { PartConstraint } from "../factory";
 import { defaultResourceLimits } from "../game-data";
-import type { RecipeLike } from "../recipe-like";
+import type { AnyRecipe } from "../recipe-like";
 import { createBaseModel } from "./base-model";
 
 export interface RateSolveInput {
   /** One entry per assembly line, in factory traversal order. */
-  recipes: RecipeLike[];
+  recipes: AnyRecipe[];
   /** partSlug → desired output rate (equality constraint). */
   rateTargets: Map<string, number>;
   /** Parts whose output the solve maximizes instead of pinning. */
