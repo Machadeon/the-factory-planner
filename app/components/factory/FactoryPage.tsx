@@ -84,7 +84,6 @@ export default function FactoryPage() {
   const drawer = (pinned: boolean) => (
     <LibraryDrawerSlot
       pinned={pinned}
-      currentFactoryId={currentFactoryId}
       libraryApi={libraryApi}
       flows={flows}
       onPinChange={handlePinChange}

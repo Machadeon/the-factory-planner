@@ -1,5 +1,6 @@
 import type AssemblyLine from "./assembly-line";
 import type Part from "./part";
+import type Recipe from "./recipe";
 
 export default class ProductionLine {
   /**
@@ -52,5 +53,34 @@ export default class ProductionLine {
     this.autoCreated = autoCreated;
     this.maximizeOutput = false;
     this.assemblyLines = [];
+  }
+
+  /**
+   * The per-instance production rate a new assembly line for {@link recipe} would
+   * need to close the gap between the target {@link rate} and the current summed
+   * output of the existing assembly lines. Precondition: {@link recipe} produces
+   * this line's part, so `recipe.productLookup[part.slug]` is defined and non-zero.
+   */
+  recipeInstanceRate(recipe: Recipe): number {
+    const actualProductionRate = this.assemblyLines.reduce(
+      (acc, assemblyLine) =>
+        acc + assemblyLine.getPartProductionRate(this.part),
+      0,
+    );
+    return (
+      (this.rate - actualProductionRate) / recipe.productLookup[this.part.slug]
+    );
+  }
+
+  /**
+   * Rescale every assembly line's rate by `n / (n + 1)` (n = current line count),
+   * making room for one additional recipe while preserving the total.
+   */
+  splitRecipeRates(): void {
+    const n = this.assemblyLines.length;
+    const ratio = n / (n + 1);
+    for (const assemblyLine of this.assemblyLines) {
+      assemblyLine.rate *= ratio;
+    }
   }
 }

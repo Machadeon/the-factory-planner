@@ -9,7 +9,10 @@ import {
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
 import type { ScoringObjective } from "../models/optimizer-config";
-import { applyRejectSilent } from "../models/suggestions";
+import {
+  acceptAllSuggestions,
+  rejectAllSuggestions,
+} from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
 import { HorizontalDivider } from "./Dividers";
 import ProductionTargetsBar from "./ProductionTargetsBar";
@@ -43,33 +46,13 @@ export default function OptimizationSection() {
   );
   const suggestionCount = suggestedLineCount + suggestedRecipeCount;
 
-  function acceptAllSuggestions() {
-    for (const pl of factory.productionLines) {
-      pl.autoCreated = false;
-      for (const al of pl.assemblyLines) al.autoCreated = false;
-    }
+  function acceptAll() {
+    acceptAllSuggestions(factory);
     factory.update();
   }
 
-  function rejectAllSuggestions() {
-    const slugs: string[] = [];
-    factory.productionLines = factory.productionLines.filter((pl) => {
-      if (pl.autoCreated) {
-        for (const al of pl.assemblyLines) {
-          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
-        }
-        return false;
-      }
-      pl.assemblyLines = pl.assemblyLines.filter((al) => {
-        if (al.autoCreated) {
-          if (!al.recipe.isFactoryRecipe) slugs.push(al.recipe.slug);
-          return false;
-        }
-        return true;
-      });
-      return true;
-    });
-    applyRejectSilent(factory.optimizer, slugs);
+  function rejectAll() {
+    rejectAllSuggestions(factory);
     setShowRejectAllConfirm(false);
     factory.update();
   }
@@ -99,7 +82,7 @@ export default function OptimizationSection() {
               fullWidth
               variant="outlined"
               startIcon={<DoneAllIcon />}
-              onClick={acceptAllSuggestions}
+              onClick={acceptAll}
             >
               Accept all
             </Button>
@@ -133,7 +116,7 @@ export default function OptimizationSection() {
         }
         confirmLabel="Reject all"
         severity="warning"
-        onConfirm={rejectAllSuggestions}
+        onConfirm={rejectAll}
         onCancel={() => setShowRejectAllConfirm(false)}
       />
     </div>
