@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
+import AssemblyLine from "@/app/models/assembly-line";
+import Factory from "@/app/models/factory";
+import FactoryRecipe from "@/app/models/factory-recipe";
+import { partSlugLookup, recipeSlugLookup } from "@/app/models/game-data";
 import {
   defaultRecipeOptimizerConfig,
   type RecipeOptimizerConfig,
 } from "@/app/models/optimizer-config";
+import ProductionLine from "@/app/models/production-line";
+import type { AnyRecipe } from "@/app/models/recipe-like";
 import {
+  acceptAllSuggestions,
   applyRejectChoice,
   applyRejectSilent,
+  lineRecipeSlugs,
+  rejectAllSuggestions,
   shouldPromptReject,
 } from "@/app/models/suggestions";
 
@@ -17,6 +26,35 @@ function makeConfig(): RecipeOptimizerConfig {
   expect(config.enabledRecipes).toContain(SLUG_A);
   expect(config.enabledRecipes).toContain(SLUG_B);
   return config;
+}
+
+function recipe(slug: string): AnyRecipe {
+  const r = recipeSlugLookup[slug];
+  expect(r, `test recipe ${slug} should exist`).toBeTruthy();
+  return r;
+}
+
+function assemblyLine(r: AnyRecipe, autoCreated: boolean): AssemblyLine {
+  return new AssemblyLine({ recipe: r, rate: 1, autoCreated });
+}
+
+function line(
+  autoCreated: boolean,
+  assemblyLines: AssemblyLine[],
+): ProductionLine {
+  const pl = new ProductionLine(
+    partSlugLookup["iron-plate"],
+    0,
+    0,
+    false,
+    autoCreated,
+  );
+  pl.assemblyLines = assemblyLines;
+  return pl;
+}
+
+function factoryRecipe(): FactoryRecipe {
+  return new FactoryRecipe("nested-1", "Nested", new Factory());
 }
 
 describe("suggestions module (R1.S1, R2)", () => {
@@ -76,5 +114,101 @@ describe("suggestions module (R1.S1, R2)", () => {
     applyRejectChoice(config, ["", SLUG_B], "yes");
     expect(config.enabledRecipes).not.toContain(SLUG_B);
     expect(config.enabledRecipes).toContain(SLUG_A);
+  });
+});
+
+describe("suggestion mutation helpers (R3)", () => {
+  it("R3.S1 lineRecipeSlugs returns non-factory slugs in array order", () => {
+    const pl = line(false, [
+      assemblyLine(recipe(SLUG_A), false),
+      assemblyLine(factoryRecipe(), false),
+      assemblyLine(recipe(SLUG_B), false),
+    ]);
+    expect(lineRecipeSlugs(pl)).toEqual([SLUG_A, SLUG_B]);
+  });
+
+  it("R3.S2 acceptAllSuggestions clears every flag, removes nothing", () => {
+    const factory = new Factory();
+    const pl1 = line(true, [assemblyLine(recipe(SLUG_A), true)]);
+    const pl2 = line(false, [
+      assemblyLine(recipe(SLUG_B), true),
+      assemblyLine(recipe(SLUG_A), false),
+    ]);
+    factory.productionLines = [pl1, pl2];
+
+    acceptAllSuggestions(factory);
+
+    expect(factory.productionLines).toHaveLength(2);
+    expect(factory.productionLines.every((pl) => !pl.autoCreated)).toBe(true);
+    expect(
+      factory.productionLines.every((pl) =>
+        pl.assemblyLines.every((al) => !al.autoCreated),
+      ),
+    ).toBe(true);
+    expect(pl1.assemblyLines).toHaveLength(1);
+    expect(pl2.assemblyLines).toHaveLength(2);
+  });
+
+  it('R3.S3 rejectAllSuggestions with "always" prunes and denies', () => {
+    const factory = new Factory();
+    factory.optimizer.rejectPrompt = "always";
+    expect(factory.optimizer.enabledRecipes).toContain(SLUG_A);
+    expect(factory.optimizer.enabledRecipes).toContain(SLUG_B);
+    const autoLine = line(true, [assemblyLine(recipe(SLUG_A), true)]);
+    const keptLine = line(false, [
+      assemblyLine(recipe(SLUG_B), true),
+      assemblyLine(recipe(SLUG_A), false),
+    ]);
+    factory.productionLines = [autoLine, keptLine];
+
+    rejectAllSuggestions(factory);
+
+    expect(factory.productionLines).toEqual([keptLine]);
+    expect(keptLine.assemblyLines).toHaveLength(1);
+    expect(keptLine.assemblyLines[0].autoCreated).toBe(false);
+    expect(factory.optimizer.enabledRecipes).not.toContain(SLUG_A);
+    expect(factory.optimizer.enabledRecipes).not.toContain(SLUG_B);
+  });
+
+  it('R3.S4 rejectAllSuggestions honors non-"always" preference', () => {
+    for (const prompt of ["never", "ask"] as const) {
+      const factory = new Factory();
+      factory.optimizer.rejectPrompt = prompt;
+      const before = [...factory.optimizer.enabledRecipes];
+      factory.productionLines = [
+        line(true, [assemblyLine(recipe(SLUG_A), true)]),
+      ];
+
+      rejectAllSuggestions(factory);
+
+      expect(factory.productionLines).toHaveLength(0);
+      expect(factory.optimizer.enabledRecipes).toEqual(before);
+    }
+  });
+
+  it("R3.S5 kept line with no auto assembly lines is untouched", () => {
+    const factory = new Factory();
+    factory.optimizer.rejectPrompt = "always";
+    const before = [...factory.optimizer.enabledRecipes];
+    const keptLine = line(false, [assemblyLine(recipe(SLUG_A), false)]);
+    factory.productionLines = [keptLine];
+
+    rejectAllSuggestions(factory);
+
+    expect(factory.productionLines).toEqual([keptLine]);
+    expect(keptLine.assemblyLines).toHaveLength(1);
+    expect(factory.optimizer.enabledRecipes).toEqual(before);
+  });
+
+  it("R3.S6 empty factory is a safe no-op", () => {
+    const factory = new Factory();
+    factory.optimizer.rejectPrompt = "always";
+    const before = [...factory.optimizer.enabledRecipes];
+    factory.productionLines = [];
+
+    expect(() => acceptAllSuggestions(factory)).not.toThrow();
+    expect(() => rejectAllSuggestions(factory)).not.toThrow();
+    expect(factory.productionLines).toHaveLength(0);
+    expect(factory.optimizer.enabledRecipes).toEqual(before);
   });
 });
