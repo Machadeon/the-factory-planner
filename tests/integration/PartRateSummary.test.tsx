@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import PartRateSummary from "@/app/components/PartRateSummary";
+import PartRateSummary from "@/app/components/overview/PartRateSummary";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";

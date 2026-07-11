@@ -5,12 +5,12 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
-import { displayNum } from "@/app/lib/format";
 import type AssemblyLine from "../models/assembly-line";
 import { shardsForClock, totalMachines } from "../models/assembly-line";
 import type Factory from "../models/factory";
 import type Recipe from "../models/recipe";
 import MachineCountDisplay from "./MachineCountDisplay";
+import PowerSummary from "./overview/PowerSummary";
 import TextCalculatorField from "./TextCalculatorField";
 import Icon from "./ui/Icon";
 
@@ -177,27 +177,14 @@ export default function AssemblyLineControls({
       </div>
 
       {/* Power consumption */}
-      {(() => {
-        const power = assemblyLine.getPowerConsumption();
-        const variable = power.max - power.min > 0.01;
-        return (
-          <div className="flex flex-row gap-x-1 text-xs text-gray-700 dark:text-gray-300">
-            <Icon
-              src="/images/items/power_192.png"
-              size={16}
-              className="shrink-0"
-            />
-            {variable ? (
-              <span>
-                {displayNum(power.avg)} MW avg · {displayNum(power.min)}–
-                {displayNum(power.max)} MW
-              </span>
-            ) : (
-              <span>{displayNum(power.avg)} MW</span>
-            )}
-          </div>
-        );
-      })()}
+      <div className="flex flex-row gap-x-1 text-xs text-gray-700 dark:text-gray-300">
+        <PowerSummary
+          power={assemblyLine.getPowerConsumption()}
+          iconSize={16}
+          iconAlt=""
+          variant="compact"
+        />
+      </div>
 
       {/* Somersloop slider */}
       <div className="flex flex-row gap-x-4 w-full">

@@ -1,15 +1,20 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import FactoryOverviewComponent from "@/app/components/FactoryOverviewComponent";
+import OverviewSidebar from "@/app/components/overview/OverviewSidebar";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
-import { emptyLibrary } from "@/app/models/factory-storage";
+import FactoryRecipe from "@/app/models/factory-recipe";
+import {
+  emptyLibrary,
+  type SerializedFactory,
+  serializeFactory,
+} from "@/app/models/factory-storage";
 import { partSlugLookup, recipes } from "@/app/models/game-data";
 import type Part from "@/app/models/part";
 import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
-import { renderWithProviders } from "../helpers/render-with-providers";
+import { renderWithProviders } from "../../helpers/render-with-providers";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -28,18 +33,25 @@ vi.mock("next/image", () => ({
 
 let ironIngotRecipe: Recipe;
 let ironPlateRecipe: Recipe;
+let reinforcedPlateRecipe: Recipe;
 let ironIngotPart: Part;
 let _ironOrePart: Part;
 let ironPlatePart: Part;
+let reinforcedPlatePart: Part;
 
 beforeAll(() => {
   // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c")!;
   // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
   ironPlateRecipe = recipes.find((r) => r.slug === "recipe-ironplate-c")!;
+  // biome-ignore lint/style/noNonNullAssertion: recipes should exist in test data
+  reinforcedPlateRecipe = recipes.find(
+    (r) => r.slug === "recipe-ironplatereinforced-c",
+  )!;
   ironIngotPart = partSlugLookup["iron-ingot"];
   _ironOrePart = partSlugLookup["iron-ore"];
   ironPlatePart = partSlugLookup["iron-plate"];
+  reinforcedPlatePart = partSlugLookup["reinforced-iron-plate"];
 });
 
 function buildFactory(): Factory {
@@ -76,29 +88,101 @@ function buildFactory(): Factory {
   return factory;
 }
 
-describe("FactoryOverviewComponent", () => {
+/** A library factory that consumes some of `buildFactory()`'s Iron Plate output,
+ * via a Reinforced Iron Plate line, so it shows up in the Consumers section. */
+function buildLibraryWithConsumer(currentFactoryId: string) {
+  const consumerFactory = new Factory();
+  consumerFactory.update = () => consumerFactory._updateRates();
+  const pl = new ProductionLine(reinforcedPlatePart, 0, 0, false, false);
+  pl.assemblyLines = [
+    new AssemblyLine({
+      recipe: reinforcedPlateRecipe,
+      rate: 1,
+      allowRemainder: false,
+    }),
+  ];
+  consumerFactory.productionLines.push(pl);
+  consumerFactory._productionLineLookup[reinforcedPlatePart.slug] = pl;
+  consumerFactory._updateRates();
+
+  const now = new Date().toISOString();
+  const sConsumer: SerializedFactory = {
+    ...serializeFactory(consumerFactory, {
+      id: "consumer-1",
+      name: "Consumer Factory",
+      folderId: null,
+      createdAt: now,
+      updatedAt: now,
+    }),
+    supplierIds: [currentFactoryId],
+  };
+  const library = emptyLibrary();
+  library.factories = [sConsumer];
+  return library;
+}
+
+describe("OverviewSidebar", () => {
+  it("renders all six sections when outputs, inputs, intermediates, consumers, and suppliers are all present", () => {
+    const factory = buildFactory();
+    const supplierFactory = buildFactory();
+    factory.addSupplier(
+      new FactoryRecipe("supplier-1", "Supplier Factory", supplierFactory),
+    );
+    factory._updateRates();
+
+    const library = buildLibraryWithConsumer("this-factory");
+
+    renderWithProviders(<OverviewSidebar />, {
+      factory,
+      library,
+      currentFactoryId: "this-factory",
+    });
+
+    expect(screen.getByText(/^Outputs/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Inputs/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Intermediate Parts/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Power & Modules/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Consumers/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Suppliers/i)).toBeInTheDocument();
+  });
+
+  it("omits the Consumers section when no consumers exist", () => {
+    const factory = buildFactory();
+    renderWithProviders(<OverviewSidebar />, {
+      factory,
+      library: emptyLibrary(),
+    });
+    expect(screen.queryByText(/^Consumers/i)).not.toBeInTheDocument();
+  });
+
+  it("omits the Suppliers section when there are no supplier factories", () => {
+    const factory = buildFactory();
+    renderWithProviders(<OverviewSidebar />, {
+      factory,
+      library: emptyLibrary(),
+    });
+    expect(screen.queryByText(/^Suppliers/i)).not.toBeInTheDocument();
+  });
+
   it("renders Outputs section for a factory with net outputs", () => {
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
 
-    // Iron Plate is an output (produced 20, consumed 0)
     expect(screen.getByText(/Outputs/i)).toBeInTheDocument();
-    // Get all Iron Plate mentions and find the one in the outputs section
     const ironPlateElements = screen.getAllByText(/Iron Plate/i);
     expect(ironPlateElements.length).toBeGreaterThan(0);
   });
 
   it("renders Inputs section for raw materials consumed", () => {
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
 
-    // Iron Ore is a net input (consumed 30, produced 0)
     expect(screen.getByText(/Inputs/i)).toBeInTheDocument();
     expect(screen.getByText(/Iron Ore/i)).toBeInTheDocument();
   });
@@ -106,23 +190,18 @@ describe("FactoryOverviewComponent", () => {
   it("can show intermediate parts when the visibility toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
 
-    // The Intermediate Parts section has a Clickable div (role=generic) containing
-    // a VisibilityIcon. It is in a flex row alongside the "Intermediate Parts" heading.
     const intermediateHeading = screen.getByText(/Intermediate Parts/i);
     const row = intermediateHeading.closest(".flex");
     expect(row).not.toBeNull();
 
-    // The header row itself is the Clickable (cursor-pointer)
     // biome-ignore lint/style/noNonNullAssertion: already checked with toBeNull above
     await user.click(row! as HTMLElement);
 
-    // After toggling, Iron Ingot (the intermediate) should appear
-    // Use getAllByText since Iron Ingot now appears in multiple places
     const ironIngotElements = screen.getAllByText(/Iron Ingot/i);
     expect(ironIngotElements.length).toBeGreaterThan(0);
   });
@@ -130,7 +209,7 @@ describe("FactoryOverviewComponent", () => {
   it("hides Outputs section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
@@ -140,7 +219,6 @@ describe("FactoryOverviewComponent", () => {
     // biome-ignore lint/style/noNonNullAssertion: already checked
     await user.click(outputsHeader! as HTMLElement);
 
-    // The wrapper div after the header should have contentVisibility: hidden
     const wrapper = outputsHeader?.nextElementSibling as HTMLElement | null;
     expect(wrapper).not.toBeNull();
     expect(wrapper?.style.contentVisibility).toBe("hidden");
@@ -149,7 +227,7 @@ describe("FactoryOverviewComponent", () => {
   it("hides Inputs section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
@@ -167,7 +245,7 @@ describe("FactoryOverviewComponent", () => {
   it("shows Intermediate Parts section when toggle is clicked", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
@@ -176,7 +254,6 @@ describe("FactoryOverviewComponent", () => {
     const row = intermediateHeading.closest(".flex");
     expect(row).not.toBeNull();
 
-    // Starts hidden by default
     const wrapper = row?.nextElementSibling as HTMLElement | null;
     expect(wrapper).not.toBeNull();
     expect(wrapper?.style.contentVisibility).toBe("hidden");
@@ -187,21 +264,22 @@ describe("FactoryOverviewComponent", () => {
     expect(wrapper?.style.contentVisibility).toBe("visible");
   });
 
-  it("renders Power & Modules section", () => {
+  it("renders Power & Modules section with a single non-variable power span", () => {
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
 
-    // The power section heading is "Power & Modules"
     expect(screen.getByText(/Power & Modules/i)).toBeInTheDocument();
     expect(screen.getByText(/Power Shards/i)).toBeInTheDocument();
+    // Fixed-clock lines here are not variable-power, so a single "{avg} MW" span renders.
+    expect(screen.getByText(/^\d+(\.\d+)? MW$/)).toBeInTheDocument();
   });
 
   it("starts with Intermediates collapsed and the other sections expanded", () => {
     const factory = buildFactory();
-    renderWithProviders(<FactoryOverviewComponent />, {
+    renderWithProviders(<OverviewSidebar />, {
       factory,
       library: emptyLibrary(),
     });
@@ -216,5 +294,30 @@ describe("FactoryOverviewComponent", () => {
     expectExpanded(/^Inputs/i, true);
     expectExpanded(/^Intermediate/i, false);
     expectExpanded(/^Power & Modules/i, true);
+  });
+
+  it("re-renders the Suppliers section leaf when a supplier is removed", async () => {
+    const user = userEvent.setup();
+    const factory = buildFactory();
+    const supplierFactory = buildFactory();
+    factory.addSupplier(
+      new FactoryRecipe("supplier-1", "Supplier Factory", supplierFactory),
+    );
+    factory._updateRates();
+
+    renderWithProviders(<OverviewSidebar />, {
+      factory,
+      library: emptyLibrary(),
+    });
+
+    expect(screen.getByText(/^Suppliers/i)).toBeInTheDocument();
+    expect(screen.getByText("Supplier Factory")).toBeInTheDocument();
+
+    const removeButton = screen.getByRole("button", {
+      name: "Remove supplier",
+    });
+    await user.click(removeButton);
+
+    expect(screen.queryByText(/^Suppliers/i)).not.toBeInTheDocument();
   });
 });
