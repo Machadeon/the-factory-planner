@@ -149,3 +149,83 @@ export function recipeMatchesFilters(
     ? config.alternateRecipesEnabled
     : config.defaultRecipesEnabled;
 }
+
+/**
+ * The phase select is a definer: it recomputes the full enabled set across
+ * the whole phase range. Buildings unlocked at or below `phase` are enabled,
+ * which cascades to recipes — a recipe is enabled when it passes every bulk
+ * filter.
+ */
+export function updatePhase(
+  config: RecipeOptimizerConfig,
+  phase: number,
+): RecipeOptimizerConfig {
+  const buildingsEnabled = buildings
+    .filter((b) => b.unlockPhase <= phase)
+    .map((b) => b.slug);
+  const next = { ...config, phase, buildingsEnabled };
+  next.enabledRecipes = recipes
+    .filter((r) => recipeMatchesFilters(next, r))
+    .map((r) => r.slug);
+  return next;
+}
+
+/**
+ * Master switches keep their own state. Enabling a category adds only the
+ * recipes in it that also pass the phase + building filters; disabling
+ * removes every recipe in the category.
+ */
+export function toggleCategory(
+  config: RecipeOptimizerConfig,
+  category: "default" | "alternate" | "oreConversion",
+  enabled: boolean,
+): RecipeOptimizerConfig {
+  const next = {
+    ...config,
+    ...(category === "default"
+      ? { defaultRecipesEnabled: enabled }
+      : category === "alternate"
+        ? { alternateRecipesEnabled: enabled }
+        : { oreConversionRecipesEnabled: enabled }),
+  };
+  const inCategory = (r: Recipe) => {
+    if (category === "default") return !r.alternate;
+    if (category === "alternate") return r.alternate;
+    return r.isOreConversionRecipe();
+  };
+  const affected = enabled
+    ? recipes.filter((r) => inCategory(r) && recipeMatchesFilters(next, r))
+    : recipes.filter(inCategory);
+  next.enabledRecipes = setRecipesEnabled(
+    config.enabledRecipes,
+    affected.map((r) => r.slug),
+    enabled,
+  );
+  return next;
+}
+
+/**
+ * Building switches keep their own state (buildingsEnabled list). Enabling a
+ * building adds only its recipes that also pass the phase + category
+ * filters; disabling removes every recipe in that building.
+ */
+export function toggleBuilding(
+  config: RecipeOptimizerConfig,
+  slug: string,
+  enabled: boolean,
+): RecipeOptimizerConfig {
+  const buildingsEnabled = enabled
+    ? [...config.buildingsEnabled, slug]
+    : config.buildingsEnabled.filter((s) => s !== slug);
+  const next = { ...config, buildingsEnabled };
+  const buildingRecipes = recipes.filter((r) => r.building.slug === slug);
+  const affected = enabled
+    ? buildingRecipes.filter((r) => recipeMatchesFilters(next, r))
+    : buildingRecipes;
+  next.enabledRecipes = setRecipesEnabled(
+    config.enabledRecipes,
+    affected.map((r) => r.slug),
+    enabled,
+  );
+  return next;
+}
