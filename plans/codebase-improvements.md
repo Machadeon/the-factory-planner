@@ -4,6 +4,14 @@ Status: PROPOSED backlog — companion to `component-refactor.md` and `model-ref
 
 Sequencing references like "M2" / "Phase 1" point at the combined ordering table in `component-refactor.md` §7 = `model-refactor.md` §6.
 
+**2026-07-12 consolidation** (Block B0.5, from [refactor-review.md](./refactor-review.md)): this file is the single backlog. Items previously scattered elsewhere, now cross-referenced:
+
+- **Model read accessors / render-side contract** — fully specced in `plan.md` § Improvements ("Audit all model interfaces"); tracked as **D2** in [plan-order.md](./plan-order.md). Read-side counterpart of the M4 mutation contract; includes the `PartRateSummary` render-from-proxy fix.
+- `plan.md` § Optimizations "why is deserializeFactory called in a render thread?" — same fix as **#8** below (deserialization caching); do not track twice.
+- `plan.md` § Optimizations "prevent occasional freeze for some optimization runs" — same fix as **#6** below (solver worker + timeout).
+- Bugs — GitHub issues (see #3 below); the `bugs/` directory is retired.
+- Process rule (now in AGENTS.md): open non-blocking review findings must be filed as GitHub issues or added here **before** `/opsx:archive`.
+
 ## Priority order
 
 1. CI pipeline (#1) — do first; everything else depends on it
@@ -16,6 +24,8 @@ Sequencing references like "M2" / "Phase 1" point at the combined ordering table
 ## Correctness & confidence
 
 ### 1. CI pipeline — biggest gap
+
+*(DONE — A1 landed `ci.yml` (biome/tsc/unit/build blocking); B0.3 made e2e blocking; B0.4 added knip. Evidence below is historical.)*
 
 **Evidence:** no `.github/workflows/` directory exists. Repo has a `Makefile` and full script set in `package.json` but nothing enforces them on push/PR.
 
@@ -35,8 +45,15 @@ One noisy migration change (many `?.`/assertions to add). Best slotted right aft
 
 ### 3. Known bugs backlog
 
-- **`bugs/cannot_optimize_after_reject.md`** (open; only entry besides `_template.md`). Likely the same root cause as model plan M0 finding #3 — `_updateRates()` rebuilds every index except `_productionLineLookup`, and `OptimizationSection.rejectAllSuggestions` replaces `factory.productionLines` wholesale, leaving stale lookup entries that make `addProductionLine`'s existence guard wrongly refuse. **Verify overlap before fixing twice.**
-- **Drawer open/close infinite loop** (from memory/prior sessions, `bug_drawer_loop.md` in agent memory): multiple library-drawer open/close cycles trigger a layout-change loop (1–3 changes/sec), hangs Playwright. Still unfixed. Actively undermines #1. AGENTS.md's Chrome DevTools MCP section documents the intended diagnosis workflow (trace → repeated reflow/rAF analysis).
+*(2026-07-12: the `bugs/` directory is retired — bugs live in GitHub issues now, `gh issue list --label bug`.)*
+
+- ~~`cannot_optimize_after_reject`~~ — FIXED 2026-07-03 by `fix-stale-production-line-lookup` (root cause was exactly the M0 #3 stale-lookup guess above); manual repro pass recorded in that change's review.
+- ~~Drawer open/close infinite loop~~ — FIXED (guard in `handleOpenLibrary` + rAF-deferred focus restore, per agent memory); `tests/e2e/library/open-close-library.spec.ts` covers it, green in CI.
+- Open bug issues (migrated/filed 2026-07-12 from the refactor-review audit):
+  - [#23](https://github.com/Machadeon/the-factory-planner/issues/23) `splitRecipes` leaves `rateLookup` stale (B2.5 in plan-order — before B3)
+  - [#24](https://github.com/Machadeon/the-factory-planner/issues/24) multi-maximize objective overwrite in rate solver (E0 — before E1)
+  - [#25](https://github.com/Machadeon/the-factory-planner/issues/25) redundant manual `_productionLineLookup` bookkeeping
+  - [#26](https://github.com/Machadeon/the-factory-planner/issues/26) triage `createBaseModel`'s "TODO fix for factories as recipes"
 
 ### 4. Silent storage failure = data loss
 
@@ -107,6 +124,8 @@ Feature: compress a bundle into the URL fragment (`lz-string` or native `Compres
 ### 14. Logging strategy
 
 **Evidence:** `factory.tsx` contains ~25 commented-out `console.log`/`console.debug` lines (solver model dumps, timing measurements) plus live `console.warn`s. Delete during M2, or gate behind a debug flag (e.g. `sfp:debug` localStorage key) if the solver-timing dumps are still wanted.
+
+*(2026-07-12: commented-out lines are gone — M2 deleted them (grep confirms zero). Remaining scope: decide a strategy for the ~10 live `console.warn`s in models/solver — keep as-is, or gate/collect. Small; B3 can absorb.)*
 
 ### 15. Game-data versioning
 

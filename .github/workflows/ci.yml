@@ -80,10 +80,30 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+  knip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Unused files/dependencies fail the build; unused exports/types are
+      # warnings until the Phase 5 sweep (B3) prunes the current ~25 — then
+      # flip those rules to "error" in knip.json.
+      - name: Dead code check
+        run: npx knip --no-progress
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
