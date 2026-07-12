@@ -1,25 +1,27 @@
 # Plan
 
-Remaining work: M4, M5, Phase 5 from refactor plans + all 16 backlog items. Recommended order, six blocks:
+Remaining work: M4, M5, Phase 5 from refactor plans + all 16 backlog items. Recommended order, six blocks.
+
+**Status convention:** each item's `Done` column is `[x]` when landed on `main`, `[ ]` otherwise. Decision-only items (e.g. A2) are `[x]` once the ADR is accepted.
 
 ## Block A
 
 safety net first (before M4)
 
-| # | Item | Why here |
-| --- | --- | --- |
-| A1 | [CI pipeline (#1)](./codebase-improvements.md#1-ci-pipeline--biggest-gap) | Backlog's own priority #1; M4 is highest-risk remaining change — want enforced gates before it, not after. Land lint/tsc/unit/build blocking now; e2e job with hard timeout, non-blocking until A2. |
-| A2 | [Styling decision (#9)](./codebase-improvements.md#9-pick-one-styling-system) — decision only | Window plan assigned it (Phase 1) already missed; ui/ primitives exist with the mix baked in. Make the call now (ADR in plans/), retrofit later (C1) so M4/M5 diffs don't collide. |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [x] | A1 | [CI pipeline (#1)](./codebase-improvements.md#1-ci-pipeline--biggest-gap) | Backlog's own priority #1; M4 is highest-risk remaining change — want enforced gates before it, not after. Land lint/tsc/unit/build blocking now; e2e job with hard timeout, non-blocking until A2. |
+| [x] | A2 | [Styling decision (#9)](./codebase-improvements.md#9-pick-one-styling-system) — decision only | Window plan assigned it (Phase 1) already missed; ui/ primitives exist with the mix baked in. Made the call: [ADR-0001](./adr-0001-styling-system.md) — Tailwind-first, MUI behind `ui/` for a closed allowlist. Retrofit later (C1) so M4/M5 diffs don't collide. |
 
 ## Block B
 
 finish the refactor plans
 
-| # | Item | Why here |
-| --- | --- | --- |
-| B1 | [M4 model-reactivity-cleanup](./model-refactor.md#phase-m4--model-reactivity-cleanup) | All deps landed (M2, Phase 2). Highest-risk; do while valtio context fresh and CI green. Gates undo/redo (F1). |
-| B2 | [M5 storage-migrations](./model-refactor.md#phase-m5--storagemigration-cleanup) | After M4 per plan order; deserialize paths settle here. |
-| B3 | [Phase 5 naming/layout sweep](./component-refactor.md#phase-5--naming-layout-and-sweep) | Closes both refactor plans. Fold in logging cleanup (#14) if M2 didn't already delete the commented console lines — same sweep character. Do before any file-touching backlog work so renames don't conflict. |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [ ] | B1 | [M4 model-reactivity-cleanup](./model-refactor.md#phase-m4--model-reactivity-cleanup) | All deps landed (M2, Phase 2). Highest-risk; do while valtio context fresh and CI green. Gates undo/redo (F1). |
+| [ ] | B2 | [M5 storage-migrations](./model-refactor.md#phase-m5--storagemigration-cleanup) | After M4 per plan order; deserialize paths settle here. |
+| [ ] | B3 | [Phase 5 naming/layout sweep](./component-refactor.md#phase-5--naming-layout-and-sweep) | Closes both refactor plans. Fold in logging cleanup (#14) if M2 didn't already delete the commented console lines — same sweep character. Do before any file-touching backlog work so renames don't conflict. |
 
 ### M4 Prompt
 
@@ -49,41 +51,41 @@ Review subagents: pass model: "opus" to the Agent tool for all review passes. Re
 
 resilience + small UX (post-refactor, mostly parallelizable)
 
-| # | Item | Why here |
-| --- | --- | --- |
-| C1 | Styling retrofit per A2 decision | After Phase 5 renames — avoids rebase churn on moved files. |
-| C2 | [Toast primitive + kill alert() (#10)](./codebase-improvements.md#10-kill-alert) | Small; toast is prerequisite for C3. |
-| C3 | [Storage-failure surfacing (#4)](./codebase-improvements.md#4-silent-storage-failure--data-loss) + [ErrorBoundary (#5)](./codebase-improvements.md#5-react-errorboundary) | Data-loss protection; needs toast (C2) and benefits from M5's clean storage layer. Batch as one "resilience" change. |
-| C4 | [RateDisplay non-color signaling (#12)](./codebase-improvements.md#12-non-color-status-signaling--a11y-rules) | One-file change now that RateDisplay exists. a11y biome rules already active per AGENTS.md — just the icon/text affordance remains. |
-| C5 | [Game-data versioning doc (#15)](./codebase-improvements.md#15-game-data-versioning) | Trivial filler, slot anywhere. |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [ ] | C1 | Styling retrofit per [ADR-0001](./adr-0001-styling-system.md) (A2 decision) | After Phase 5 renames — avoids rebase churn on moved files. **Land the emotion cascade-layer fix first** (`AppRouterCacheProvider enableCssLayer: true` + `@layer` order in `globals.css`); without it every Tailwind override on a retained MUI widget silently no-ops mid-migration. Also resolve here: CssBaseline-vs-preflight, biome `no @mui outside ui/` rule (icons exempt), migrate non-allowlist MUI widgets to Tailwind. |
+| [ ] | C2 | [Toast primitive + kill alert() (#10)](./codebase-improvements.md#10-kill-alert) | Small; toast is prerequisite for C3. |
+| [ ] | C3 | [Storage-failure surfacing (#4)](./codebase-improvements.md#4-silent-storage-failure--data-loss) + [ErrorBoundary (#5)](./codebase-improvements.md#5-react-errorboundary) | Data-loss protection; needs toast (C2) and benefits from M5's clean storage layer. Batch as one "resilience" change. |
+| [ ] | C4 | [RateDisplay non-color signaling (#12)](./codebase-improvements.md#12-non-color-status-signaling--a11y-rules) | One-file change now that RateDisplay exists. a11y biome rules already active per AGENTS.md — just the icon/text affordance remains. |
+| [ ] | C5 | [Game-data versioning doc (#15)](./codebase-improvements.md#15-game-data-versioning) | Trivial filler, slot anywhere. |
 
 ## Block D
 
 type strictness (solo, quiet window)
 
-| # | Item | Why here |
-| --- | --- | --- |
-| D1 | [noUncheckedIndexedAccess (#2)](./codebase-improvements.md#2-enable-nouncheckedindexedaccess) | Touches many files — worst merge-conflict profile of anything remaining. After Phase 5 + C1, all file moves done; land alone. |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [ ] | D1 | [noUncheckedIndexedAccess (#2)](./codebase-improvements.md#2-enable-nouncheckedindexedaccess) | Touches many files — worst merge-conflict profile of anything remaining. After Phase 5 + C1, all file moves done; land alone. |
 
 ## Block E
 
 performance (sequential within block)
 
-| # | Item | Why here |
-| --- | --- | --- |
-| E1 | [highs-js swap (#7)](./codebase-improvements.md#7-replace-javascript-lp-solver) | Solver isolated behind models/solver/ since M2. Swap behind the interface first, on main thread — isolates correctness risk from transport risk. |
-| E2 | [Solver worker + debounce (#6)](./codebase-improvements.md#6-lp-solver-off-the-main-thread) | Then worker-ize (WASM already in play from E1). After M4 matters: mutation contract defines exactly where solve results apply. |
-| E3 | [Deserialization caching (#8)](./codebase-improvements.md#8-deserialization-caching) | After M5 (deserialize core just changed) and 4d's consumer-links.ts (landed). |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [ ] | E1 | [highs-js swap (#7)](./codebase-improvements.md#7-replace-javascript-lp-solver) | Solver isolated behind models/solver/ since M2. Swap behind the interface first, on main thread — isolates correctness risk from transport risk. |
+| [ ] | E2 | [Solver worker + debounce (#6)](./codebase-improvements.md#6-lp-solver-off-the-main-thread) | Then worker-ize (WASM already in play from E1). After M4 matters: mutation contract defines exactly where solve results apply. |
+| [ ] | E3 | [Deserialization caching (#8)](./codebase-improvements.md#8-deserialization-caching) | After M5 (deserialize core just changed) and 4d's consumer-links.ts (landed). |
 
 ## Block F
 
 features
 
-| # | Item | Why here |
-| --- | --- | --- |
-| F1 | [Undo/redo (#11)](./codebase-improvements.md#11-undoredo) | Hard-gated on M4 (mutation contract + aliasing fix). Biggest feature; wants everything structural done. |
-| F2 | [Share via URL (#13)](./codebase-improvements.md#13-share-factories-via-url) | Independent; after M5 so bundle format is stable. |
-| F3 | [PWA manifest (#16)](./codebase-improvements.md#16-pwa-manifest) | Lowest priority per backlog; anytime after F2. |
+| Done | # | Item | Why here |
+| --- | --- | --- | --- |
+| [ ] | F1 | [Undo/redo (#11)](./codebase-improvements.md#11-undoredo) | Hard-gated on M4 (mutation contract + aliasing fix). Biggest feature; wants everything structural done. |
+| [ ] | F2 | [Share via URL (#13)](./codebase-improvements.md#13-share-factories-via-url) | Independent; after M5 so bundle format is stable. |
+| [ ] | F3 | [PWA manifest (#16)](./codebase-improvements.md#16-pwa-manifest) | Lowest priority per backlog; anytime after F2. |
 
 # Summary
 
