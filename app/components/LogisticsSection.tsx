@@ -131,14 +131,12 @@ function Graph({ factory, library, currentFactoryId, actualSize }: GraphProps) {
     const computed = computeLayout(model.nodes, cols, actualSize);
     const live = new Set(model.nodes.map((n) => n.id));
     // Prune layout entries for nodes that no longer exist (deleted lines).
-    for (const key of Object.keys(factory.graphLayout)) {
-      if (!live.has(key)) delete factory.graphLayout[key];
-    }
+    factory.pruneGraphLayout(live);
     const next: Node[] = model.nodes.map((n) => {
       // On a mode switch, ignore saved positions and re-pack everything.
       const saved = modeChanged ? undefined : factory.graphLayout[n.id];
       const pos = saved ?? computed.get(n.id) ?? { x: 0, y: 0 };
-      factory.graphLayout[n.id] = pos;
+      factory.setNodePosition(n.id, pos);
       return {
         id: n.id,
         type: n.data.kind,
@@ -185,11 +183,10 @@ function Graph({ factory, library, currentFactoryId, actualSize }: GraphProps) {
 
   const onNodeDragStop = useCallback(
     (_: unknown, node: Node) => {
-      factory.graphLayout[node.id] = {
+      factory.setNodePosition(node.id, {
         x: Math.round(node.position.x / GRID) * GRID,
         y: Math.round(node.position.y / GRID) * GRID,
-      };
-      factory.update();
+      });
     },
     [factory],
   );

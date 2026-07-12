@@ -43,9 +43,6 @@ beforeAll(() => {
 
 function buildFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => {
-    factory._updateRates();
-  };
 
   // Iron Ingot line: 30 ore/min → 30 ingot/min
   const ingotPl = new ProductionLine(ironIngotPart, 0, 0, false, false);

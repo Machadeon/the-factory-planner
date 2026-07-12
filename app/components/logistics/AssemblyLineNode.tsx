@@ -54,13 +54,11 @@ export default function AssemblyLineNode({ data }: NodeProps) {
   const name = recipe.name.replace(/^Alternate:\s*/, "");
 
   function setRows(next: number) {
-    al.rows = Math.max(1, Math.min(machines, Math.floor(next)));
-    factory.update();
+    factory.setAssemblyLineRows(al, next, machines);
   }
 
   function setSpacing(next: number) {
-    al.rowSpacing = Math.max(0, next);
-    factory.update();
+    factory.setAssemblyLineRowSpacing(al, next);
   }
 
   // Drag the bottom edge to set the machine-row count: vertical travel maps to whole rows

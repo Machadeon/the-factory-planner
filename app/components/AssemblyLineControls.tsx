@@ -6,7 +6,7 @@ import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
 import type AssemblyLine from "../models/assembly-line";
-import { shardsForClock, totalMachines } from "../models/assembly-line";
+import { totalMachines } from "../models/assembly-line";
 import type Factory from "../models/factory";
 import type Recipe from "../models/recipe";
 import MachineCountDisplay from "./MachineCountDisplay";
@@ -26,28 +26,15 @@ export default function AssemblyLineControls({
   const maxSloopSlots = assemblyLine.maxSloopSlots();
 
   function setSpeed(raw: number) {
-    const speed = Math.min(Math.max(raw, 1), 250);
-    assemblyLine.machineSpeed = speed;
-    assemblyLine.powerShards = shardsForClock(speed);
-    factory.update();
+    factory.setClockSpeed(assemblyLine, raw);
   }
 
   function setRemainder(allowRemainder: boolean) {
-    assemblyLine.allowRemainder = allowRemainder;
-    factory.update();
+    factory.setAllowRemainder(assemblyLine, allowRemainder);
   }
 
   function setMachineCount(rawN: number) {
-    const N = Math.max(1, Math.round(rawN));
-    const recipe = assemblyLine.recipe as Recipe;
-    const baseRate = 60 / recipe.processingTime;
-    const newSpeed =
-      assemblyLine.rate > 0 ? (assemblyLine.rate / (N * baseRate)) * 100 : 100;
-    const clamped = Math.min(250, Math.max(1, newSpeed));
-    assemblyLine.machineSpeed = clamped;
-    assemblyLine.powerShards = shardsForClock(clamped);
-    assemblyLine.allowRemainder = false;
-    factory.update();
+    factory.setMachineCount(assemblyLine, rawN);
   }
 
   const building = (assemblyLine.recipe as Recipe).building;
@@ -202,12 +189,7 @@ export default function AssemblyLineControls({
           disabled={maxSloopSlots === 0}
           value={assemblyLine.sloopedSlots}
           onChange={(_, v) => {
-            assemblyLine.setSloopedSlots(v as number);
-            if (factory.productionLines.some((pl) => pl.outputRate > 0)) {
-              factory.autoCalculateRates();
-            } else {
-              factory.update();
-            }
+            factory.setSloopedSlots(assemblyLine, v as number);
           }}
           sx={{
             flex: 1,

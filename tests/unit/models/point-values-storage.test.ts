@@ -28,7 +28,6 @@ const meta = {
 
 function buildFactory(overrides: Record<string, number> = {}): Factory {
   const f = new Factory();
-  f.update = () => {};
   const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
   pl.assemblyLines = [];
   f.productionLines = [pl];

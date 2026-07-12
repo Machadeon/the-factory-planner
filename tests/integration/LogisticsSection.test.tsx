@@ -35,7 +35,6 @@ function nodeProps(data: unknown) {
 describe("LogisticsSection graph view", () => {
   it("AC8: empty factory shows an empty-state, no crash", () => {
     const factory = new Factory();
-    factory.update = () => {};
     renderWithProviders(<LogisticsSection />, {
       factory,
       library: { schemaVersion: 5, folders: [], factories: [] },
@@ -45,7 +44,6 @@ describe("LogisticsSection graph view", () => {
 
   it("AC9: an assembly-line node renders input and output ports", () => {
     const factory = new Factory();
-    factory.update = () => {};
     const al = new AssemblyLine({
       recipe: ironIngot,
       rate: 30,
@@ -108,7 +106,6 @@ describe("LogisticsSection graph view", () => {
 
   it("AC15: a factory-recipe node title navigates to the nested factory", () => {
     const nested = new Factory();
-    nested.update = () => nested._updateRates();
     const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
     pl.assemblyLines = [
       new AssemblyLine({ recipe: ironIngot, rate: 30, allowRemainder: false }),
@@ -119,7 +116,6 @@ describe("LogisticsSection graph view", () => {
     const fr = new FactoryRecipe("nested-1", "Iron Sub", nested);
 
     const factory = new Factory();
-    factory.update = () => {};
     const al = new AssemblyLine({ recipe: fr, rate: 1, allowRemainder: false });
     const data: AssemblyNodeData = {
       kind: "assembly",
@@ -137,8 +133,6 @@ describe("LogisticsSection graph view", () => {
 
   it("AC16: rows control updates rows and persists", () => {
     const factory = new Factory();
-    const update = vi.fn();
-    factory.update = update;
     const al = new AssemblyLine({
       recipe: ironIngot,
       rate: 90,
@@ -153,8 +147,8 @@ describe("LogisticsSection graph view", () => {
     renderWithProviders(<AssemblyLineNode {...nodeProps(data)} />);
     const input = screen.getByRole("spinbutton") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "2" } });
+    // rows is presentation state: the proxy write persists it, no recompute.
     expect(al.rows).toBe(2);
-    expect(update).toHaveBeenCalled();
   });
 
   it.todo("AC12: raw input renders a source node; net output a sink node");

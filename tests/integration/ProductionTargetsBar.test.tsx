@@ -23,9 +23,6 @@ vi.mock("next/image", () => ({
 
 function buildFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => {
-    factory._updateRates();
-  };
   return factory;
 }
 

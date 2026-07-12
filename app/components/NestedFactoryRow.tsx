@@ -24,8 +24,7 @@ export default function NestedFactoryRow({
 
   function updateRate(newRate: number) {
     // A factory-as-recipe represents whole copies of a physical sub-factory.
-    assemblyLine.rate = Math.max(0, Math.round(newRate));
-    factory.update();
+    factory.setNestedFactoryRate(assemblyLine, newRate);
   }
 
   return (

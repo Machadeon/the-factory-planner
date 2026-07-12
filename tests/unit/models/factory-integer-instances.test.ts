@@ -21,7 +21,6 @@ beforeAll(() => {
 // A nested factory producing 30 iron-ingot / instance (consuming 30 iron-ore).
 function ironSubFactoryRecipe(): FactoryRecipe {
   const nested = new Factory();
-  nested.update = () => nested._updateRates();
   const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
   pl.assemblyLines = [
     new AssemblyLine({
@@ -40,7 +39,6 @@ function ironSubFactoryRecipe(): FactoryRecipe {
 // Outer factory whose iron-ingot line is satisfied by `count` instances of the sub.
 function outerWithSub(): { factory: Factory; al: AssemblyLine } {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   const fr = ironSubFactoryRecipe();
   const al = new AssemblyLine({ recipe: fr, rate: 1, allowRemainder: false });
   const pl = new ProductionLine(ironIngotPart, 0, 0, true, false);
@@ -74,7 +72,6 @@ describe("integer factory-recipe instances", () => {
 describe("AC4: building recipes stay continuous", () => {
   it("a building-recipe line solves to a fractional rate when demanded", () => {
     const factory = new Factory();
-    factory.update = () => factory._updateRates();
     const al = new AssemblyLine({
       recipe: ironIngotRecipe,
       rate: 1,

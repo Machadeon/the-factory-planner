@@ -2,7 +2,6 @@
 
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
-import AssemblyLineModel from "../models/assembly-line";
 import type Factory from "../models/factory";
 import FactoryRecipe, { factoryRecipeSlug } from "../models/factory-recipe";
 import type { SerializedFactory } from "../models/factory-storage";
@@ -73,50 +72,24 @@ export default function ProductionLineComponent(
   const isExpanded =
     props.forceExpanded === true || !recipeIsSet ? true : expanded;
 
-  function updateProductionLine() {
-    if (productionLine.assemblyLines.length === 1) {
-      // if something changed and there is only one line, then set the line rate to the product rate
-      productionLine.assemblyLines[0].setPartProductionRate(
-        part,
-        productionLine.rate,
-      );
-    }
-    factory.setPartRate(part, productionLine.rate);
-  }
-
   function updateProductionRate(newValue: number) {
     setPickerManuallyOpened(false);
-    productionLine.rate = newValue;
-    updateProductionLine();
+    factory.setProductionLineRate(productionLine, newValue);
   }
 
   function updateOutputRate(newValue: number) {
     setPickerManuallyOpened(false);
-    productionLine.outputRate = newValue;
-    factory.autoCalculateRates();
+    factory.setOutputRate(productionLine, newValue);
   }
 
   function addAssemblyLine(recipe: Recipe) {
-    productionLine.assemblyLines.push(
-      new AssemblyLineModel({
-        recipe,
-        rate: productionLine.recipeInstanceRate(recipe),
-        machineSpeed: 100,
-        allowRemainder: true,
-        autoCreated: true,
-      }),
-    );
+    factory.addAssemblyLine(productionLine, recipe);
     setPickerManuallyOpened(false);
-    updateProductionLine();
   }
 
   function removeAssemblyLine(recipe: AnyRecipe) {
-    const index = productionLine.assemblyLines
-      .map((assemblyLine) => assemblyLine.recipe.slug)
-      .indexOf(recipe.slug);
-    productionLine.assemblyLines.splice(index, 1);
+    factory.removeAssemblyLine(productionLine, recipe);
     setPickerManuallyOpened(false);
-    updateProductionLine();
   }
 
   function addSupplierFactory(
@@ -134,20 +107,9 @@ export default function ProductionLineComponent(
     nestedFactory: Factory,
   ) {
     const fr = new FactoryRecipe(id, name, nestedFactory);
-    const productionDeficit = productionLine.rate - actualProductionRate;
-    const qty = fr.getProduct(part.slug)?.quantity ?? 1;
-    productionLine.assemblyLines.push(
-      new AssemblyLineModel({
-        recipe: fr,
-        rate: productionDeficit / qty,
-        machineSpeed: 100,
-        allowRemainder: true,
-        autoCreated: true,
-      }),
-    );
+    factory.addFactoryAssemblyLine(productionLine, fr, actualProductionRate);
     setShowFactoryPicker(false);
     setPickerManuallyOpened(false);
-    updateProductionLine();
   }
 
   function removeSelf(e: MouseEvent<HTMLButtonElement>) {
@@ -157,9 +119,7 @@ export default function ProductionLineComponent(
 
   function acceptLine(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
-    productionLine.autoCreated = false;
-    for (const al of productionLine.assemblyLines) al.autoCreated = false;
-    factory.update();
+    factory.acceptLine(productionLine);
   }
 
   function rejectLine(e: MouseEvent<HTMLButtonElement>) {
@@ -173,11 +133,7 @@ export default function ProductionLineComponent(
   }
 
   function acceptAssembly(recipe: AnyRecipe) {
-    const al = productionLine.assemblyLines.find(
-      (a) => a.recipe.slug === recipe.slug,
-    );
-    if (al) al.autoCreated = false;
-    factory.update();
+    factory.acceptAssembly(productionLine, recipe);
   }
 
   function rejectAssembly(recipe: AnyRecipe) {
@@ -212,19 +168,16 @@ export default function ProductionLineComponent(
   function toggleAutoCalculateRate(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     setPickerManuallyOpened(false);
-    productionLine.autoCalculateRate = !productionLine.autoCalculateRate;
-    if (productionLine.autoCalculateRate) {
-      factory.autoSetPartRate(part);
-    } else {
-      factory.update();
-    }
+    factory.setAutoCalculateRate(
+      productionLine,
+      !productionLine.autoCalculateRate,
+    );
   }
 
   function toggleMaximizeOutput(e: MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     setPickerManuallyOpened(false);
-    productionLine.maximizeOutput = !productionLine.maximizeOutput;
-    factory.autoCalculateRates();
+    factory.setMaximizeOutput(productionLine, !productionLine.maximizeOutput);
   }
 
   function splitRecipes() {

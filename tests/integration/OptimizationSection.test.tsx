@@ -23,9 +23,6 @@ vi.mock("next/image", () => ({
 
 function buildFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => {
-    factory._updateRates();
-  };
   return factory;
 }
 
@@ -60,12 +57,12 @@ describe("OptimizationSection", () => {
   });
 
   // T5 (AC4, live-write): editing a constraint writes to the model immediately and
-  // calls factory.update(); deleting a row removes it from factory.constraints at once.
-  it("constraint edits + deletes hit the model immediately and call update()", async () => {
+  // calls factory._updateRates(); deleting a row removes it from factory.constraints at once.
+  it("constraint edits + deletes hit the model immediately and recompute", async () => {
     const user = userEvent.setup();
     const factory = buildFactory();
     factory.constraints = [{ partSlug: "iron-ore", max: 60 }];
-    const updateSpy = vi.spyOn(factory, "update");
+    const updateSpy = vi.spyOn(factory, "_updateRates");
     renderWithProviders(<OptimizationSection />, {
       factory,
       library: emptyLibrary(),

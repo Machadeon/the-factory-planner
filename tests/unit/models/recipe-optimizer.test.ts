@@ -5,9 +5,6 @@ import type { ScoringObjective } from "@/app/models/optimizer-config";
 
 function makeFactory(): Factory {
   const f = new Factory();
-  f.update = () => {
-    f._updateRates();
-  };
   // Overwrite so each solve starts from a clean, deterministic slate.
   f.optimizer.overwrite = true;
   return f;

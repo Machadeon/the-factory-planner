@@ -77,18 +77,17 @@ Core hierarchy: `Factory → ProductionLine → AssemblyLine → RecipeLike`
 - **`AssemblyLine`** (`app/models/assembly-line.ts`): One per recipe within production line. Holds `rate`, `machineSpeed`, `powerShards`, `sloopedSlots`, `allowRemainder`.
 - **`RecipeLike`** (`app/models/recipe-like.ts`): Interface satisfied by `Recipe` (game recipe) and `FactoryRecipe` (supplier factory). Distinguish via `isFactoryRecipe` flag.
 
-## State management pattern
+## State management pattern (valtio + mutation contract)
 
-`FactoryComponent` stores `factory` in **`useRef`** (not `useState`) with version counter for re-renders:
+The `Factory` graph is a mutable class model wrapped in a valtio `proxy` created once in `useFactorySession` (`proxy({ factory: new Factory() })`) and distributed via `FactoryContext`. There is no `update` field and no version counter — render notification is automatic: a mutation on the proxied graph publishes itself, and every `useSnapshot` consumer re-renders on the fields it read.
 
-```ts
-const factoryRef = useRef<Factory>(new Factory());
-const factory = factoryRef.current;
-const [, setVersion] = useState(0);
-// factory.update is set to: () => setVersion(v => v + 1)
-```
+**Reads-from-snapshot / writes-to-proxy:**
 
-Never mutate `Factory` directly without `factory.update()` after — shallow-clones state, triggers React reconciliation.
+- Components render from `useSnapshot(...)` / the context read hooks.
+- Components mutate **only** through named model methods on the **proxy** (`factory.setClockSpeed(al, n)`, `factory.setConstraints(next)`, `factory.setOutputRate(pl, r)`, …). Never assign a model field from a component, never call `factory.update()` / `autoCalculateRates()` / `optimizeRecipes()` directly, and never mutate a `useSnapshot` result. Method arguments must be proxy-derived model refs (reached through the context proxy), not snapshot objects — a snapshot child is frozen and the write would no-op.
+- Each mutator owns its recompute: rate-affecting mutators end with `_updateRates()` or a re-solve (`autoCalculateRates` / `optimizeRecipes` / `autoSetPartRate`); presentation mutators (`setIcon`, `setNodePosition`, `pruneGraphLayout`, `setAssemblyLineRows`/`RowSpacing`) skip recompute. Never add a rate-affecting mutator that leaves derived state stale.
+- The standing tests in `tests/unit/mutation-contract.test.ts` fail CI if a component reintroduces a direct field write or recompute/solve call.
+- Solver scratch (`_autoSetPartRateInProgress`) is the only `ref()`-exempt field; every derived lookup stays tracked so components (and future read accessors) remain reactive.
 
 ## Rate units and Somersloop math
 

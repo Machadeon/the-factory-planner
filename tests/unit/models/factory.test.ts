@@ -1,3 +1,4 @@
+import { proxy, subscribe } from "valtio";
 import { beforeAll, describe, expect, it } from "vitest";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
@@ -38,9 +39,6 @@ beforeAll(() => {
 
 function makeFactory(): Factory {
   const f = new Factory();
-  f.update = () => {
-    f._updateRates();
-  };
   return f;
 }
 
@@ -717,50 +715,56 @@ describe("M2 wrapper contracts — structured errors and single notification", (
     expect(factory.solverError).toEqual({ kind: "infeasible-rates" });
   });
 
-  it("verification R2.S1: autoCalculateRates notifies exactly once (feasible path)", () => {
+  it("verification R2.S1: autoCalculateRates notifies exactly once (feasible path)", async () => {
     const factory = makeFactory();
     addManualProductionLine(factory, ironIngotPart, ironIngotRecipe, 1, 30);
+    const store = proxy({ factory });
     let updates = 0;
-    factory.update = () => {
+    const unsub = subscribe(store.factory, () => {
       updates += 1;
-      factory._updateRates();
-    };
+    });
 
-    factory.autoCalculateRates();
+    store.factory.autoCalculateRates();
+    await Promise.resolve();
 
-    expect(factory.solverError).toBeNull();
+    expect(store.factory.solverError).toBeNull();
     expect(updates).toBe(1);
+    unsub();
   });
 
-  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on success", () => {
+  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on success", async () => {
     const factory = makeFactory();
     factory.optimizer.overwrite = true;
     factory.optimizer.targets = [{ partSlug: "iron-plate", rate: 30 }];
+    const store = proxy({ factory });
     let updates = 0;
-    factory.update = () => {
+    const unsub = subscribe(store.factory, () => {
       updates += 1;
-      factory._updateRates();
-    };
+    });
 
-    factory.optimizeRecipes();
+    store.factory.optimizeRecipes();
+    await Promise.resolve();
 
-    expect(factory.solverError).toBeNull();
+    expect(store.factory.solverError).toBeNull();
     expect(updates).toBe(1);
+    unsub();
   });
 
-  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on the error path", () => {
+  it("recipe-optimizer R1.S3: optimizeRecipes notifies exactly once on the error path", async () => {
     const factory = makeFactory();
     factory.optimizer.overwrite = true;
     factory.optimizer.targets = [];
+    const store = proxy({ factory });
     let updates = 0;
-    factory.update = () => {
+    const unsub = subscribe(store.factory, () => {
       updates += 1;
-      factory._updateRates();
-    };
+    });
 
-    factory.optimizeRecipes();
+    store.factory.optimizeRecipes();
+    await Promise.resolve();
 
-    expect(factory.solverError).toEqual({ kind: "nothing-to-optimize" });
+    expect(store.factory.solverError).toEqual({ kind: "nothing-to-optimize" });
     expect(updates).toBe(1);
+    unsub();
   });
 });

@@ -9,10 +9,6 @@ import {
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
 import type { ScoringObjective } from "../models/optimizer-config";
-import {
-  acceptAllSuggestions,
-  rejectAllSuggestions,
-} from "../models/suggestions";
 import ConstraintsPanel from "./ConstraintsPanel";
 import { HorizontalDivider } from "./Dividers";
 import OptimizerPanel from "./optimization/OptimizerPanel";
@@ -47,14 +43,12 @@ export default function OptimizationSection() {
   const suggestionCount = suggestedLineCount + suggestedRecipeCount;
 
   function acceptAll() {
-    acceptAllSuggestions(factory);
-    factory.update();
+    factory.acceptAllSuggestions();
   }
 
   function rejectAll() {
-    rejectAllSuggestions(factory);
+    factory.rejectAllSuggestions();
     setShowRejectAllConfirm(false);
-    factory.update();
   }
 
   return (

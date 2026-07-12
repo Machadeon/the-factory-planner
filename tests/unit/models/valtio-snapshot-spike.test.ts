@@ -20,7 +20,6 @@ beforeAll(() => {
 describe("valtio snapshot spike (page-structure R7.S2)", () => {
   it("getPartProductionRate and getMachineCount match through snapshot()", () => {
     const raw = new Factory();
-    raw.update = () => raw._updateRates();
     const store = proxy({ factory: raw });
     store.factory.addProductionLine(ironIngot, false, false);
     const line = store.factory.productionLines[0];
@@ -32,7 +31,7 @@ describe("valtio snapshot spike (page-structure R7.S2)", () => {
         allowRemainder: false,
       }),
     );
-    store.factory.update();
+    store.factory._updateRates();
 
     const snapFactory = snapshot(store).factory;
     const snapLine = snapFactory.productionLines[0];

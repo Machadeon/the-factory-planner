@@ -16,22 +16,11 @@ Session-level Factory state: the valtio-proxied Factory instance, session identi
 - **THEN** no occurrences remain
 
 ### Requirement: R2 — root snapshot as re-render trigger
-`FactoryPage` SHALL call `useSnapshot` once on the proxy container as a re-render trigger only; children SHALL receive the proxy (`store.factory` and objects reached through it), not snapshot objects, so reads and model-method mutations work unchanged and re-render behavior in this phase is equivalent to today's whole-tree re-render. All mutations SHALL go through the proxy (model methods or field assignment on the proxy), never through a snapshot.
+`FactoryPage` SHALL call `useSnapshot` once on the proxy container as a re-render trigger only; children SHALL receive the proxy (`store.factory` and objects reached through it), not snapshot objects, so reads and model-method mutations work unchanged. All mutations SHALL go through model methods on the proxy; the enforceable mutation contract (no direct field writes, no direct `update`/`autoCalculateRates`/`optimizeRecipes` calls) is owned by the `factory-mutation-methods` capability (R4), which this requirement defers to. Reads SHALL come from snapshots; writes SHALL target the proxy.
 
 #### Scenario: R2.S1 — mutation re-renders the page
 - **WHEN** a model mutation occurs on the proxy (e.g. a production line rate changes)
 - **THEN** `FactoryPage` re-renders and children receive updated data, with no call to a manual version counter
-
-### Requirement: R3 — transitional recompute-only update shim
-`useFactorySession` SHALL assign `factory.update = () => factory._updateRates()` — derived-state recompute only, with no React coupling, no dirty-marking, and no autosave scheduling inside the shim. No other module in `app/components/` or `app/hooks/` may assign or wrap `factory.update`.
-
-#### Scenario: R3.S1 — shim body
-- **WHEN** `factory.update()` runs after the change
-- **THEN** it recomputes rates (`_updateRates`) and does nothing else; dependent components re-render because the rebuilt lookups are tracked writes on the proxy
-
-#### Scenario: R3.S2 — single assignment site
-- **WHEN** the codebase is searched for assignments to `.update =`
-- **THEN** the only assignment site for the factory's update field is `useFactorySession`
 
 ### Requirement: R4 — session identity state
 `useFactorySession` SHALL own the session identity fields: factory name, current factory id, current slug, current folder id, createdAt, and dirty flag. A fresh session SHALL have a generated factory name (via `generateFactoryName`), null id/slug/folder, empty createdAt, and dirty=false.

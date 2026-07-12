@@ -35,9 +35,7 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
   );
 
   function commit(next: PartConstraint[]) {
-    factory.constraints = next;
-    factory.autoCalculateRates();
-    factory.update();
+    factory.setConstraints(next);
   }
 
   function addConstraint(partSlug: string) {

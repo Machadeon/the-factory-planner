@@ -59,7 +59,6 @@ describe("assemblyNodeBox actual-size toggle", () => {
 describe("effectiveRows on FactoryRecipe lines (assembly-line-construction R3.S2)", () => {
   it("returns 1 regardless of the stored rows value", () => {
     const nested = new Factory();
-    nested.update = () => nested._updateRates();
     const ingotPart = partSlugLookup["iron-ingot"];
     const pl = new ProductionLine(ingotPart, 0, 0, false, false);
     pl.assemblyLines = [

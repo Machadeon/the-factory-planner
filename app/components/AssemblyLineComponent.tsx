@@ -31,10 +31,12 @@ function AssemblyLineComponent(props: AssemblyLineComponentProps) {
     isProduct: boolean,
     newValue: number,
   ) {
-    if (isProduct)
-      props.assemblyLine.setPartProductionRate(recipePart.part, newValue);
-    else props.assemblyLine.setPartConsumptionRate(recipePart.part, newValue);
-    factory.update();
+    factory.setAssemblyLinePartRate(
+      props.assemblyLine,
+      recipePart.part,
+      newValue,
+      isProduct,
+    );
   }
 
   const allOutputs = factory.recipeOutputs().map((part) => part.slug);

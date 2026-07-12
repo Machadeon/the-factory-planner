@@ -17,7 +17,6 @@ beforeAll(() => {
 
 function freshFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   return factory;
 }
 

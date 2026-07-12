@@ -24,11 +24,10 @@ beforeAll(() => {
 
 function makeTwoLineStore() {
   const raw = new Factory();
-  raw.update = () => raw._updateRates();
   const store = proxy({ factory: raw });
   store.factory.addProductionLine(ironIngot, false, false);
   store.factory.addProductionLine(copperIngot, false, false);
-  store.factory.update();
+  store.factory._updateRates();
   return store;
 }
 
