@@ -22,6 +22,7 @@ run:
 
 verify: format lint test build
 	npx tsc --noEmit
+	npm run knip
 	pre-commit run --all-files
 
 update:

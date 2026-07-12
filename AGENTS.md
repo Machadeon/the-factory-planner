@@ -34,6 +34,10 @@ The OpenSpec `spec-driven-reviewed` schema is **mandatory** for any material cha
 
 All review artifacts are **append-only** — each pass adds a new section recording what was resolved and how. opsx:continue MUST NOT advance past a review artifact while its latest pass shows Status: CONCERNS.
 
+**Archive gate:** before `/opsx:archive`, every review finding left open as non-blocking ("filed as follow-up", "tracked separately", MED/LOW left open) MUST be filed as a GitHub issue (`gh issue create`) or added to `plans/codebase-improvements.md`. Archived review artifacts are not a tracking system — deferred items recorded only there get lost (this happened; see `plans/refactor-review.md` §6.1).
+
+Bug reports live in **GitHub issues** (`gh issue list --label bug`), not in-repo files. Bug fixes still require a regression test before the fix (see Tests).
+
 ---
 
 ## Development commands

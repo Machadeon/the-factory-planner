@@ -111,7 +111,7 @@ app/models/
   storage-service.ts            # unchanged minus downloadJson
 ```
 
-`Factory` public API after the split: state fields, `_updateRates`, add/remove production line & supplier, `setPartRate`/`autoSetPartRate`, query methods delegating to `factory-metrics`, and thin `autoCalculateRates()`/`optimizeRecipes()` wrappers that call `solver/*` and apply results. No `update` field — render notification is valtio's job; mutators own their derived-state recompute (M4). Target ≤400 lines.
+`Factory` public API after the split: state fields, `_updateRates`, add/remove production line & supplier, `setPartRate`/`autoSetPartRate`, query methods delegating to `factory-metrics`, and thin `autoCalculateRates()`/`optimizeRecipes()` wrappers that call `solver/*` and apply results. No `update` field — render notification is valtio's job; mutators own their derived-state recompute (M4). Target ≤400 lines. *(2026-07-12 amendment: landed at ~700 lines — the delta is the M4 mutator façade (~40 named mutation methods), which this target predates. Accepted; see `refactor-review.md` §4.6. Split a `factory-mutations.ts` only if the façade keeps growing.)*
 
 ## 4. Phases
 
