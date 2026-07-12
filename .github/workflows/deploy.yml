@@ -40,6 +40,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_TELEMETRY_DISABLED: 1
 
       - name: Verify export output
         run: scripts/verify-export.sh "${{ steps.pages.outputs.base_path }}"

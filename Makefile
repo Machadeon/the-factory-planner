@@ -20,7 +20,7 @@ build:
 run:
 	npm run start
 
-verify: format lint test
+verify: format lint test build
 	npx tsc --noEmit
 	pre-commit run --all-files
 

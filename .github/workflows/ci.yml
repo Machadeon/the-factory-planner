@@ -77,6 +77,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
 
   e2e:
     runs-on: ubuntu-latest
