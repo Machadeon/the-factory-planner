@@ -16,6 +16,11 @@ test.describe("bookmarkable URL", () => {
     const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
+    // A fresh session seeds the field with a client-generated random name.
+    // On a cold CI compile, typing can outrace that first controlled commit —
+    // fill() then finds nothing to select and prepends instead of replacing.
+    // Wait for the initial value to actually land before typing over it.
+    await expect(nameInput).not.toHaveValue("");
     await nameInput.fill("Iron Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
