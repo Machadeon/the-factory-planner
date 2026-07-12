@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -17,7 +18,7 @@ test.describe("bookmarkable URL", () => {
     const dialog = page.getByRole("dialog");
 
     // Save "Factory A", capture slugA
-    await nameInput.fill("Factory A");
+    await fillFactoryName(page, "Factory A");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);
@@ -29,7 +30,7 @@ test.describe("bookmarkable URL", () => {
     await page.getByLabel("New factory").click();
     await expect(dialog).not.toBeVisible();
 
-    await nameInput.fill("Factory B");
+    await fillFactoryName(page, "Factory B");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);

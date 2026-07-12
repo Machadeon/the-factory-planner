@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,12 +17,7 @@ test.describe("bookmarkable URL", () => {
     const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
-    // A fresh session seeds the field with a client-generated random name.
-    // On a cold CI compile, typing can outrace that first controlled commit —
-    // fill() then finds nothing to select and prepends instead of replacing.
-    // Wait for the initial value to actually land before typing over it.
-    await expect(nameInput).not.toHaveValue("");
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
     await page.getByLabel(/Save/).click();
@@ -32,7 +28,7 @@ test.describe("bookmarkable URL", () => {
     await page.getByLabel("New factory").click();
     await expect(dialog).not.toBeVisible();
 
-    await nameInput.fill("Steel Works");
+    await fillFactoryName(page, "Steel Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
     await page.getByLabel(/Save/).click();

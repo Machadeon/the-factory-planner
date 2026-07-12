@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("Factory Name and Icon", () => {
   test("Rename the factory via the header text field", async ({ page }) => {
@@ -25,7 +26,7 @@ test.describe("Factory Name and Icon", () => {
     await expect(nameField).toBeFocused();
 
     // 3. Clear the existing text and type 'Iron Works'
-    await nameField.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
 
     // expect: The text field now shows 'Iron Works'
     await expect(nameField).toHaveValue("Iron Works");

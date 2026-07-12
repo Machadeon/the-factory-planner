@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("Factory Library", () => {
   test("Delete a factory from the library", async ({ page }) => {
@@ -14,11 +15,7 @@ test.describe("Factory Library", () => {
     await page.reload();
 
     // Rename factory
-    const factoryNameInput = page.getByRole("textbox", {
-      name: "Factory name",
-    });
-    await factoryNameInput.clear();
-    await factoryNameInput.fill("Factory To Delete");
+    await fillFactoryName(page, "Factory To Delete");
     await page.keyboard.press("Tab");
 
     // Add Iron Plate and select recipe

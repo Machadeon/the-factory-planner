@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -19,7 +20,7 @@ test.describe("bookmarkable URL", () => {
     const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
     // 1. Fill factory name "Iron Works", press Tab, click Save, wait for URL to contain factory=
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);
