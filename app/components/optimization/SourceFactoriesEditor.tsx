@@ -46,7 +46,13 @@ export default function SourceFactoriesEditor() {
     if (!library) return [];
     return config.availableFactoryIds.map((id) => {
       const sf = library.factories.find((f) => f.id === id);
-      const f = sf ? deserializeFactory(sf, library) : null;
+      const f = sf
+        ? deserializeFactory(
+            sf,
+            (nestedId) =>
+              library.factories.find((nf) => nf.id === nestedId) ?? null,
+          )
+        : null;
       const outputs = f ? availableOutputsFrom(f) : [];
       return { id, name: sf?.name ?? id, outputs };
     });

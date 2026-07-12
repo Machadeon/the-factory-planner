@@ -1,16 +1,35 @@
 import {
   CURRENT_SCHEMA_VERSION,
   generateId,
-  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
 } from "./factory-storage";
 
-// Pure import-merge logic. No React, no storage access — callers own
-// persistence and UI side effects. Transitional home: model M5 folds this
-// into the storage/migrations area.
+// Reshape data on the way in: structural-shape normalization and
+// import id-remapping. No per-schema-version repair logic — this project is
+// pre-alpha with no persisted real-user libraries, so legacy field shapes
+// (slooped rename, embedded nestedFactoryData hoisting) are not migrated;
+// deserializeFactory's own tolerant skip/default handling covers them.
 
-// Migrate incoming data (hoists any legacy embedded factories), then assign
+/**
+ * Guarantees only structural shape on the output: `schemaVersion: 1`,
+ * `folders`/`factories` default to `[]` when absent. Performs no field-level
+ * rewrites.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: operates on untyped raw JSON
+export function migrateLibrary(raw: any): StorageLibrary {
+  return {
+    ...raw,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    folders: raw.folders ?? [],
+    factories: raw.factories ?? [],
+  };
+}
+
+// Pure import-merge logic. No React, no storage access — callers own
+// persistence and UI side effects.
+
+// Migrate incoming data (structural-shape guarantee only), then assign
 // fresh ids while preserving every cross-reference (folder parent, supplier,
 // nested recipe). Returns the remapped entries plus the id mapping.
 export function remapImportedLibrary(data: StorageLibrary): {
@@ -49,9 +68,11 @@ export function remapImportedLibrary(data: StorageLibrary): {
   return { folders, factories, idMap };
 }
 
-// Legacy single-factory files (schema <= 3) may embed nested factories. Run
-// them through the same remap path so embedded copies become independent
-// entries. No root resolved → import failed; caller persists and loads nothing.
+// Legacy single-factory files may embed nested factories via
+// `nestedFactoryData`; that embedding is no longer hoisted into an
+// independent entry (see migrateLibrary above) — the assembly line just
+// passes through untouched and deserializeFactory skips it with a warning.
+// No root resolved → import failed; caller persists and loads nothing.
 export function mergeSingleFactory(
   current: StorageLibrary,
   data: SerializedFactory,

@@ -18,7 +18,10 @@ export function deriveConsumers(
   const outputs = factory.allOutputs();
   for (const sf of library.factories) {
     if (!sf.supplierIds?.includes(currentFactoryId)) continue;
-    const consumerFactory = deserializeFactory(sf, library);
+    const consumerFactory = deserializeFactory(
+      sf,
+      (id) => library.factories.find((f) => f.id === id) ?? null,
+    );
     if (!consumerFactory) continue;
     for (const output of outputs) {
       const rate = consumerFactory.rateLookup[output.slug];

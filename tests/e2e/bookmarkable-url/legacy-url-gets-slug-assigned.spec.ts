@@ -23,11 +23,11 @@ test.describe("bookmarkable URL", () => {
     await page.addInitScript(
       ({ id }) => {
         const lib = {
-          schemaVersion: 5,
+          schemaVersion: 1,
           folders: [],
           factories: [
             {
-              schemaVersion: 5,
+              schemaVersion: 1,
               id,
               name: "Copper Smelter",
               folderId: null,

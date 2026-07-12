@@ -11,7 +11,7 @@ import {
   mergeLibrary,
   mergeSingleFactory,
   remapImportedLibrary,
-} from "@/app/models/library-ops";
+} from "@/app/models/migrations";
 
 const NOW = "2026-01-01T00:00:00.000Z";
 
@@ -41,7 +41,7 @@ function importLib(overrides: Partial<StorageLibrary>): StorageLibrary {
 describe("library-ops purity (R1.S1)", () => {
   it("imports no React and no storage-service", () => {
     const src = readFileSync(
-      path.resolve(__dirname, "../../../app/models/library-ops.ts"),
+      path.resolve(__dirname, "../../../app/models/migrations.ts"),
       "utf8",
     );
     expect(src).not.toMatch(/from ["']react["']/);
@@ -105,7 +105,7 @@ describe("remapImportedLibrary (R2)", () => {
     expect(factories[0].updatedAt).not.toBe(NOW);
   });
 
-  it("R2.S2 — legacy embedded nested factories are hoisted before remapping", () => {
+  it("R2.S4 — legacy embedded factory is not hoisted (post-migration-retirement behavior)", () => {
     const legacy = {
       schemaVersion: 3,
       folders: [],
@@ -135,14 +135,17 @@ describe("remapImportedLibrary (R2)", () => {
       ],
     } as unknown as StorageLibrary;
 
-    const { factories } = remapImportedLibrary(legacy);
-    expect(factories.length).toBe(2);
-    const outer = factories.find((f) => f.name === "Source");
-    const hoisted = factories.find((f) => f.name === "Embedded");
-    expect(hoisted).toBeDefined();
-    expect(outer?.productionLines[0].assemblyLines[0].nestedFactoryId).toBe(
-      hoisted?.id,
-    );
+    const { factories, idMap } = remapImportedLibrary(legacy);
+    // No independent entry is created for the embedded factory — only the
+    // outer factory is present, and its embedded data passes through untouched.
+    expect(factories.length).toBe(1);
+    expect(idMap.get("f-embedded")).toBeUndefined();
+    const al = factories[0].productionLines[0].assemblyLines[0];
+    expect(al.nestedFactoryId).toBeUndefined();
+    expect(
+      (al as unknown as { nestedFactoryData?: { id: string } })
+        .nestedFactoryData?.id,
+    ).toBe("f-embedded");
   });
 
   it("R2.S3 — dangling refs: supplier/nested pass through, parentId/folderId null out", () => {

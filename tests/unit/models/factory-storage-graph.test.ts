@@ -13,7 +13,8 @@ import ProductionLine from "@/app/models/production-line";
 import type Recipe from "@/app/models/recipe";
 
 // AC6/AC7 (R7): graph layout, per-line id, and rows round-trip through serialization;
-// pre-v5 factories migrate cleanly (fresh ids, rows default 0 = auto, schema bumped to 5).
+// deserializeFactory tolerates any schemaVersion value (fresh ids, rows default 0 =
+// auto) without branching on it — schemaVersion is pinned to 1, never incremented.
 let ironIngotRecipe: Recipe;
 let ironIngotPart: Part;
 
@@ -48,10 +49,10 @@ const meta = {
 };
 
 describe("graph layout serialization", () => {
-  it("AC6: schemaVersion is 5", () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(5);
+  it("AC6: schemaVersion is 1", () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(1);
     const s = serializeFactory(buildFactory(), meta);
-    expect(s.schemaVersion).toBe(5);
+    expect(s.schemaVersion).toBe(1);
   });
 
   it("AC6: round-trips graphLayout, per-line id and rows", () => {
@@ -115,9 +116,9 @@ describe("graph layout serialization", () => {
     expect((al as unknown as { rowSpacing: number }).rowSpacing).toBe(8);
   });
 
-  it("AC7: a pre-v5 factory migrates — fresh ids, rows default 0 (auto), no positions", () => {
+  it("AC7: deserializeFactory ignores schemaVersion (storage-migrations R4) — fresh ids, rows default 0 (auto), no positions", () => {
     const legacy = {
-      schemaVersion: 4,
+      schemaVersion: 4, // deliberately not CURRENT_SCHEMA_VERSION — must not affect behavior
       id: "old",
       name: "Old",
       folderId: null,
@@ -154,7 +155,7 @@ describe("graph layout serialization", () => {
   });
 
   it("nested-factory line with no rows deserializes to rows 0 (assembly-line-construction R3.S1)", () => {
-    // A nested (FactoryRecipe) assembly line embedded via nestedFactoryData, no rows field.
+    // A nested (FactoryRecipe) assembly line resolved via resolveNested, no rows field.
     const nestedSer = serializeFactory(buildFactory(), {
       ...meta,
       id: "nested",
@@ -178,7 +179,6 @@ describe("graph layout serialization", () => {
           assemblyLines: [
             {
               nestedFactoryId: "nested",
-              nestedFactoryData: nestedSer,
               rate: 1,
               sloopedSlots: 0,
               machineSpeed: 100,
@@ -190,7 +190,9 @@ describe("graph layout serialization", () => {
       ],
     } as unknown as SerializedFactory;
 
-    const back = deserializeFactory(outer);
+    const back = deserializeFactory(outer, (id) =>
+      id === "nested" ? nestedSer : null,
+    );
     const al = back?.productionLines[0].assemblyLines[0];
     expect(al?.recipe.isFactoryRecipe).toBe(true);
     expect((al as unknown as { rows: number }).rows).toBe(0);

@@ -129,7 +129,10 @@ export default function useFactorySession({
       persistCurrentId = true,
     } = opts;
 
-    const loaded = deserializeFactory(sf, lib);
+    const loaded = deserializeFactory(
+      sf,
+      (id) => lib.factories.find((f) => f.id === id) ?? null,
+    );
     if (!loaded) {
       alert(
         "Could not restore factory — some recipe or part data may be missing.",
