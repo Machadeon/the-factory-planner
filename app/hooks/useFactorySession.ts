@@ -58,9 +58,14 @@ export default function useFactorySession({
   }
   const store = storeRef.current;
 
-  const [factoryName, setFactoryNameState] = useState(() =>
-    generateFactoryName(),
-  );
+  const [factoryName, setFactoryNameState] = useState(() => {
+    const initial = generateFactoryName();
+    console.log(
+      "[debug] initial useState factoryName",
+      JSON.stringify(initial),
+    );
+    return initial;
+  });
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -115,6 +120,7 @@ export default function useFactorySession({
 
   // Name edits mark the session dirty and count as a mutation for autosave.
   function setFactoryName(name: string) {
+    console.log("[debug] setFactoryName", JSON.stringify(name));
     setFactoryNameState(name);
     setIsDirty(true);
     for (const cb of mutateListeners.current) cb();
@@ -158,6 +164,14 @@ export default function useFactorySession({
     muteDuring(() => {
       store.factory = loaded;
     });
+    console.log(
+      "[debug] loadSerialized setFactoryNameState",
+      JSON.stringify(sf.name),
+      "sf.id",
+      sf.id,
+      "sf.slug",
+      sf.slug,
+    );
     setFactoryNameState(sf.name);
     setCurrentFactoryId(sf.id);
     setCurrentSlug(slug);
@@ -177,7 +191,12 @@ export default function useFactorySession({
     muteDuring(() => {
       store.factory = raw;
     });
-    setFactoryNameState(generateFactoryName());
+    const freshName = generateFactoryName();
+    console.log(
+      "[debug] clearTo setFactoryNameState",
+      JSON.stringify(freshName),
+    );
+    setFactoryNameState(freshName);
     setCurrentFactoryId(null);
     setCurrentSlug(null);
     setCurrentFolderId(folderId);
@@ -209,6 +228,13 @@ export default function useFactorySession({
   }
 
   function doSave(): { firstSave: boolean } {
+    console.log(
+      "[debug] doSave",
+      "currentFactoryId",
+      currentFactoryId,
+      "factoryName",
+      JSON.stringify(factoryName),
+    );
     const now = new Date().toISOString();
     const id = currentFactoryId ?? generateId();
     const isFirstSave = !currentFactoryId;
