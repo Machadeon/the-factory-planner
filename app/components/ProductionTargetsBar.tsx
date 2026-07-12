@@ -22,8 +22,7 @@ export default function ProductionTargetsBar() {
   const targets = factory.optimizer.targets;
 
   function setTargets(next: Target[]) {
-    factory.optimizer.targets = next;
-    factory.update();
+    factory.setOptimizerConfig({ ...factory.optimizer, targets: next });
   }
 
   function addTarget(partSlug: string) {
@@ -53,8 +52,7 @@ export default function ProductionTargetsBar() {
   }
 
   function solve() {
-    factory.optimizeRecipes(library.partPointOverrides ?? {});
-    factory.update();
+    factory.optimize(library.partPointOverrides ?? {});
   }
 
   return (

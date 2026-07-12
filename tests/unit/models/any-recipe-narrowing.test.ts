@@ -18,7 +18,6 @@ beforeAll(() => {
 
 function buildIronIngotFactory(rate: number): Factory {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
   pl.assemblyLines = [new AssemblyLine({ recipe: ironIngotRecipe, rate })];
   pl.rate = pl.assemblyLines[0].getPartProductionRate(ironIngotPart);

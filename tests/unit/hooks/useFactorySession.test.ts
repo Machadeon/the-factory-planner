@@ -234,7 +234,7 @@ describe("useFactorySession", () => {
     expect(result.current.isDirty).toBe(false);
     act(() => {
       result.current.factory.productionLines[0].outputRate = 60;
-      result.current.factory.update();
+      result.current.factory._updateRates();
     });
     await settle();
     expect(result.current.isDirty).toBe(true);
@@ -273,7 +273,7 @@ describe("useFactorySession", () => {
     await settle();
     const lookupBefore = result.current.factory.rateLookup;
     act(() => {
-      result.current.factory.update();
+      result.current.factory._updateRates();
     });
     await settle();
     // _updateRates rebuilds rateLookup from scratch — a tracked write on the

@@ -56,9 +56,6 @@ beforeAll(() => {
 
 function buildFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => {
-    factory._updateRates();
-  };
 
   // Iron Ingot line: 30 ore/min → 30 ingot/min
   const ingotPl = new ProductionLine(ironIngotPart, 0, 0, false, false);
@@ -92,7 +89,6 @@ function buildFactory(): Factory {
  * via a Reinforced Iron Plate line, so it shows up in the Consumers section. */
 function buildLibraryWithConsumer(currentFactoryId: string) {
   const consumerFactory = new Factory();
-  consumerFactory.update = () => consumerFactory._updateRates();
   const pl = new ProductionLine(reinforcedPlatePart, 0, 0, false, false);
   pl.assemblyLines = [
     new AssemblyLine({

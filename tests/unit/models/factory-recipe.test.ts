@@ -20,9 +20,6 @@ beforeAll(() => {
 
 function buildIronIngotFactory(rate: number): Factory {
   const factory = new Factory();
-  factory.update = () => {
-    factory._updateRates();
-  };
 
   const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
   const al = new AssemblyLine({
@@ -63,7 +60,6 @@ describe("FactoryRecipe", () => {
   it("zero-net parts are not in products or ingredients", () => {
     // A factory that produces AND consumes iron-ingot at equal rates
     const factory = new Factory();
-    factory.update = () => {};
     const pl1 = new ProductionLine(ironIngotPart, 0, 0, false, false);
     pl1.assemblyLines = [
       new AssemblyLine({

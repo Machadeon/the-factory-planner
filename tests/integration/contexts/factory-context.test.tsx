@@ -18,7 +18,6 @@ beforeAll(() => {
 
 function makeStore() {
   const raw = new Factory();
-  raw.update = () => raw._updateRates();
   return proxy({ factory: raw });
 }
 

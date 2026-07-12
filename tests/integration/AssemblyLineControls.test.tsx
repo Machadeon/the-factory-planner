@@ -33,7 +33,6 @@ beforeAll(() => {
 describe("AssemblyLineControls power row (overview-sidebar-structure R3.S2)", () => {
   it("renders the power row through the shared PowerSummary formatting", () => {
     const factory = new Factory();
-    factory.update = () => factory._updateRates();
     const assemblyLine = new AssemblyLine({
       recipe: ironIngotRecipe,
       rate: 30,

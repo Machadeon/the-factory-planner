@@ -43,10 +43,9 @@ describe("autoCalculateRates synchronous verification (R2.S1)", () => {
     vi.mocked(solver.Solve).mockReset();
   });
 
-  it("sets constraint-violations on return with exactly one update()", () => {
+  it("sets constraint-violations on return with exactly one recompute", () => {
     const factory = makeFactoryWithTarget(30);
-    const update = vi.fn(() => factory._updateRates());
-    factory.update = update;
+    const updateSpy = vi.spyOn(factory, "_updateRates");
 
     // Feasible per the solver, but the returned rate underproduces the
     // { equal: 30 } target (25/min instead of 30).
@@ -72,13 +71,12 @@ describe("autoCalculateRates synchronous verification (R2.S1)", () => {
         limit: 30,
       }),
     );
-    expect(update).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("leaves solverError null and still notifies once when constraints hold", () => {
+  it("leaves solverError null and still recomputes once when constraints hold", () => {
     const factory = makeFactoryWithTarget(30);
-    const update = vi.fn(() => factory._updateRates());
-    factory.update = update;
+    const updateSpy = vi.spyOn(factory, "_updateRates");
 
     const productQty =
       // biome-ignore lint/style/noNonNullAssertion: recipe produces iron ingot
@@ -92,6 +90,6 @@ describe("autoCalculateRates synchronous verification (R2.S1)", () => {
     factory.autoCalculateRates();
 
     expect(factory.solverError).toBeNull();
-    expect(update).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
   });
 });

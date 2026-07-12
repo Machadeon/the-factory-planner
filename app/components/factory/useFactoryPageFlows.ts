@@ -289,8 +289,7 @@ export default function useFactoryPageFlows({
   }
 
   function handleIconChange(icon: string | undefined) {
-    factory.icon = icon;
-    factory.update();
+    factory.setIcon(icon);
   }
 
   return {

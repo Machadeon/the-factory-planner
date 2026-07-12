@@ -32,7 +32,6 @@ afterEach(cleanup);
 
 function factoryWithLine(pl: ProductionLine): Factory {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   factory.productionLines.push(pl);
   factory._productionLineLookup[pl.part.slug] = pl;
   factory._updateRates();

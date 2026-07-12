@@ -68,8 +68,7 @@ export default function OptimizerPanel() {
   const config = factory.optimizer;
 
   function commit(next: RecipeOptimizerConfig) {
-    factory.optimizer = next;
-    factory.update();
+    factory.setOptimizerConfig(next);
   }
 
   function update(patch: Partial<RecipeOptimizerConfig>) {

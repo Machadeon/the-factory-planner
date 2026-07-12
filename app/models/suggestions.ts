@@ -54,8 +54,8 @@ export function lineRecipeSlugs(productionLine: ProductionLine): string[] {
 
 /**
  * Clear the `autoCreated` flag on every production line and assembly line,
- * marking all suggestions as accepted. Removes nothing. Callers own the
- * post-mutation `factory.update()`.
+ * marking all suggestions as accepted. Removes nothing. The caller
+ * (`Factory.acceptAllSuggestions`) owns the post-mutation recompute.
  */
 export function acceptAllSuggestions(factory: Factory): void {
   for (const pl of factory.productionLines) {
@@ -68,7 +68,8 @@ export function acceptAllSuggestions(factory: Factory): void {
  * Remove every auto-created suggestion: drop `autoCreated` production lines
  * wholesale and drop `autoCreated` assembly lines from surviving lines,
  * collecting the non-factory recipe slugs and applying the remembered reject
- * preference. Callers own the post-mutation `factory.update()`.
+ * preference. The caller (`Factory.rejectAllSuggestions`) owns the
+ * post-mutation recompute.
  */
 export function rejectAllSuggestions(factory: Factory): void {
   const slugs: string[] = [];

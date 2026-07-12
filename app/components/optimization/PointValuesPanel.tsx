@@ -61,15 +61,13 @@ export default function PointValuesPanel({
   }
 
   function setFactoryOverride(slug: string, value: number) {
-    factory.partPointOverrides = { ...factoryOverrides, [slug]: value };
-    factory.update();
+    factory.setPartPointOverride(slug, value);
   }
 
   function clearFactoryOverride(slug: string) {
     const next = { ...factoryOverrides };
     delete next[slug];
-    factory.partPointOverrides = next;
-    factory.update();
+    factory.setPartPointOverrides(next);
   }
 
   return (

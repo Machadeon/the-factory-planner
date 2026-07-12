@@ -1,5 +1,6 @@
 import type { ConstraintBound } from "javascript-lp-solver";
-import AssemblyLine from "./assembly-line";
+import { ref } from "valtio";
+import AssemblyLine, { shardsForClock } from "./assembly-line";
 import type FactoryRecipe from "./factory-recipe";
 import { factoryRecipeSlug } from "./factory-recipe";
 import { partSlugLookup, parts, RATE_EPSILON, recipeLookup } from "./game-data";
@@ -9,6 +10,8 @@ import {
 } from "./optimizer-config";
 import type Part from "./part";
 import ProductionLine from "./production-line";
+import type Recipe from "./recipe";
+import type { AnyRecipe } from "./recipe-like";
 import type { SolverError } from "./solver/errors";
 import { type RateSolveInput, solveRates } from "./solver/rate-solver";
 import {
@@ -16,6 +19,10 @@ import {
   solveRecipeSelection,
 } from "./solver/recipe-optimizer";
 import { verifyConstraints } from "./solver/verify";
+import {
+  acceptAllSuggestions as acceptAllSuggestionsWalk,
+  rejectAllSuggestions as rejectAllSuggestionsWalk,
+} from "./suggestions";
 
 export interface Rate {
   consumptionRate: number;
@@ -40,7 +47,6 @@ export default class Factory {
   icon?: string;
   autoAddProductLines: boolean;
   supplierFactories: FactoryRecipe[];
-  update: () => void;
   solverError: SolverError | null;
   constraints: PartConstraint[];
   optimizer: RecipeOptimizerConfig;
@@ -61,22 +67,22 @@ export default class Factory {
    */
   _assemblyLineLookup: { [partSlug: string]: AssemblyLine[] };
 
-  constructor(oldFactory?: Factory) {
-    this.productionLines = oldFactory?.productionLines || [];
-    this.icon = oldFactory?.icon;
-    this.update = oldFactory?.update || (() => {});
-    this.autoAddProductLines = oldFactory?.autoAddProductLines || false;
-    this.supplierFactories = oldFactory?.supplierFactories || [];
-    this.solverError = oldFactory?.solverError ?? null;
-    this.constraints = oldFactory?.constraints ?? [];
-    this.optimizer = oldFactory?.optimizer ?? defaultRecipeOptimizerConfig();
-    this.graphLayout = oldFactory?.graphLayout ?? {};
-    this.partPointOverrides = oldFactory?.partPointOverrides ?? {};
+  constructor() {
+    this.productionLines = [];
+    this.autoAddProductLines = false;
+    this.supplierFactories = [];
+    this.solverError = null;
+    this.constraints = [];
+    this.optimizer = defaultRecipeOptimizerConfig();
+    this.graphLayout = {};
+    this.partPointOverrides = {};
 
     this.rateLookup = {};
     this._productionLineLookup = {};
     this._assemblyLineLookup = {};
-    this._autoSetPartRateInProgress = new Set();
+    // Solver scratch: ref()-exempt from valtio tracking (mutated mid-recursion,
+    // never rendered). ref() strips tracking only; add/has/delete still work.
+    this._autoSetPartRateInProgress = ref(new Set());
 
     this._partsConsumed = new Set();
     this._partsProduced = new Set();
@@ -162,7 +168,6 @@ export default class Factory {
 
     if (!result.ok) {
       this.solverError = result.error;
-      this.update();
       return;
     }
 
@@ -176,8 +181,6 @@ export default class Factory {
     }
     this._applyRates(rates);
     this._updateRates();
-
-    this.update();
   }
 
   autoCalculateRates() {
@@ -205,7 +208,6 @@ export default class Factory {
 
     if (!result.feasible) {
       this.solverError = { kind: "infeasible-rates" };
-      this.update();
       return;
     }
 
@@ -228,8 +230,6 @@ export default class Factory {
     if (violations.length > 0) {
       this.solverError = { kind: "constraint-violations", violations };
     }
-
-    this.update();
   }
 
   _hasRecycledRubberPlasticLoop(): boolean {
@@ -286,14 +286,14 @@ export default class Factory {
 
   addSupplier(fr: FactoryRecipe) {
     this.supplierFactories.push(fr);
-    this.update();
+    this._updateRates();
   }
 
   removeSupplier(factoryId: string) {
     this.supplierFactories = this.supplierFactories.filter(
       (fr) => fr.slug !== factoryRecipeSlug(factoryId),
     );
-    this.update();
+    this._updateRates();
   }
 
   recipeOutputs(): Part[] {
@@ -371,7 +371,7 @@ export default class Factory {
       // TODO select default recipe, add more product lines automatically
     }
 
-    if (!autoCreated) this.update();
+    if (!autoCreated) this._updateRates();
   }
 
   removeProductionLine(part: Part) {
@@ -381,7 +381,7 @@ export default class Factory {
 
     delete this._productionLineLookup[part.slug];
 
-    this.update();
+    this._updateRates();
   }
 
   /**
@@ -442,7 +442,7 @@ export default class Factory {
       }
     }
 
-    this.update();
+    this._updateRates();
   }
 
   /**
@@ -507,5 +507,201 @@ export default class Factory {
         0,
       );
     }
+  }
+
+  // --- Mutation methods (M4 mutation contract) ---------------------------
+  // Components mutate the factory only through these, on the valtio proxy.
+  // Each rate-affecting mutator ends with its own recompute; presentation
+  // mutators skip recompute (the proxy write itself notifies). See spec R5.
+
+  /** Re-run the sole-recipe sync + rate propagation for one production line. */
+  _syncProductionLine(pl: ProductionLine) {
+    if (pl.assemblyLines.length === 1) {
+      pl.assemblyLines[0].setPartProductionRate(pl.part, pl.rate);
+    }
+    this.setPartRate(pl.part, pl.rate);
+  }
+
+  setClockSpeed(al: AssemblyLine, speed: number) {
+    const clamped = Math.min(Math.max(speed, 1), 250);
+    al.machineSpeed = clamped;
+    al.powerShards = shardsForClock(clamped);
+    this._updateRates();
+  }
+
+  setAllowRemainder(al: AssemblyLine, allow: boolean) {
+    al.allowRemainder = allow;
+    this._updateRates();
+  }
+
+  setMachineCount(al: AssemblyLine, n: number) {
+    const N = Math.max(1, Math.round(n));
+    const recipe = al.recipe as Recipe;
+    const baseRate = 60 / recipe.processingTime;
+    const newSpeed = al.rate > 0 ? (al.rate / (N * baseRate)) * 100 : 100;
+    const clamped = Math.min(250, Math.max(1, newSpeed));
+    al.machineSpeed = clamped;
+    al.powerShards = shardsForClock(clamped);
+    al.allowRemainder = false;
+    this._updateRates();
+  }
+
+  setSloopedSlots(al: AssemblyLine, n: number) {
+    al.setSloopedSlots(n);
+    if (this.productionLines.some((pl) => pl.outputRate > 0)) {
+      this.autoCalculateRates();
+    } else {
+      this._updateRates();
+    }
+  }
+
+  /** Edit one assembly line's throughput for a specific part (recompute-only). */
+  setAssemblyLinePartRate(
+    al: AssemblyLine,
+    part: Part,
+    rate: number,
+    isProduction: boolean,
+  ) {
+    if (isProduction) al.setPartProductionRate(part, rate);
+    else al.setPartConsumptionRate(part, rate);
+    this._updateRates();
+  }
+
+  /** Set a nested-factory line's whole-copy count (recompute-only). */
+  setNestedFactoryRate(al: AssemblyLine, copies: number) {
+    al.rate = Math.max(0, Math.round(copies));
+    this._updateRates();
+  }
+
+  setProductionLineRate(pl: ProductionLine, rate: number) {
+    pl.rate = rate;
+    this._syncProductionLine(pl);
+  }
+
+  setOutputRate(pl: ProductionLine, rate: number) {
+    pl.outputRate = rate;
+    this.autoCalculateRates();
+  }
+
+  setMaximizeOutput(pl: ProductionLine, value: boolean) {
+    pl.maximizeOutput = value;
+    this.autoCalculateRates();
+  }
+
+  setAutoCalculateRate(pl: ProductionLine, value: boolean) {
+    pl.autoCalculateRate = value;
+    if (value) this.autoSetPartRate(pl.part);
+    else this._updateRates();
+  }
+
+  addAssemblyLine(pl: ProductionLine, recipe: Recipe) {
+    pl.assemblyLines.push(
+      new AssemblyLine({
+        recipe,
+        rate: pl.recipeInstanceRate(recipe),
+        machineSpeed: 100,
+        allowRemainder: true,
+        autoCreated: true,
+      }),
+    );
+    this._syncProductionLine(pl);
+  }
+
+  addFactoryAssemblyLine(
+    pl: ProductionLine,
+    fr: FactoryRecipe,
+    actualProductionRate: number,
+  ) {
+    const productionDeficit = pl.rate - actualProductionRate;
+    const qty = fr.getProduct(pl.part.slug)?.quantity ?? 1;
+    pl.assemblyLines.push(
+      new AssemblyLine({
+        recipe: fr,
+        rate: productionDeficit / qty,
+        machineSpeed: 100,
+        allowRemainder: true,
+        autoCreated: true,
+      }),
+    );
+    this._syncProductionLine(pl);
+  }
+
+  removeAssemblyLine(pl: ProductionLine, recipe: AnyRecipe) {
+    const index = pl.assemblyLines
+      .map((a) => a.recipe.slug)
+      .indexOf(recipe.slug);
+    if (index >= 0) pl.assemblyLines.splice(index, 1);
+    this._syncProductionLine(pl);
+  }
+
+  acceptLine(pl: ProductionLine) {
+    pl.autoCreated = false;
+    for (const al of pl.assemblyLines) al.autoCreated = false;
+    this._updateRates();
+  }
+
+  acceptAssembly(pl: ProductionLine, recipe: AnyRecipe) {
+    const al = pl.assemblyLines.find((a) => a.recipe.slug === recipe.slug);
+    if (al) al.autoCreated = false;
+    this._updateRates();
+  }
+
+  acceptAllSuggestions() {
+    acceptAllSuggestionsWalk(this);
+    this._updateRates();
+  }
+
+  rejectAllSuggestions() {
+    rejectAllSuggestionsWalk(this);
+    this._updateRates();
+  }
+
+  /** Public wrapper over the recipe optimizer (recompute is internal). */
+  optimize(globalPointOverrides: Record<string, number> = {}) {
+    this.optimizeRecipes(globalPointOverrides);
+  }
+
+  setConstraints(next: PartConstraint[]) {
+    this.constraints = next;
+    this.autoCalculateRates();
+  }
+
+  setOptimizerConfig(next: RecipeOptimizerConfig) {
+    this.optimizer = next;
+    this._updateRates();
+  }
+
+  setPartPointOverride(slug: string, value: number) {
+    this.partPointOverrides = { ...this.partPointOverrides, [slug]: value };
+    this._updateRates();
+  }
+
+  setPartPointOverrides(next: Record<string, number>) {
+    this.partPointOverrides = next;
+    this._updateRates();
+  }
+
+  // --- Presentation mutators (no recompute) ------------------------------
+
+  setIcon(icon: string | undefined) {
+    this.icon = icon;
+  }
+
+  setNodePosition(nodeId: string, pos: { x: number; y: number }) {
+    this.graphLayout[nodeId] = pos;
+  }
+
+  pruneGraphLayout(liveNodeIds: Set<string>) {
+    for (const key of Object.keys(this.graphLayout)) {
+      if (!liveNodeIds.has(key)) delete this.graphLayout[key];
+    }
+  }
+
+  setAssemblyLineRows(al: AssemblyLine, rows: number, maxRows: number) {
+    al.rows = Math.max(1, Math.min(maxRows, Math.floor(rows)));
+  }
+
+  setAssemblyLineRowSpacing(al: AssemblyLine, spacing: number) {
+    al.rowSpacing = Math.max(0, spacing);
   }
 }

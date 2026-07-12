@@ -32,17 +32,6 @@ interface UseFactorySessionDeps {
   setLibrary: (lib: StorageLibrary) => void;
 }
 
-// Recompute-only shim (model M4 deletes it along with the update field).
-// Deliberately a `function` using `this`: model methods call `this.update()`
-// through the valtio proxy, so `this` is the proxy and the rebuilt lookups are
-// tracked writes. Assigned on the raw instance before proxying/swapping so the
-// assignment itself never fires the subscription.
-function installUpdateShim(raw: Factory) {
-  raw.update = function (this: Factory) {
-    this._updateRates();
-  };
-}
-
 // Session-level Factory state: the valtio proxy container, session identity
 // fields, the single loadSerialized restore path, and new/clear + save flows.
 // The container is the only place the session's Factory is created or swapped.
@@ -52,9 +41,7 @@ export default function useFactorySession({
 }: UseFactorySessionDeps) {
   const storeRef = useRef<{ factory: Factory } | null>(null);
   if (storeRef.current === null) {
-    const raw = new Factory();
-    installUpdateShim(raw);
-    storeRef.current = proxy({ factory: raw });
+    storeRef.current = proxy({ factory: new Factory() });
   }
   const store = storeRef.current;
 
@@ -162,7 +149,6 @@ export default function useFactorySession({
       setLibrary(updatedLib);
     }
 
-    installUpdateShim(loaded);
     muteDuring(() => {
       store.factory = loaded;
     });
@@ -181,7 +167,6 @@ export default function useFactorySession({
   // disable are page-level concerns wired by the caller.
   function clearTo(folderId: string | null) {
     const raw = new Factory();
-    installUpdateShim(raw);
     muteDuring(() => {
       store.factory = raw;
     });
@@ -193,15 +178,6 @@ export default function useFactorySession({
     setIsDirty(false);
     clearCurrentFactoryId();
     emitSwap();
-  }
-
-  // Same-content rebuild (overview's re-layout escape hatch): swap only, no
-  // identity or dirty changes — mirrors the old rebuildFactory.
-  function rebuild() {
-    const raw = new Factory(store.factory);
-    muteDuring(() => {
-      store.factory = raw;
-    });
   }
 
   function buildSerialized(overrideName?: string): SerializedFactory {
@@ -294,7 +270,6 @@ export default function useFactorySession({
     isDirty,
     loadSerialized,
     clearTo,
-    rebuild,
     buildSerialized,
     doSave,
     onFactoryMutate,

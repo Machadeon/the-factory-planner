@@ -41,11 +41,6 @@ beforeAll(() => {
 
 function buildProps(rate = 30, outputRate = 0) {
   const factory = new Factory();
-  let _version = 0;
-  factory.update = () => {
-    factory._updateRates();
-    _version++;
-  };
 
   const al = new AssemblyLine({
     recipe: ironIngotRecipe,
@@ -118,14 +113,9 @@ describe("AssemblyLineComponent — somersloop slider", () => {
       act(() => {
         sloopSlider.dispatchEvent(new Event("change", { bubbles: true }));
       });
-      // Direct call to verify the behavior: when outputRate > 0, autoCalculateRates should be called
+      // The mutator owns the branch: with outputRate > 0 it re-solves.
       act(() => {
-        props.assemblyLine.setSloopedSlots(1);
-        if (props.factory.productionLines.some((pl) => pl.outputRate > 0)) {
-          props.factory.autoCalculateRates();
-        } else {
-          props.factory.update();
-        }
+        props.factory.setSloopedSlots(props.assemblyLine, 1);
       });
       expect(autoCalcSpy).toHaveBeenCalled();
     }

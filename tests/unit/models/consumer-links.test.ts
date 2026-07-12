@@ -13,7 +13,6 @@ import ProductionLine from "@/app/models/production-line";
 
 function buildSupplierFactory(): Factory {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   const ironIngotRecipe = recipes.find((r) => r.slug === "recipe-ingotiron-c");
   if (!ironIngotRecipe) throw new Error("missing recipe fixture");
   const ironIngotPart = partSlugLookup["iron-ingot"];
@@ -35,7 +34,6 @@ function buildSupplierFactory(): Factory {
  * the ingot consumption rate exactly — lets tests pin an exact RATE_EPSILON boundary. */
 function buildConsumerFactory(ironRodRate: number): Factory {
   const factory = new Factory();
-  factory.update = () => factory._updateRates();
   const ironRodRecipe = recipes.find((r) => r.slug === "recipe-ironrod-c");
   if (!ironRodRecipe) throw new Error("missing recipe fixture");
   const ironRodPart = partSlugLookup["iron-rod"];
