@@ -23,6 +23,8 @@ finish the refactor plans
 
 ### M4 Prompt
 
+> _Opus 4.8, high effort_
+
 Start /opsx:new for change `model-reactivity-cleanup` — Phase M4 in plans/model-refactor.md. Read that plan (esp. §2.2, §2.3, M4, §5) and the "State pattern: valtio" section of plans/component-refactor.md. Scope is the plan's M4 section verbatim; do not expand it.
 
 First verify prerequisites from the sequencing table (§6) are on main — M2 and component Phase 2 (valtio store, recompute-only update shim). Stop and tell me if missing.
@@ -32,6 +34,8 @@ The two decisions M4 defers to spec (aliasing approach, ref()-exempt list) must 
 Review subagents: pass model: "fable" to the Agent tool for design-review and the final review.md pass; model: "opus" for tasks-review. Reviewers verify: (a) every rate-affecting mutator recomputes, (b) no component mutates outside model methods, (c) tasks.md orders the counting-subscribe tests before update() deletion.
 
 ### M5 Prompt
+
+> _Sonnet 5, high effort_
 
 Start /opsx:new for change `storage-migrations` — Phase M5 in plans/model-refactor.md. Read that plan (esp. §2.6, M5). Scope is the plan's M5 section verbatim; do not expand it.
 
