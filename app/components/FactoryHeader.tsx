@@ -9,7 +9,6 @@ import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
-import { useEffect, useRef } from "react";
 import FactoryIconPicker from "./FactoryIconPicker";
 import FileImportButton from "./ui/FileImportButton";
 import IconButton from "./ui/IconButton";
@@ -55,35 +54,6 @@ export default function FactoryHeader({
     onOpenLibrary?.();
   }
 
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
-  const patchedRef = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
-    const el = nameInputRef.current;
-    if (!el || patchedRef.current === el) return;
-    patchedRef.current = el;
-    const nativeDescriptor = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      "value",
-    );
-    if (!nativeDescriptor) return;
-    Object.defineProperty(el, "value", {
-      configurable: true,
-      get() {
-        return nativeDescriptor.get?.call(this);
-      },
-      set(v) {
-        console.log(
-          "[debug] native input.value SET",
-          JSON.stringify(v),
-          "prev",
-          JSON.stringify(nativeDescriptor.get?.call(this)),
-          new Error("stack").stack,
-        );
-        nativeDescriptor.set?.call(this, v);
-      },
-    });
-  }, []);
-
   return (
     <div className="flex flex-row items-center gap-2 px-4 py-2 border-b border-[rgba(128,128,128,0.2)]">
       {onOpenLibrary && (
@@ -102,16 +72,10 @@ export default function FactoryHeader({
           variant="outlined"
           size="small"
           value={factoryName}
-          onChange={(e) => {
-            console.log(
-              "[debug] TextField onChange",
-              JSON.stringify(e.target.value),
-            );
-            onNameChange(e.target.value);
-          }}
+          onChange={(e) => onNameChange(e.target.value)}
           placeholder="Factory Name"
           slotProps={{
-            htmlInput: { "aria-label": "Factory name", ref: nameInputRef },
+            htmlInput: { "aria-label": "Factory name" },
           }}
           sx={{
             flexGrow: 1,
