@@ -112,7 +112,6 @@ export default function FactoryPage() {
               className={`flex flex-col min-h-full grow ${libraryPinned ? "min-w-0" : "min-w-full"}`}
             >
               <FactoryHeader
-                key={session.currentFactoryId ?? "unsaved"}
                 factoryName={session.factoryName}
                 factoryIcon={snap.icon}
                 isDirty={session.isDirty}

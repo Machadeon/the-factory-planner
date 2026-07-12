@@ -5,6 +5,8 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     permissions: ["clipboard-read", "clipboard-write"],
+    trace: "retain-on-failure",
+    video: "retain-on-failure",
   },
   webServer: {
     command: "npm run dev",
