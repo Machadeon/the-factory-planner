@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,10 +14,9 @@ test.describe("bookmarkable URL", () => {
   test("Switching factories via the library updates hash to current active tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
     await page.getByLabel(/Save/).click();
@@ -28,7 +28,7 @@ test.describe("bookmarkable URL", () => {
     await page.getByLabel("New factory").click();
     await expect(dialog).not.toBeVisible();
 
-    await nameInput.fill("Steel Works");
+    await fillFactoryName(page, "Steel Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
     await page.getByLabel(/Save/).click();

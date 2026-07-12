@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -11,11 +12,9 @@ test.describe("bookmarkable URL", () => {
   });
 
   test("URL uses human-readable slug after first save", async ({ page }) => {
-    const nameInput = page.getByRole("textbox", { name: "Factory name" });
-
     expect(new URL(page.url()).searchParams.get("factory")).toBeNull();
 
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();
     expect(new URL(page.url()).searchParams.get("factory")).toBeNull();

@@ -58,9 +58,17 @@ export default function useFactorySession({
   }
   const store = storeRef.current;
 
-  const [factoryName, setFactoryNameState] = useState(() =>
-    generateFactoryName(),
-  );
+  // The fresh-session name must NOT be generated during render: this hook is
+  // SSR'd, so a render-time random draw puts one name in the server HTML and a
+  // different one in the client's first render. React's hydration then has to
+  // reconcile the input against a DOM value it never rendered, and anything
+  // typed into the field during the hydration window gets merged with the
+  // stale name (observed as CI-only e2e corruption on cold compiles). First
+  // render is a deterministic ""; the random name lands in a mount effect.
+  const [factoryName, setFactoryNameState] = useState("");
+  useEffect(() => {
+    setFactoryNameState((prev) => prev || generateFactoryName());
+  }, []);
   const [currentFactoryId, setCurrentFactoryId] = useState<string | null>(null);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);

@@ -74,7 +74,9 @@ export default function FactoryHeader({
           value={factoryName}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Factory Name"
-          inputProps={{ "aria-label": "Factory name" }}
+          slotProps={{
+            htmlInput: { "aria-label": "Factory name" },
+          }}
           sx={{
             flexGrow: 1,
             "& .MuiOutlinedInput-root": {

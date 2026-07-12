@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,10 +14,9 @@ test.describe("bookmarkable URL", () => {
   test("Two factories with the same name get unique slugs", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Factory name" });
     const dialog = page.getByRole("dialog");
 
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);
@@ -28,7 +28,7 @@ test.describe("bookmarkable URL", () => {
     await page.getByLabel("New factory").click();
     await expect(dialog).not.toBeVisible();
 
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);

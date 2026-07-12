@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -15,7 +16,7 @@ test.describe("bookmarkable URL", () => {
   }) => {
     const nameInput = page.getByRole("textbox", { name: "Factory name" });
 
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await page.waitForURL(/factory=/);

@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,10 +17,8 @@ test.describe("bookmarkable URL", () => {
   test("Direct load of /?factory=slug#logistics opens on the Logistics tab", async ({
     page,
   }) => {
-    const nameInput = page.getByRole("textbox", { name: "Factory name" });
-
     // 1. Fill factory name input with "Iron Works", press Tab, click Save, wait for URL factory=iron-works
-    await nameInput.fill("Iron Works");
+    await fillFactoryName(page, "Iron Works");
     await page.keyboard.press("Tab");
     // Wait for React to commit the name change and enter dirty state before saving
     await expect(page.getByLabel(/Save \(unsaved/)).toBeVisible();

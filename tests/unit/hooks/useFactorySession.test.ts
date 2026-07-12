@@ -92,6 +92,26 @@ describe("useFactorySession", () => {
     expect(result.current.isDirty).toBe(false);
   });
 
+  it("R4.S2 — first render has a deterministic empty name (SSR-safe); random name arrives via effect", () => {
+    // Regression: generating the random name during render made the SSR HTML
+    // carry a different name than the client's first render — a hydration
+    // mismatch that let text typed during the hydration window get merged
+    // with a stale name (CI-only e2e corruption). The first render must be
+    // deterministic; the random name may only be assigned in an effect.
+    const renderNames: string[] = [];
+    const setLibrary = vi.fn();
+    renderHook(() => {
+      const session = useFactorySession({
+        library: emptyLibrary(),
+        setLibrary,
+      });
+      renderNames.push(session.factoryName);
+      return session;
+    });
+    expect(renderNames[0]).toBe("");
+    expect(renderNames[renderNames.length - 1]).not.toBe("");
+  });
+
   it("R5.S1 — loadSerialized success sets identity, clean, persists id", async () => {
     const entry = sf();
     const lib = libWith(entry);

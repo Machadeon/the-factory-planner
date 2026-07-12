@@ -22,7 +22,13 @@ describe("TextCalculatorField", () => {
   it("evaluates an expression on blur and calls onCalculate", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -37,7 +43,13 @@ describe("TextCalculatorField", () => {
   it("shows error state on Enter and does not fire onCalculate for invalid input", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -53,7 +65,13 @@ describe("TextCalculatorField", () => {
   it("resets to the original value and calls onCalculate on Escape", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField value={42} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={42}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -67,7 +85,13 @@ describe("TextCalculatorField", () => {
   it("evaluates on Enter without removing focus", async () => {
     const user = userEvent.setup();
     const onCalculate = vi.fn();
-    render(<TextCalculatorField value={0} onCalculate={onCalculate} />);
+    render(
+      <TextCalculatorField
+        variant="outlined"
+        value={0}
+        onCalculate={onCalculate}
+      />,
+    );
 
     const input = screen.getByRole("textbox");
     await user.click(input);
@@ -82,24 +106,28 @@ describe("TextCalculatorField", () => {
 
   it("syncs display value when the external value prop changes while unfocused", async () => {
     const _user = userEvent.setup();
-    const { rerender } = render(<TextCalculatorField value={10} />);
+    const { rerender } = render(
+      <TextCalculatorField variant="outlined" value={10} />,
+    );
     const input = screen.getByRole("textbox");
     expect(input).toHaveValue("10");
 
-    rerender(<TextCalculatorField value={99} />);
+    rerender(<TextCalculatorField variant="outlined" value={99} />);
     expect(input).toHaveValue("99");
   });
 
   it("does not sync external value while the field is focused", async () => {
     const user = userEvent.setup();
-    const { rerender } = render(<TextCalculatorField value={10} />);
+    const { rerender } = render(
+      <TextCalculatorField variant="outlined" value={10} />,
+    );
     const input = screen.getByRole("textbox");
     await user.click(input); // focus
     await user.clear(input);
     await user.type(input, "50");
 
     // External value changes while focused — should NOT overwrite user input
-    rerender(<TextCalculatorField value={99} />);
+    rerender(<TextCalculatorField variant="outlined" value={99} />);
     expect(input).toHaveValue("50");
   });
 });

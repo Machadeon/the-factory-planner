@@ -256,7 +256,7 @@ export default function LibraryDrawer({
       anchor="left"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width: 320 } }}
+      slotProps={{ paper: { sx: { width: 320 } } }}
     >
       {content}
     </Drawer>

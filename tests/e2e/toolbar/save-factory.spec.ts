@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("Factory Toolbar Actions", () => {
   test("Save the factory manually", async ({ page }) => {
@@ -14,11 +15,7 @@ test.describe("Factory Toolbar Actions", () => {
     await page.reload();
 
     // Rename factory
-    const factoryNameInput = page.getByRole("textbox", {
-      name: "Factory name",
-    });
-    await factoryNameInput.clear();
-    await factoryNameInput.fill("My Iron Factory");
+    await fillFactoryName(page, "My Iron Factory");
     await page.keyboard.press("Tab");
 
     // Add Iron Plate and select recipe

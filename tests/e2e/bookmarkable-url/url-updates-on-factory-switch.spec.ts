@@ -2,6 +2,7 @@
 // seed: tests/e2e/seed.spec.ts
 
 import { expect, test } from "@playwright/test";
+import { fillFactoryName } from "../helpers";
 
 test.describe("bookmarkable URL", () => {
   test("URL changes to the new factory slug when switching factories via the library", async ({
@@ -16,7 +17,7 @@ test.describe("bookmarkable URL", () => {
 
     // 1. Fill factory name "Factory A", press Tab. Click Save.
     //    Wait for URL to contain `factory=`. Capture `factory` URL param as `slugA`. Assert `slugA === 'factory-a'`.
-    await page.getByRole("textbox", { name: "Factory name" }).fill("Factory A");
+    await fillFactoryName(page, "Factory A");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await expect(page).toHaveURL(/factory=/);
@@ -35,7 +36,7 @@ test.describe("bookmarkable URL", () => {
 
     // 3. Fill factory name "Factory B", press Tab. Click Save.
     //    Wait for URL to contain `factory=`. Capture `factory` URL param as `slugB`. Assert `slugB !== slugA`.
-    await page.getByRole("textbox", { name: "Factory name" }).fill("Factory B");
+    await fillFactoryName(page, "Factory B");
     await page.keyboard.press("Tab");
     await page.getByLabel(/Save/).click();
     await expect(page).toHaveURL(/factory=/);
