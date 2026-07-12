@@ -83,6 +83,9 @@ export default function useFactoryUrlSync({
   // delegate to loadSerialized; deserialization is pre-flighted so a corrupt
   // entry falls through silently instead of alerting.
   function restoreFactory(lib: StorageLibrary): boolean {
+    const resolveNested = (id: string) =>
+      lib.factories.find((f) => f.id === id) ?? null;
+
     // Priority 1: URL param — ?factory=<slug> (new) or ?factoryId=<id> (legacy)
     const urlParams =
       typeof window !== "undefined"
@@ -95,7 +98,7 @@ export default function useFactoryUrlSync({
       : urlFactoryId
         ? lib.factories.find((f) => f.id === urlFactoryId)
         : null;
-    if (saved && deserializeFactory(saved, lib)) {
+    if (saved && deserializeFactory(saved, resolveNested)) {
       sessionRef.current.loadSerialized(saved, lib);
       // Stamp history state so popstate carries the factoryId
       window.history.replaceState(
@@ -108,7 +111,7 @@ export default function useFactoryUrlSync({
 
     // Priority 2: unsaved autosave
     const autosaved = readAutosave();
-    if (autosaved && deserializeFactory(autosaved, lib)) {
+    if (autosaved && deserializeFactory(autosaved, resolveNested)) {
       sessionRef.current.loadSerialized(autosaved, lib, {
         markDirty: true,
         backfillSlug: false,
@@ -124,7 +127,7 @@ export default function useFactoryUrlSync({
     const lastId = getCurrentFactoryId();
     if (lastId) {
       const saved = lib.factories.find((f) => f.id === lastId);
-      if (saved && deserializeFactory(saved, lib)) {
+      if (saved && deserializeFactory(saved, resolveNested)) {
         sessionRef.current.loadSerialized(saved, lib);
         return true;
       }
@@ -196,6 +199,8 @@ export default function useFactoryUrlSync({
     const onPopState = (e: PopStateEvent) => {
       const id = e.state?.factoryId as string | null | undefined;
       const lib = reloadRef.current();
+      const resolveNested = (nid: string) =>
+        lib.factories.find((f) => f.id === nid) ?? null;
       const target = id ? lib.factories.find((f) => f.id === id) : null;
       // Suppress URL-sync effect: popstate already updated the URL, we must
       // not pushState again or the forward history stack gets destroyed.
@@ -213,7 +218,7 @@ export default function useFactoryUrlSync({
       );
 
       if (target) {
-        if (deserializeFactory(target, lib)) {
+        if (deserializeFactory(target, resolveNested)) {
           sessionRef.current.loadSerialized(target, lib);
         }
       } else if (!id) {
@@ -228,7 +233,7 @@ export default function useFactoryUrlSync({
           : urlFactoryId
             ? lib.factories.find((f) => f.id === urlFactoryId)
             : null;
-        if (savedByUrl && deserializeFactory(savedByUrl, lib)) {
+        if (savedByUrl && deserializeFactory(savedByUrl, resolveNested)) {
           sessionRef.current.loadSerialized(savedByUrl, lib);
           return;
         }

@@ -80,7 +80,7 @@ export interface StorageLibrary {
   rootId?: string;
 }
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 1;
 
 export function generateId(): string {
   return crypto.randomUUID();
@@ -233,128 +233,18 @@ function normalizeRecipeOptimizer(
   return { ...base, ...raw, availableParts };
 }
 
-// When a cycle is detected, deserialize the factory using only its standard
-// recipe assembly lines (no nested factory links) to break the recursion while
-// still providing usable output rates.
-function deserializeFactoryStub(data: SerializedFactory): Factory {
-  const factory = new Factory();
-  factory.icon = data.icon;
-  factory.autoAddProductLines = data.autoAddProductLines;
-  factory.constraints = data.constraints ?? [];
-  factory.optimizer = normalizeRecipeOptimizer(data.optimizer);
-  factory.graphLayout = data.graphLayout ?? {};
-  factory.partPointOverrides = data.partPointOverrides ?? {};
-  for (const plData of data.productionLines) {
-    const part = partSlugLookup[plData.partSlug];
-    if (!part) continue;
-    const pl = new ProductionLine(
-      part,
-      plData.rate,
-      plData.outputRate,
-      plData.autoCalculateRate,
-      plData.autoCreated,
-    );
-    pl.maximizeOutput = plData.maximizeOutput ?? false;
-    for (const alData of plData.assemblyLines) {
-      if (alData.nestedFactoryId || !alData.recipeSlug) continue;
-      const recipe = recipeSlugLookup[alData.recipeSlug];
-      if (!recipe) continue;
-      pl.assemblyLines.push(
-        new AssemblyLine({
-          recipe,
-          rate: alData.rate,
-          sloopedSlots: alData.sloopedSlots,
-          machineSpeed: alData.machineSpeed,
-          powerShards: shardsForClock(alData.machineSpeed),
-          allowRemainder: alData.allowRemainder,
-          autoCreated: alData.autoCreated ?? false,
-          id: alData.id ?? generateId(),
-          rows: alData.rows ?? 0,
-          rowSpacing: alData.rowSpacing ?? DEFAULT_ROW_SPACING,
-        }),
-      );
-    }
-    factory.productionLines.push(pl);
-  }
-  factory._updateRates();
-  return factory;
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-function migrateAssemblyLineRaw(al: any): SerializedAssemblyLine {
-  const result = { ...al };
-  if ("slooped" in result && !("sloopedSlots" in result)) {
-    result.sloopedSlots = result.slooped ? 1 : 0;
-  }
-  delete result.slooped;
-  if (!("machineSpeed" in result)) result.machineSpeed = 100;
-  if (!("allowRemainder" in result)) result.allowRemainder = true;
-  // Schema <= 3 embedded the nested factory; recover the id reference and drop
-  // the embedded copy (it's been hoisted to an independent library entry).
-  if (result.nestedFactoryData && !result.nestedFactoryId) {
-    result.nestedFactoryId = result.nestedFactoryData.id;
-  }
-  delete result.nestedFactoryData;
-  return result as SerializedAssemblyLine;
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-function migrateSerializedFactoryRaw(f: any): SerializedFactory {
-  return {
-    ...f,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-    productionLines: (f.productionLines ?? []).map((pl: any) => ({
-      ...pl,
-      assemblyLines: (pl.assemblyLines ?? []).map(migrateAssemblyLineRaw),
-    })),
-  };
-}
-
-// Recursively gather every factory embedded via `nestedFactoryData` (schema <= 3)
-// into `acc`, keyed by id. Does not overwrite ids already present, so callers can
-// seed higher-precedence entries first.
-// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-function collectEmbeddedFactories(f: any, acc: Map<string, any>): void {
-  for (const pl of f.productionLines ?? []) {
-    for (const al of pl.assemblyLines ?? []) {
-      const nested = al.nestedFactoryData;
-      if (nested?.id != null) {
-        if (!acc.has(nested.id)) acc.set(nested.id, nested);
-        collectEmbeddedFactories(nested, acc);
-      }
-    }
-  }
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-export function migrateLibrary(raw: any): StorageLibrary {
-  // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-  const topLevel: any[] = raw.factories ?? [];
-  // Hoist embedded factories to independent entries. Top-level entries are the
-  // source of truth, so seed them last to override any embedded copy.
-  // biome-ignore lint/suspicious/noExplicitAny: migration operates on untyped raw JSON
-  const byId = new Map<string, any>();
-  for (const f of topLevel) collectEmbeddedFactories(f, byId);
-  for (const f of topLevel) byId.set(f.id, f);
-
-  return {
-    ...raw,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    folders: raw.folders ?? [],
-    factories: [...byId.values()].map(migrateSerializedFactoryRaw),
-  };
-}
-
 export function deserializeFactory(
   data: SerializedFactory,
-  library?: StorageLibrary,
+  resolveNested: (id: string) => SerializedFactory | null = () => null,
   _visiting: Set<string> = new Set(),
 ): Factory | null {
-  if (_visiting.has(data.id)) {
-    return deserializeFactoryStub(data);
-  }
-  _visiting.add(data.id);
+  // A cycle through nested-factory or supplier references breaks by building
+  // this occurrence in stub mode: every reference resolves to null (R2/R3 —
+  // the same skip-with-warning path as any other unresolved reference), so
+  // recursion terminates without a separate stub function.
+  const resolve = _visiting.has(data.id) ? () => null : resolveNested;
+  const visiting = new Set(_visiting).add(data.id);
+
   const factory = new Factory();
   factory.icon = data.icon;
   factory.autoAddProductLines = data.autoAddProductLines;
@@ -383,9 +273,7 @@ export function deserializeFactory(
 
     for (const alData of plData.assemblyLines) {
       if (alData.nestedFactoryId) {
-        const nestedSerialized =
-          library?.factories.find((f) => f.id === alData.nestedFactoryId) ??
-          alData.nestedFactoryData;
+        const nestedSerialized = resolve(alData.nestedFactoryId);
         if (!nestedSerialized) {
           console.warn(
             `[deserialize] Nested factory not found: ${alData.nestedFactoryId}, skipping assembly line`,
@@ -394,8 +282,8 @@ export function deserializeFactory(
         }
         const nestedFactory = deserializeFactory(
           nestedSerialized,
-          library,
-          new Set(_visiting),
+          resolveNested,
+          visiting,
         );
         if (!nestedFactory) {
           console.warn(
@@ -464,9 +352,7 @@ export function deserializeFactory(
   factory._updateRates();
 
   for (const supplierId of data.supplierIds ?? []) {
-    const nestedSerialized = library?.factories.find(
-      (f) => f.id === supplierId,
-    );
+    const nestedSerialized = resolve(supplierId);
     if (!nestedSerialized) {
       console.warn(
         `[deserialize] Supplier factory not found: ${supplierId}, skipping`,
@@ -475,8 +361,8 @@ export function deserializeFactory(
     }
     const nestedFactory = deserializeFactory(
       nestedSerialized,
-      library,
-      new Set(_visiting),
+      resolveNested,
+      visiting,
     );
     if (!nestedFactory) {
       console.warn(

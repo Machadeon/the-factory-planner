@@ -39,7 +39,10 @@ export default function FactoryPickerDialog({
     if (!open) return [];
     return library.factories.flatMap((sf) => {
       if (sf.id === currentFactoryId) return [];
-      const factory = deserializeFactory(sf, library);
+      const factory = deserializeFactory(
+        sf,
+        (id) => library.factories.find((f) => f.id === id) ?? null,
+      );
       if (!factory) return [];
       if (!factory.allOutputs().some((p) => p.slug === targetPartSlug))
         return [];

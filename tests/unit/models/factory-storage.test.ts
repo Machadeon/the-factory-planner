@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CURRENT_SCHEMA_VERSION,
   collectFactoryBundle,
+  deserializeFactory,
   directDependencyIds,
-  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
 } from "@/app/models/factory-storage";
@@ -46,150 +46,150 @@ function nestedRefLine(nestedFactoryId: string) {
   };
 }
 
-describe("migrateLibrary() — embedded factory hoisting", () => {
-  it("hoists an embedded nestedFactoryData into an independent entry", () => {
-    const embedded = factory("child", { name: "Child" });
-    const raw = {
-      schemaVersion: 3,
-      folders: [],
-      factories: [
-        {
-          ...factory("parent", { name: "Parent" }),
-          productionLines: [
-            {
-              partSlug: "iron-plate",
-              rate: 10,
-              outputRate: 10,
-              autoCalculateRate: false,
-              autoCreated: false,
-              assemblyLines: [
-                {
-                  nestedFactoryId: "child",
-                  nestedFactoryData: embedded,
-                  rate: 1,
-                  sloopedSlots: 0,
-                  machineSpeed: 100,
-                  allowRemainder: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    const lib = migrateLibrary(raw);
-
-    expect(lib.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    // child is now an independent top-level entry
-    expect(lib.factories.map((f) => f.id).sort()).toEqual(["child", "parent"]);
-    // embedding stripped, reference preserved
-    const al = lib.factories.find((f) => f.id === "parent")?.productionLines[0]
-      .assemblyLines[0];
-    expect(al?.nestedFactoryId).toBe("child");
-    expect(al?.nestedFactoryData).toBeUndefined();
+describe("deserializeFactory() — unified core (storage-migrations R1-R3)", () => {
+  it("R1.S1: nested assembly-line link resolves via resolveNested", () => {
+    const nested = factory("nested-1", { name: "Nested" });
+    const outer = factory("outer-1", {
+      productionLines: [nestedRefLine("nested-1")],
+    });
+    const resolveNested = (id: string) => (id === "nested-1" ? nested : null);
+    const back = deserializeFactory(outer, resolveNested);
+    const al = back?.productionLines[0].assemblyLines[0];
+    expect(al?.recipe.isFactoryRecipe).toBe(true);
   });
 
-  it("recovers nestedFactoryId from embedded data when the id was missing", () => {
-    const raw = {
-      schemaVersion: 3,
-      folders: [],
-      factories: [
-        {
-          ...factory("parent"),
-          productionLines: [
-            {
-              partSlug: "iron-plate",
-              rate: 10,
-              outputRate: 10,
-              autoCalculateRate: false,
-              autoCreated: false,
-              assemblyLines: [
-                {
-                  nestedFactoryData: factory("child"),
-                  rate: 1,
-                  sloopedSlots: 0,
-                  machineSpeed: 100,
-                  allowRemainder: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    const lib = migrateLibrary(raw);
-    const al = lib.factories.find((f) => f.id === "parent")?.productionLines[0]
-      .assemblyLines[0];
-    expect(al?.nestedFactoryId).toBe("child");
+  it("R1.S2: supplier link resolves via resolveNested", () => {
+    const supplier = factory("sup-1", { name: "Supplier" });
+    const outer = factory("outer-2", { supplierIds: ["sup-1"] });
+    const resolveNested = (id: string) => (id === "sup-1" ? supplier : null);
+    const back = deserializeFactory(outer, resolveNested);
+    expect(back?.supplierFactories).toHaveLength(1);
+    expect(back?.supplierFactories[0].slug).toBe("factory:sup-1");
   });
 
-  it("prefers the top-level entry over an embedded copy of the same id", () => {
-    const raw = {
-      schemaVersion: 3,
-      folders: [],
-      factories: [
-        factory("child", { name: "Real Child" }),
-        {
-          ...factory("parent"),
-          productionLines: [
-            {
-              partSlug: "iron-plate",
-              rate: 10,
-              outputRate: 10,
-              autoCalculateRate: false,
-              autoCreated: false,
-              assemblyLines: [
-                {
-                  nestedFactoryId: "child",
-                  nestedFactoryData: factory("child", { name: "Stale Copy" }),
-                  rate: 1,
-                  sloopedSlots: 0,
-                  machineSpeed: 100,
-                  allowRemainder: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    const lib = migrateLibrary(raw);
-    expect(lib.factories.find((f) => f.id === "child")?.name).toBe(
-      "Real Child",
+  it("R1.S3: unresolved reference skipped with warning", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const outer = factory("outer-3", {
+      productionLines: [nestedRefLine("missing")],
+    });
+    const back = deserializeFactory(outer, () => null);
+    expect(back?.productionLines[0].assemblyLines).toHaveLength(0);
+    expect(warn).toHaveBeenCalled();
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("missing"))).toBe(
+      true,
     );
+    warn.mockRestore();
   });
 
-  it("migrates legacy `slooped` boolean to sloopedSlots", () => {
-    const raw = {
-      schemaVersion: 1,
-      folders: [],
-      factories: [
+  it("R1.S4: mixed resolution within one factory", () => {
+    const x = factory("x", { name: "X" });
+    const outer = factory("outer-4", {
+      productionLines: [nestedRefLine("x"), nestedRefLine("y")],
+    });
+    const resolveNested = (id: string) => (id === "x" ? x : null);
+    const back = deserializeFactory(outer, resolveNested);
+    expect(
+      back?.productionLines[0].assemblyLines[0]?.recipe.isFactoryRecipe,
+    ).toBe(true);
+    expect(back?.productionLines[1].assemblyLines).toHaveLength(0);
+  });
+
+  it("R1.S5: omitted resolveNested defaults to null-resolution", () => {
+    const outer = factory("outer-5", {
+      productionLines: [nestedRefLine("anything")],
+    });
+    const back = deserializeFactory(outer);
+    expect(back?.productionLines[0].assemblyLines).toHaveLength(0);
+  });
+
+  it("R2.S1: sibling nested-factory subtrees don't share _visiting state", () => {
+    const sibB = factory("sib-b", { name: "B" });
+    const sibC = factory("sib-c", { name: "C" });
+    const outer = factory("outer-6", {
+      productionLines: [nestedRefLine("sib-b"), nestedRefLine("sib-c")],
+    });
+    const resolveNested = (id: string) =>
+      id === "sib-b" ? sibB : id === "sib-c" ? sibC : null;
+    const back = deserializeFactory(outer, resolveNested);
+    expect(
+      back?.productionLines[0].assemblyLines[0]?.recipe.isFactoryRecipe,
+    ).toBe(true);
+    expect(
+      back?.productionLines[1].assemblyLines[0]?.recipe.isFactoryRecipe,
+    ).toBe(true);
+  });
+
+  it("R3.S1: cyclic reference breaks without infinite recursion (stub-mode parity)", () => {
+    // A -> B -> A: A and B each resolve normally once; the second, re-encountered
+    // occurrence of A (already in _visiting) is the one that gets stub-built, so
+    // it's *A's* reference to B (not B's to A) that ends up skipped with a warning.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const a = factory("cyc-a", {
+      name: "A",
+      productionLines: [nestedRefLine("cyc-b")],
+    });
+    const b = factory("cyc-b", {
+      name: "B",
+      productionLines: [nestedRefLine("cyc-a")],
+    });
+    const resolveNested = (id: string) =>
+      id === "cyc-a" ? a : id === "cyc-b" ? b : null;
+    const back = deserializeFactory(a, resolveNested);
+    expect(back).not.toBeNull();
+    const al = back?.productionLines[0].assemblyLines[0];
+    expect(al?.recipe.isFactoryRecipe).toBe(true);
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("cyc-b"))).toBe(
+      true,
+    );
+    warn.mockRestore();
+  });
+
+  it("R3.S2: standalone stub call (deserializeFactory(data, () => null)) skips every nested/supplier reference", () => {
+    const outer = factory("outer-7", {
+      supplierIds: ["sup-x"],
+      productionLines: [nestedRefLine("nest-x")],
+    });
+    const back = deserializeFactory(outer, () => null);
+    expect(back?.supplierFactories).toHaveLength(0);
+    expect(back?.productionLines[0].assemblyLines).toHaveLength(0);
+  });
+
+  it("R4.S2: legacy field shapes are not repaired — deserializeFactory tolerates them via constructor defaults", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const legacy = {
+      ...factory("legacy-1"),
+      productionLines: [
         {
-          ...factory("f"),
-          productionLines: [
+          partSlug: "iron-plate",
+          rate: 10,
+          outputRate: 10,
+          autoCalculateRate: false,
+          autoCreated: false,
+          assemblyLines: [
+            // legacy `slooped` field, no sloopedSlots/machineSpeed/allowRemainder
+            { recipeSlug: "recipe-ingotiron-c", rate: 1, slooped: true },
+            // nestedFactoryData-only, no nestedFactoryId/recipeSlug — skipped
             {
-              partSlug: "iron-plate",
-              rate: 10,
-              outputRate: 10,
-              autoCalculateRate: false,
-              autoCreated: false,
-              assemblyLines: [
-                { recipeSlug: "iron-plate", rate: 1, slooped: true },
-              ],
+              nestedFactoryData: factory("embedded-1"),
+              rate: 1,
+              sloopedSlots: 0,
+              machineSpeed: 100,
+              allowRemainder: true,
             },
           ],
         },
       ],
-    };
+    } as unknown as SerializedFactory;
 
-    const lib = migrateLibrary(raw);
-    const al = lib.factories[0].productionLines[0].assemblyLines[0];
-    expect(al.sloopedSlots).toBe(1);
-    expect(al.machineSpeed).toBe(100);
-    expect("slooped" in al).toBe(false);
+    const back = deserializeFactory(legacy);
+    const lines = back?.productionLines[0].assemblyLines ?? [];
+    // Only the recipeSlug line survives; the nestedFactoryData-only line is skipped.
+    expect(lines).toHaveLength(1);
+    expect(lines[0].sloopedSlots).toBe(0);
+    expect(lines[0].machineSpeed).toBe(100);
+    expect(lines[0].allowRemainder).toBe(true);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 

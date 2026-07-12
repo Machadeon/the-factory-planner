@@ -13,7 +13,7 @@ import {
   type SerializedFactory,
   type StorageLibrary,
 } from "@/app/models/factory-storage";
-import { mergeLibrary, mergeSingleFactory } from "@/app/models/library-ops";
+import { mergeLibrary, mergeSingleFactory } from "@/app/models/migrations";
 import type Part from "@/app/models/part";
 import { hasConsent } from "@/app/models/storage-service";
 
@@ -79,7 +79,10 @@ export default function useFactoryPageFlows({
     () =>
       library.factories.flatMap((sf) => {
         if (sf.id === currentFactoryId) return [];
-        const f = deserializeFactory(sf, library);
+        const f = deserializeFactory(
+          sf,
+          (id) => library.factories.find((f2) => f2.id === id) ?? null,
+        );
         if (!f) return [];
         return [{ sf, factory: f }];
       }),

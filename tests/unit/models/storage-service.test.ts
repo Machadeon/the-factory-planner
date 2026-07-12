@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   CURRENT_SCHEMA_VERSION,
   emptyLibrary,
@@ -7,12 +7,14 @@ import {
 import {
   addFactory,
   addFolder,
+  loadLibrary,
   moveFactory,
   removeFactory,
   removeFolder,
   renameFolder,
   updateFactory,
 } from "@/app/models/storage-service";
+import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 function makeFactory(
   id: string,
@@ -31,6 +33,35 @@ function makeFactory(
     updatedAt: now,
   };
 }
+
+describe("loadLibrary() — unconditional normalization (storage-migrations R7)", () => {
+  beforeEach(() => {
+    installLocalStorageMock();
+  });
+
+  it("R7.S1: pre-change stored data still gets structurally normalized regardless of schemaVersion", () => {
+    localStorage.setItem(
+      "sfp:library",
+      JSON.stringify({ schemaVersion: CURRENT_SCHEMA_VERSION }),
+    );
+    const lib = loadLibrary();
+    expect(lib.folders).toEqual([]);
+    expect(lib.factories).toEqual([]);
+  });
+
+  it("R7.S2: already-well-formed data survives unconditional migrateLibrary as a no-op", () => {
+    const factory = makeFactory("1", "Alpha");
+    const wellFormed = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      folders: [],
+      factories: [factory],
+    };
+    localStorage.setItem("sfp:library", JSON.stringify(wellFormed));
+    const lib = loadLibrary();
+    expect(lib.factories).toEqual([factory]);
+    expect(lib.folders).toEqual([]);
+  });
+});
 
 describe("addFactory()", () => {
   it("appends factory to the list", () => {

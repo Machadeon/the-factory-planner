@@ -1,12 +1,11 @@
 import {
-  CURRENT_SCHEMA_VERSION,
   emptyLibrary,
   type FactoryFolder,
   generateId,
-  migrateLibrary,
   type SerializedFactory,
   type StorageLibrary,
 } from "./factory-storage";
+import { migrateLibrary } from "./migrations";
 
 const KEY_CONSENT = "sfp:consent";
 const KEY_LIBRARY = "sfp:library";
@@ -33,15 +32,13 @@ export function loadLibrary(): StorageLibrary {
     const raw = localStorage.getItem(KEY_LIBRARY);
     if (!raw) return emptyLibrary();
     const parsed = JSON.parse(raw);
-    if (
-      !parsed?.schemaVersion ||
-      parsed.schemaVersion < CURRENT_SCHEMA_VERSION
-    ) {
-      const migrated = migrateLibrary(parsed);
-      saveLibrary(migrated);
-      return migrated;
-    }
-    return parsed as StorageLibrary;
+    // migrateLibrary is a cheap, idempotent structural-default-fill (not a
+    // per-version repair pass), so it runs unconditionally on every load —
+    // no schemaVersion comparison needed or possible now that the field is
+    // pinned rather than incremented (see storage-migrations R4/R7).
+    const migrated = migrateLibrary(parsed);
+    saveLibrary(migrated);
+    return migrated;
   } catch {
     return emptyLibrary();
   }

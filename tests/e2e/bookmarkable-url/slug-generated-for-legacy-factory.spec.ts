@@ -18,11 +18,11 @@ test.describe("bookmarkable URL", () => {
     await page.evaluate(
       ({ id }) => {
         const lib = {
-          schemaVersion: 5,
+          schemaVersion: 1,
           folders: [],
           factories: [
             {
-              schemaVersion: 5,
+              schemaVersion: 1,
               id,
               name: "Copper Works",
               folderId: null,

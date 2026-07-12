@@ -1,7 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import useLibrary from "@/app/hooks/useLibrary";
-import type { SerializedFactory } from "@/app/models/factory-storage";
+import {
+  CURRENT_SCHEMA_VERSION,
+  type SerializedFactory,
+} from "@/app/models/factory-storage";
 import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
 beforeEach(() => {
@@ -13,7 +16,7 @@ function makeFactory(
 ): SerializedFactory {
   const now = new Date().toISOString();
   return {
-    schemaVersion: 5,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     id: "fa-1",
     name: "Factory A",
     folderId: null,
@@ -55,8 +58,9 @@ describe("useLibrary", () => {
     expect(persisted.folders.length).toBe(1);
   });
 
-  it("reload reads storage into state and returns the library", () => {
+  it("reload reads storage into state and returns the library, normalizing schemaVersion (storage-migrations R7)", () => {
     const { result } = renderHook(() => useLibrary());
+    // Deliberately a foreign/legacy value — loadLibrary normalizes unconditionally.
     localStorage.setItem(
       "sfp:library",
       JSON.stringify({ schemaVersion: 5, folders: [], factories: [] }),
@@ -65,7 +69,7 @@ describe("useLibrary", () => {
     act(() => {
       returned = result.current.reload();
     });
-    expect(returned).toMatchObject({ schemaVersion: 5 });
+    expect(returned).toMatchObject({ schemaVersion: CURRENT_SCHEMA_VERSION });
   });
 
   // component-structure R2.S1 — mutator surface
@@ -73,7 +77,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [],
         factories: [makeFactory()],
       }),
@@ -88,7 +92,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [
           {
             id: "fo-1",
@@ -110,7 +114,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [],
         factories: [makeFactory()],
       }),
@@ -125,7 +129,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [
           {
             id: "fo-1",
@@ -153,7 +157,7 @@ describe("useLibrary", () => {
     });
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [],
         factories: [original],
       }),
@@ -185,7 +189,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [
           {
             id: "fo-1",
@@ -208,7 +212,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [],
         factories: [makeFactory()],
       }),
@@ -225,7 +229,7 @@ describe("useLibrary", () => {
     const { result } = renderHook(() => useLibrary());
     act(() =>
       result.current.replaceLibrary({
-        schemaVersion: 5,
+        schemaVersion: CURRENT_SCHEMA_VERSION,
         folders: [
           {
             id: "fo-1",
