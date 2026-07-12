@@ -100,24 +100,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      # Turbopack dev-server rebuilds/HMR-remounts client components in the
-      # background after the first response — on a cold CI cache this can land
-      # mid-test and clobber local state (see factory-name-concat flake). Warm
-      # it up and let it settle before handing off to Playwright, which reuses
-      # this same server (webServer.reuseExistingServer). Must stay in one step:
-      # a background process started here dies at step boundary otherwise.
       - name: Run e2e tests
-        run: |
-          npm run dev &
-          for i in $(seq 1 60); do
-            curl -sf -o /dev/null http://localhost:3000 && break
-            sleep 1
-          done
-          for i in 1 2 3 4 5; do
-            curl -s -o /dev/null http://localhost:3000
-            sleep 2
-          done
-          npm run test:e2e
+        run: npm run test:e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
