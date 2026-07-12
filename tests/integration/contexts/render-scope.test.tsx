@@ -99,7 +99,7 @@ describe("FactoryPage-scoped fields still re-render (R6.S2 positive)", () => {
       return (
         <div>
           <span data-testid="len">{snap.productionLines.length}</span>
-          <span data-testid="err">{String(snap.solverError ?? "")}</span>
+          <span data-testid="err">{JSON.stringify(snap.solverError)}</span>
         </div>
       );
     }
@@ -111,11 +111,13 @@ describe("FactoryPage-scoped fields still re-render (R6.S2 positive)", () => {
     const before = renders;
     // solverError is one of the three fields FactoryPage's scoped snapshot reads.
     await act(async () => {
-      store.factory.solverError = "boom";
+      store.factory.solverError = { kind: "infeasible-rates" };
       await Promise.resolve();
     });
     expect(renders).toBe(before + 1);
-    expect(screen.getByTestId("err").textContent).toBe("boom");
+    expect(screen.getByTestId("err").textContent).toBe(
+      JSON.stringify({ kind: "infeasible-rates" }),
+    );
   });
 });
 

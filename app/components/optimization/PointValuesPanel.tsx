@@ -150,11 +150,13 @@ export default function PointValuesPanel({
                   onCalculate={(v) => setGlobalOverride(part.slug, v)}
                   onClear={() => clearGlobalOverride(part.slug)}
                   allowClear={gOv !== undefined}
-                  inputProps={{
-                    style: {
-                      fontSize: 12,
-                      textAlign: "right",
-                      padding: "2px 6px",
+                  slotProps={{
+                    htmlInput: {
+                      style: {
+                        fontSize: 12,
+                        textAlign: "right",
+                        padding: "2px 6px",
+                      },
                     },
                   }}
                   sx={{ width: "7rem" }}
@@ -171,11 +173,13 @@ export default function PointValuesPanel({
                   onCalculate={(v) => setFactoryOverride(part.slug, v)}
                   onClear={() => clearFactoryOverride(part.slug)}
                   allowClear={fOv !== undefined}
-                  inputProps={{
-                    style: {
-                      fontSize: 12,
-                      textAlign: "right",
-                      padding: "2px 6px",
+                  slotProps={{
+                    htmlInput: {
+                      style: {
+                        fontSize: 12,
+                        textAlign: "right",
+                        padding: "2px 6px",
+                      },
                     },
                   }}
                   sx={{ width: "7rem" }}

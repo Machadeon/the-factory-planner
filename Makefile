@@ -21,4 +21,8 @@ run:
 	npm run start
 
 verify: format lint test
+	npx tsc --noEmit
 	pre-commit run --all-files
+
+update:
+	npx npm-check-updates -i
