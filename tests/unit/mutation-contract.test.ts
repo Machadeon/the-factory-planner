@@ -54,4 +54,16 @@ describe("R4 — components mutate only through model methods", () => {
     const offenders = sourceLines(globs).filter((l) => banned.test(l.line));
     expect(offenders.map((o) => `${o.file}: ${o.line}`)).toEqual([]);
   });
+
+  it("R4.S3 — no direct productionLine.splitRecipeRates() calls", () => {
+    const banned = /\bproductionLine\.splitRecipeRates\s*\(/;
+    const offenders = sourceLines(globs).filter((l) => banned.test(l.line));
+    expect(offenders.map((o) => `${o.file}: ${o.line}`)).toEqual([]);
+  });
+
+  it("R4.S4 — no direct applyRejectSilent()/applyRejectChoice() calls", () => {
+    const banned = /\bapplyReject(Silent|Choice)\s*\(/;
+    const offenders = sourceLines(globs).filter((l) => banned.test(l.line));
+    expect(offenders.map((o) => `${o.file}: ${o.line}`)).toEqual([]);
+  });
 });

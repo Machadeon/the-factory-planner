@@ -176,6 +176,135 @@ describe("R5 — per-mutator recompute semantics (preserved verbatim)", () => {
   });
 });
 
+describe("R5 — split recipe rates / reject mutators", () => {
+  it("R5.S7 — splitRecipeRates rescales by n/(n+1) and leaves rateLookup consistent", () => {
+    const factory = new Factory();
+    const pl = addLine(factory, ironIngotPart, ironIngotRecipe, 45);
+    pl.assemblyLines.push(
+      new AssemblyLine({
+        recipe: ironIngotRecipe,
+        rate: 15,
+        allowRemainder: false,
+      }),
+    );
+    factory._updateRates();
+    const before = pl.assemblyLines.map((al) => al.rate);
+    const n = pl.assemblyLines.length;
+    factory.splitRecipeRates(pl);
+    pl.assemblyLines.forEach((al, i) => {
+      expect(al.rate).toBeCloseTo((before[i] * n) / (n + 1));
+    });
+    const expectedProduction = pl.assemblyLines.reduce(
+      (sum, al) => sum + al.getPartProductionRate(ironIngotPart),
+      0,
+    );
+    expect(factory.rateLookup["iron-ingot"].productionRate).toBeCloseTo(
+      expectedProduction,
+    );
+  });
+
+  it("R5.S8 — splitRecipeRates on an empty production line is a no-op but still recomputes", () => {
+    const factory = new Factory();
+    const pl = new ProductionLine(ironIngotPart, 0, 0, false, false);
+    factory.productionLines.push(pl);
+    const s = spies(factory);
+    factory.splitRecipeRates(pl);
+    expect(pl.assemblyLines).toHaveLength(0);
+    expect(s.update).toHaveBeenCalled();
+  });
+
+  it("R5.S9 — rejectLine/rejectAssembly leave enabledRecipes consistent (2x2 matrix)", () => {
+    const alwaysFactory = new Factory();
+    const alwaysPl = addLine(alwaysFactory, ironIngotPart, ironIngotRecipe, 30);
+    alwaysFactory.optimizer.rejectPrompt = "always";
+    const sAlways = spies(alwaysFactory);
+    alwaysFactory.rejectLine(alwaysPl);
+    expect(alwaysFactory.optimizer.enabledRecipes).not.toContain(
+      ironIngotRecipe.slug,
+    );
+    expect(sAlways.update).toHaveBeenCalled();
+
+    const askFactory = new Factory();
+    const askPl = addLine(askFactory, ironIngotPart, ironIngotRecipe, 30);
+    const enabledBefore = [...askFactory.optimizer.enabledRecipes];
+    const sAsk = spies(askFactory);
+    askFactory.rejectLine(askPl);
+    expect(askFactory.optimizer.enabledRecipes).toEqual(enabledBefore);
+    expect(sAsk.update).toHaveBeenCalled();
+
+    const alwaysAssemblyFactory = new Factory();
+    alwaysAssemblyFactory.optimizer.rejectPrompt = "always";
+    const sAlwaysAssembly = spies(alwaysAssemblyFactory);
+    alwaysAssemblyFactory.rejectAssembly(ironIngotRecipe);
+    expect(alwaysAssemblyFactory.optimizer.enabledRecipes).not.toContain(
+      ironIngotRecipe.slug,
+    );
+    expect(sAlwaysAssembly.update).toHaveBeenCalled();
+
+    const askAssemblyFactory = new Factory();
+    const enabledBeforeAssembly = [
+      ...askAssemblyFactory.optimizer.enabledRecipes,
+    ];
+    const sAskAssembly = spies(askAssemblyFactory);
+    askAssemblyFactory.rejectAssembly(ironIngotRecipe);
+    expect(askAssemblyFactory.optimizer.enabledRecipes).toEqual(
+      enabledBeforeAssembly,
+    );
+    expect(sAskAssembly.update).toHaveBeenCalled();
+  });
+
+  it("R5.S10 — rejectLineChoice covers all four choice values", () => {
+    const cases: Array<{
+      choice: "never" | "no" | "yes" | "always";
+      expectDenied: boolean;
+      expectRejectPrompt?: "never" | "always";
+    }> = [
+      { choice: "never", expectDenied: false, expectRejectPrompt: "never" },
+      { choice: "no", expectDenied: false },
+      { choice: "yes", expectDenied: true },
+      { choice: "always", expectDenied: true, expectRejectPrompt: "always" },
+    ];
+    for (const { choice, expectDenied, expectRejectPrompt } of cases) {
+      const factory = new Factory();
+      const pl = addLine(factory, ironIngotPart, ironIngotRecipe, 30);
+      const s = spies(factory);
+      factory.rejectLineChoice(pl, choice);
+      if (expectDenied) {
+        expect(factory.optimizer.enabledRecipes).not.toContain(
+          ironIngotRecipe.slug,
+        );
+      } else {
+        expect(factory.optimizer.enabledRecipes).toContain(
+          ironIngotRecipe.slug,
+        );
+      }
+      if (expectRejectPrompt) {
+        expect(factory.optimizer.rejectPrompt).toBe(expectRejectPrompt);
+      }
+      expect(s.update).toHaveBeenCalled();
+    }
+  });
+
+  it("R5.S10 — rejectAssemblyChoice cross-check ('always' and 'never')", () => {
+    const alwaysFactory = new Factory();
+    const sAlways = spies(alwaysFactory);
+    alwaysFactory.rejectAssemblyChoice(ironIngotRecipe, "always");
+    expect(alwaysFactory.optimizer.enabledRecipes).not.toContain(
+      ironIngotRecipe.slug,
+    );
+    expect(alwaysFactory.optimizer.rejectPrompt).toBe("always");
+    expect(sAlways.update).toHaveBeenCalled();
+
+    const neverFactory = new Factory();
+    const enabledBefore = [...neverFactory.optimizer.enabledRecipes];
+    const sNever = spies(neverFactory);
+    neverFactory.rejectAssemblyChoice(ironIngotRecipe, "never");
+    expect(neverFactory.optimizer.enabledRecipes).toEqual(enabledBefore);
+    expect(neverFactory.optimizer.rejectPrompt).toBe("never");
+    expect(sNever.update).toHaveBeenCalled();
+  });
+});
+
 describe("R6 — only solver scratch is ref()-exempt", () => {
   it("R6.S3 — the only ref() in factory.ts wraps the scratch set", () => {
     const src = readFileSync(
