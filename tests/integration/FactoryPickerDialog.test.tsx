@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import FactoryPickerDialog from "@/app/components/FactoryPickerDialog";
+import FactoryPickerDialog from "@/app/components/planning/FactoryPickerDialog";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";
 import { renderWithProviders } from "../helpers/render-with-providers";

@@ -9,9 +9,9 @@ import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UploadIcon from "@mui/icons-material/Upload";
 import { Badge, Switch, TextField, Tooltip } from "@mui/material";
+import FileImportButton from "../ui/FileImportButton";
+import IconButton from "../ui/IconButton";
 import FactoryIconPicker from "./FactoryIconPicker";
-import FileImportButton from "./ui/FileImportButton";
-import IconButton from "./ui/IconButton";
 
 interface Props {
   factoryName: string;

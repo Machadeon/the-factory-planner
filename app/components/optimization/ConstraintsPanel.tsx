@@ -3,17 +3,17 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import type Factory from "../models/factory";
-import type { PartConstraint } from "../models/factory";
+import type Factory from "../../models/factory";
+import type { PartConstraint } from "../../models/factory";
 import {
   defaultResourceLimits,
   partSlugLookup,
   parts,
-} from "../models/game-data";
-import PartSelector from "./PartSelector";
-import TextCalculatorField from "./TextCalculatorField";
-import AddItemControl from "./ui/AddItemControl";
-import Icon from "./ui/Icon";
+} from "../../models/game-data";
+import AddItemControl from "../ui/AddItemControl";
+import Icon from "../ui/Icon";
+import PartSelector from "../ui/PartSelector";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
 interface ConstraintsPanelProps {
   factory: Factory;

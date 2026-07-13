@@ -19,7 +19,7 @@ describe("production-line-structure (R1.S1, R3.S5, R5.S2)", () => {
   it("R1.S1 each planning file exists with one default export and ≤300 lines", () => {
     for (const rel of [
       ...PLANNING_FILES,
-      "app/components/ProductionLineComponent.tsx", // retained composition parent
+      "app/components/planning/ProductionLine.tsx", // retained composition parent
     ]) {
       const src = read(rel);
       expect(src.split("\n").length, `${rel} line count`).toBeLessThanOrEqual(
@@ -33,7 +33,7 @@ describe("production-line-structure (R1.S1, R3.S5, R5.S2)", () => {
   it("R3.S5 no useEffect derives picker visibility from needMoreProduction", () => {
     for (const rel of [
       ...PLANNING_FILES,
-      "app/components/ProductionLineComponent.tsx",
+      "app/components/planning/ProductionLine.tsx",
     ]) {
       const src = read(rel);
       // No effect body references needMoreProduction (the removed derived-state sync).

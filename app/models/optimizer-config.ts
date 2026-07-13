@@ -9,7 +9,7 @@ export type ScoringObjective =
   | "logistics"
   | "inputValue";
 
-export type RejectPrompt = "ask" | "always" | "never";
+type RejectPrompt = "ask" | "always" | "never";
 
 /** A part the user marks as already available, with an optional supply rate. */
 export interface AvailablePart {

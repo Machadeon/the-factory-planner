@@ -6,17 +6,17 @@ import EditIcon from "@mui/icons-material/Edit";
 import type { ReactNode } from "react";
 import { type MouseEventHandler, useState } from "react";
 import { displayNum, formatRate } from "@/app/lib/format";
-import type Factory from "../models/factory";
-import type Part from "../models/part";
-import type Recipe from "../models/recipe";
-import type { RecipePart } from "../models/recipe";
-import TextCalculatorField from "./TextCalculatorField";
-import ActionRow from "./ui/ActionRow";
-import Icon from "./ui/Icon";
-import IconButton from "./ui/IconButton";
+import type Factory from "../../models/factory";
+import type Part from "../../models/part";
+import type RecipeModel from "../../models/recipe";
+import type { RecipePart } from "../../models/recipe";
+import ActionRow from "../ui/ActionRow";
+import Icon from "../ui/Icon";
+import IconButton from "../ui/IconButton";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
-interface RecipeComponentProps {
-  recipe: Recipe;
+interface RecipeProps {
+  recipe: RecipeModel;
   rate: number;
   factory?: Factory;
   onClick?: MouseEventHandler<HTMLButtonElement>;
@@ -31,7 +31,7 @@ interface RecipeComponentProps {
   belowRecipeName?: ReactNode;
 }
 
-export default function RecipeComponent({
+export default function Recipe({
   recipe,
   rate,
   factory,
@@ -41,7 +41,7 @@ export default function RecipeComponent({
   partsNeeded,
   sloopMultiplier,
   belowRecipeName,
-}: RecipeComponentProps) {
+}: RecipeProps) {
   const [manualRatePart, setManualRatePart] = useState<string | undefined>();
 
   const className =

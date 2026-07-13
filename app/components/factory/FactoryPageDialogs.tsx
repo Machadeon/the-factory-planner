@@ -1,11 +1,11 @@
 "use client";
 
 import type useConsentGate from "@/app/hooks/useConsentGate";
+import type useFactoryPageFlows from "@/app/hooks/useFactoryPageFlows";
 import type { SerializedFactory } from "@/app/models/factory-storage";
-import StorageConsentDialog from "../StorageConsentDialog";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import FactoryJsonDialog from "./FactoryJsonDialog";
-import type useFactoryPageFlows from "./useFactoryPageFlows";
+import StorageConsentDialog from "./StorageConsentDialog";
 
 interface FactoryPageDialogsProps {
   consent: ReturnType<typeof useConsentGate>;

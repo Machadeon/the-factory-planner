@@ -8,9 +8,9 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { useMemo } from "react";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
-import type Factory from "../models/factory";
-import { deserializeFactory } from "../models/factory-storage";
-import Icon from "./ui/Icon";
+import type Factory from "../../models/factory";
+import { deserializeFactory } from "../../models/factory-storage";
+import Icon from "../ui/Icon";
 
 interface FactoryPickerDialogProps {
   open: boolean;

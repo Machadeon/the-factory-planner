@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import LogisticsSection from "@/app/components/LogisticsSection";
 import AssemblyLineNode from "@/app/components/logistics/AssemblyLineNode";
 import FactoryLinkNode from "@/app/components/logistics/FactoryLinkNode";
 import type {
@@ -8,6 +7,7 @@ import type {
   FactoryNodeData,
   TerminalNodeData,
 } from "@/app/components/logistics/graph-model";
+import LogisticsSection from "@/app/components/logistics/LogisticsSection";
 import PartPort from "@/app/components/logistics/PartPort";
 import TerminalNode from "@/app/components/logistics/TerminalNode";
 import AssemblyLine from "@/app/models/assembly-line";

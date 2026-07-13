@@ -5,7 +5,7 @@ export const POINT_RATE_CONSTANT = Math.max(
   ...Object.values(defaultResourceLimits),
 );
 
-export interface PossibleValue {
+interface PossibleValue {
   slug: string;
   value: number;
   recipe: Recipe;
@@ -14,14 +14,14 @@ export interface PossibleValue {
 export type Combiner = (possibleValues: PossibleValue[]) => number;
 export type ValueFilter = (possibleValues: PossibleValue[]) => PossibleValue[];
 
-export const combiners = {
+const combiners = {
   min: (pvs: PossibleValue[]) => Math.min(...pvs.map((pv) => pv.value)),
   max: (pvs: PossibleValue[]) => Math.max(...pvs.map((pv) => pv.value)),
   average: (pvs: PossibleValue[]) =>
     pvs.reduce((s, pv) => s + pv.value, 0) / pvs.length,
 };
 
-export const filters = {
+const filters = {
   any: (pvs: PossibleValue[]) => pvs,
   onlyDefault: (pvs: PossibleValue[]) =>
     pvs.filter((pv) => !pv.recipe.alternate),

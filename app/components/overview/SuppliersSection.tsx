@@ -5,8 +5,8 @@ import { useFactory, useFactorySnapshot } from "@/app/contexts/FactoryContext";
 import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
 import { factoryRecipeId } from "../../models/factory-recipe";
-import { HorizontalDivider } from "../Dividers";
 import CollapsibleSection from "../ui/CollapsibleSection";
+import { HorizontalDivider } from "../ui/Dividers";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
 

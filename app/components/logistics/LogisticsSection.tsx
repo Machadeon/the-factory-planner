@@ -23,23 +23,23 @@ import {
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
-import { deriveConsumers } from "../models/consumer-links";
-import type Factory from "../models/factory";
-import type { StorageLibrary } from "../models/factory-storage";
-import AssemblyLineNode from "./logistics/AssemblyLineNode";
-import { GRID } from "./logistics/constants";
-import { LogisticsContext } from "./logistics/context";
-import FactoryLinkNode from "./logistics/FactoryLinkNode";
-import { assignColumns } from "./logistics/graph-layout";
-import { buildGraphModel, type GraphNode } from "./logistics/graph-model";
-import LogisticEdge from "./logistics/LogisticEdge";
-import { nodeSize } from "./logistics/node-size";
-import TerminalNode from "./logistics/TerminalNode";
+import { deriveConsumers } from "../../models/consumer-links";
+import type Factory from "../../models/factory";
+import type { StorageLibrary } from "../../models/factory-storage";
+import AssemblyLineNode from "./AssemblyLineNode";
+import { GRID } from "./constants";
+import { LogisticsContext } from "./context";
+import FactoryLinkNode from "./FactoryLinkNode";
+import { assignColumns } from "./graph-layout";
+import { buildGraphModel, type GraphNode } from "./graph-model";
+import LogisticEdge from "./LogisticEdge";
+import { nodeSize } from "./node-size";
+import TerminalNode from "./TerminalNode";
 
 interface GraphProps {
   factory: Factory;
-  library?: StorageLibrary;
-  currentFactoryId?: string | null;
+  library: StorageLibrary;
+  currentFactoryId: string | null;
   actualSize: boolean;
 }
 

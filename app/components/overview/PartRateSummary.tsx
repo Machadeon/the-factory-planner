@@ -10,7 +10,7 @@ import type { Rate } from "../../models/factory";
 import FactoryRecipe from "../../models/factory-recipe";
 import { RATE_EPSILON } from "../../models/game-data";
 import type Part from "../../models/part";
-import FactoryPickerDialog from "../FactoryPickerDialog";
+import FactoryPickerDialog from "../planning/FactoryPickerDialog";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
 import RateDisplay from "../ui/RateDisplay";

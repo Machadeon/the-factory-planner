@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import ProductionLineComponent from "@/app/components/ProductionLineComponent";
+import ProductionLineComp from "@/app/components/planning/ProductionLine";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import {
@@ -40,7 +40,7 @@ function factoryWithLine(pl: ProductionLine): Factory {
 
 function renderLine(pl: ProductionLine) {
   return renderWithProviders(
-    <ProductionLineComponent
+    <ProductionLineComp
       productionLine={pl}
       candidateFactories={[]}
       onDeleteClicked={() => {}}

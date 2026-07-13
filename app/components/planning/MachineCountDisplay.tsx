@@ -1,6 +1,6 @@
 "use client";
 
-import type AssemblyLine from "../models/assembly-line";
+import type AssemblyLine from "../../models/assembly-line";
 import ClockDisplay from "./ClockDisplay";
 
 interface MachineCountDisplayProps {

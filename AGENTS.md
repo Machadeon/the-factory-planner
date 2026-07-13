@@ -76,7 +76,7 @@ Commit hooks enforce this automatically, but verify explicitly to catch issues e
 
 Core hierarchy: `Factory → ProductionLine → AssemblyLine → RecipeLike`
 
-- **`Factory`** (`app/models/factory.ts`): Top-level container. Holds `ProductionLine[]`, maintains rate/lookup indexes (`rateLookup`, `_assemblyLineLookup`, `_productionLineLookup`), owns LP solver (`autoCalculateRates()`). `Factory.update()` injected by `FactoryComponent` at mount.
+- **`Factory`** (`app/models/factory.ts`): Top-level container. Holds `ProductionLine[]`, maintains rate/lookup indexes (`rateLookup`, `_assemblyLineLookup`, `_productionLineLookup`), owns LP solver (`autoCalculateRates()`). The valtio proxy wrapping it is created once in `useFactorySession` and distributed via `FactoryContext`; there is no `update()` field (see State management pattern below).
 - **`ProductionLine`** (`app/models/production-line.ts`): One per output part. Tracks `rate`, `outputRate` (desired export), `autoCalculateRate`, `autoCreated` flags.
 - **`AssemblyLine`** (`app/models/assembly-line.ts`): One per recipe within production line. Holds `rate`, `machineSpeed`, `powerShards`, `sloopedSlots`, `allowRemainder`.
 - **`RecipeLike`** (`app/models/recipe-like.ts`): Interface satisfied by `Recipe` (game recipe) and `FactoryRecipe` (supplier factory). Distinguish via `isFactoryRecipe` flag.
@@ -102,16 +102,16 @@ The `Factory` graph is a mutable class model wrapped in a valtio `proxy` created
 
 `app/models/game-data/` loads `app/models/data.json` at module init:
 
-- `constants.ts` — `rawResources`, `defaultResourceLimits`, `notAutomatable`, `syntheticSinkPoints`, `RATE_EPSILON`, `SOLVER_EQUALITY_FUDGE`
+- `constants.ts` — `rawResources`, `defaultResourceLimits`, `notAutomatable`, `RATE_EPSILON`, `SOLVER_EQUALITY_FUDGE`
 - `load.ts` — parts/buildings/base-recipe parsing; single `registerRecipe()` path
 - `generator-recipes.ts` — synthetic burn-recipe generation
-- `index.ts` — public barrel: `parts`, `partLookup` (by className), `partSlugLookup`, `buildings`, `buildingLookup`, `recipes`, `recipeLookup` (partSlug → Recipe[]), `recipeSlugLookup` (slug → Recipe)
+- `index.ts` — public barrel: `parts`, `partLookup` (by className), `partSlugLookup`, `buildings`, `buildingLookup`, `recipes`, `recipeLookup` (partSlug → Recipe[]), `recipeSlugLookup` (slug → Recipe). `partLookup`/`buildingLookup` currently have no in-repo consumer but stay exported as guaranteed public API (marked `@public` for `knip`).
 
 `recipeLookup` primary way to find recipes producing a given part. Import from `@/app/models/game-data`; model files that `game-data` itself imports (e.g. `recipe.ts`) import `game-data/constants` directly to stay acyclic. Rate tolerance comparisons always use `RATE_EPSILON` — never literal epsilons.
 
 ## Storage layer
 
-`app/models/storage-service.ts` uses localStorage (keys prefixed `sfp:`). Consent gated via `sfp:consent`. `StorageLibrary` holds `folders`, `factories` at `schemaVersion` 2. `factory-storage.ts` owns serialization, deserialization, migration. Nested factories inlined into assembly lines during serialization.
+`app/models/storage-service.ts` uses localStorage (keys prefixed `sfp:`). Consent gated via `sfp:consent`. `StorageLibrary` holds `folders`, `factories` at `schemaVersion` 1 (`CURRENT_SCHEMA_VERSION`, defined in `factory-storage.ts`). `factory-storage.ts` owns serialization/deserialization; `app/models/migrations.ts` owns the version-upgrade path (`migrateLibrary`, `mergeLibrary`, `remapImportedLibrary`). Nested factories inlined into assembly lines during serialization.
 
 ## Tests
 
@@ -173,16 +173,24 @@ Two MCP servers in `.mcp.json`:
 - No comments unless why non-obvious.
 - `a11y` rules are active (pre-commit biome hook enforces them); suppress only with a reasoned `biome-ignore` comment.
 - One exported component per file in `app/components/`; internal sub-components in own files.
+- `app/components/` is organized by feature directory, no bare `Component` suffix on filenames:
+  - `ui/` — design-system primitives, domain-free (`IconButton`, `ActionRow`, `ConfirmDialog`, `Icon`, `Dividers`, `TextCalculatorField`, `PartSelector`, …)
+  - `factory/` — page composition root and page-level chrome (`FactoryPage`, `FactoryHeader`, `SectionTabs`, `StorageConsentDialog`, …)
+  - `planning/` — production-line/recipe/assembly-line editing (`PlanningSection`, `ProductionLine`, `Recipe`, `AssemblyLine`, `AssemblyLineControls`, `RecipePicker`, …)
+  - `optimization/` — recipe optimizer panel and its sub-editors (`OptimizationSection`, `OptimizerPanel`, `ConstraintsPanel`, `SourceFactoriesEditor`, …)
+  - `overview/` — the five overview-sidebar sections (`OverviewSidebar`, `OutputsSection`, `ConsumersSection`, `PowerSummary`, …)
+  - `library/` — factory library drawer (`LibraryDrawer`, `LibraryTree`, `LibraryFolderRow`, …)
+  - `logistics/` — the React Flow graph view (`LogisticsSection` and its node/edge components)
 
 ### Naming conventions
 
 | Thing               | Convention           | Example                                          |
 | ------------------- | -------------------- | ------------------------------------------------ |
-| Component files     | PascalCase           | `AssemblyLineComponent.tsx`                      |
+| Component files     | PascalCase           | `AssemblyLine.tsx`                               |
 | Model/service files | kebab-case           | `assembly-line.ts`, `storage-service.ts`        |
 | Functions           | camelCase            | `displayNum`, `serializeFactory`                 |
 | Constants           | SCREAMING_SNAKE_CASE | `CURRENT_SCHEMA_VERSION`, `AUTOSAVE_DEBOUNCE_MS` |
-| Props interfaces    | `XxxProps` suffix    | `AssemblyLineComponentProps`                     |
+| Props interfaces    | `XxxProps` suffix    | `AssemblyLineProps`                              |
 
 Use `interface` for plain data shapes. Use `class` for models with methods (`Factory`, `ProductionLine`, `AssemblyLine`).
 

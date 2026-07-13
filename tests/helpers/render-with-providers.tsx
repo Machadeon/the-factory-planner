@@ -25,7 +25,7 @@ export interface ProviderOptions {
   updatePartPointOverrides?: (overrides: Record<string, number>) => void;
 }
 
-export function AppProviders({
+function AppProviders({
   children,
   factory,
   store,

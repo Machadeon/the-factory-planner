@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import AssemblyLineControls from "@/app/components/AssemblyLineControls";
+import AssemblyLineControls from "@/app/components/planning/AssemblyLineControls";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";

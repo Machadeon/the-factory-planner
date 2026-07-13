@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import type { ReactNode } from "react";
 
-export type ConfirmSeverity = "default" | "warning" | "danger";
+type ConfirmSeverity = "default" | "warning" | "danger";
 
 export interface ConfirmDialogProps {
   open: boolean;

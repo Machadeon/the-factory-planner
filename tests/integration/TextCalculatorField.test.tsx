@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import TextCalculatorField from "@/app/components/TextCalculatorField";
+import TextCalculatorField from "@/app/components/ui/TextCalculatorField";
 
 vi.mock("next/image", () => ({
   default: ({

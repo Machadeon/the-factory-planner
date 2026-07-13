@@ -1,10 +1,10 @@
 "use client";
 
+import type useFactoryPageFlows from "@/app/hooks/useFactoryPageFlows";
 import type { Section } from "@/app/hooks/useFactoryUrlSync";
-import LogisticsSection from "../LogisticsSection";
-import OptimizationSection from "../OptimizationSection";
-import PlanningSection from "../PlanningSection";
-import type useFactoryPageFlows from "./useFactoryPageFlows";
+import LogisticsSection from "../logistics/LogisticsSection";
+import OptimizationSection from "../optimization/OptimizationSection";
+import PlanningSection from "../planning/PlanningSection";
 
 interface FactorySectionsProps {
   activeSection: Section;

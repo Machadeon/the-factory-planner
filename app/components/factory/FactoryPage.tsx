@@ -7,6 +7,7 @@ import { LibraryProvider } from "@/app/contexts/LibraryContext";
 import { NavigationProvider } from "@/app/contexts/NavigationContext";
 import useAutosave from "@/app/hooks/useAutosave";
 import useConsentGate from "@/app/hooks/useConsentGate";
+import useFactoryPageFlows from "@/app/hooks/useFactoryPageFlows";
 import useFactorySession from "@/app/hooks/useFactorySession";
 import useFactoryUrlSync, { type Section } from "@/app/hooks/useFactoryUrlSync";
 import useLibrary from "@/app/hooks/useLibrary";
@@ -15,13 +16,12 @@ import {
   getLibraryPinned,
   setLibraryPinned as persistLibraryPinned,
 } from "@/app/models/storage-service";
-import FactoryHeader from "../FactoryHeader";
+import FactoryHeader from "./FactoryHeader";
 import FactoryPageDialogs from "./FactoryPageDialogs";
 import FactorySections from "./FactorySections";
 import FactorySidebar from "./FactorySidebar";
 import LibraryDrawerSlot from "./LibraryDrawerSlot";
 import SectionTabs from "./SectionTabs";
-import useFactoryPageFlows from "./useFactoryPageFlows";
 
 export default function FactoryPage() {
   const [activeSection, setActiveSection] = useState<Section>("planning");
