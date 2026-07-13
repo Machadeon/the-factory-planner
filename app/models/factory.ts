@@ -21,6 +21,9 @@ import {
 import { verifyConstraints } from "./solver/verify";
 import {
   acceptAllSuggestions as acceptAllSuggestionsWalk,
+  applyRejectChoice,
+  applyRejectSilent,
+  lineRecipeSlugs,
   rejectAllSuggestions as rejectAllSuggestionsWalk,
 } from "./suggestions";
 
@@ -653,6 +656,39 @@ export default class Factory {
 
   rejectAllSuggestions() {
     rejectAllSuggestionsWalk(this);
+    this._updateRates();
+  }
+
+  splitRecipeRates(pl: ProductionLine) {
+    pl.splitRecipeRates();
+    this._updateRates();
+  }
+
+  rejectLine(pl: ProductionLine) {
+    applyRejectSilent(this.optimizer, lineRecipeSlugs(pl));
+    this._updateRates();
+  }
+
+  rejectAssembly(recipe: AnyRecipe) {
+    const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
+    applyRejectSilent(this.optimizer, slugs);
+    this._updateRates();
+  }
+
+  rejectLineChoice(
+    pl: ProductionLine,
+    choice: "never" | "no" | "yes" | "always",
+  ) {
+    applyRejectChoice(this.optimizer, lineRecipeSlugs(pl), choice);
+    this._updateRates();
+  }
+
+  rejectAssemblyChoice(
+    recipe: AnyRecipe,
+    choice: "never" | "no" | "yes" | "always",
+  ) {
+    const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
+    applyRejectChoice(this.optimizer, slugs, choice);
     this._updateRates();
   }
 

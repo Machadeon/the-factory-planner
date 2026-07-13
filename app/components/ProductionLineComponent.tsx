@@ -9,12 +9,7 @@ import { RATE_EPSILON, recipeLookup } from "../models/game-data";
 import type ProductionLine from "../models/production-line";
 import type Recipe from "../models/recipe";
 import type { AnyRecipe } from "../models/recipe-like";
-import {
-  applyRejectChoice,
-  applyRejectSilent,
-  lineRecipeSlugs,
-  shouldPromptReject,
-} from "../models/suggestions";
+import { shouldPromptReject } from "../models/suggestions";
 import ProductionLineDetails, {
   type RejectTarget,
 } from "./planning/ProductionLineDetails";
@@ -127,7 +122,7 @@ export default function ProductionLineComponent(
     if (shouldPromptReject(factory.optimizer)) {
       setRejectTarget({ kind: "line" });
     } else {
-      applyRejectSilent(factory.optimizer, lineRecipeSlugs(productionLine));
+      factory.rejectLine(productionLine);
       props.onDeleteClicked();
     }
   }
@@ -137,11 +132,10 @@ export default function ProductionLineComponent(
   }
 
   function rejectAssembly(recipe: AnyRecipe) {
-    const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
     if (shouldPromptReject(factory.optimizer)) {
       setRejectTarget({ kind: "assembly", recipe });
     } else {
-      applyRejectSilent(factory.optimizer, slugs);
+      factory.rejectAssembly(recipe);
       removeAssemblyLine(recipe);
     }
   }
@@ -149,17 +143,12 @@ export default function ProductionLineComponent(
   function onRejectChoice(choice: RejectChoice) {
     if (!rejectTarget) return;
     if (rejectTarget.kind === "line") {
-      applyRejectChoice(
-        factory.optimizer,
-        lineRecipeSlugs(productionLine),
-        choice,
-      );
+      factory.rejectLineChoice(productionLine, choice);
       setRejectTarget(null);
       props.onDeleteClicked();
     } else {
       const recipe = rejectTarget.recipe;
-      const slugs = recipe.isFactoryRecipe ? [] : [recipe.slug];
-      applyRejectChoice(factory.optimizer, slugs, choice);
+      factory.rejectAssemblyChoice(recipe, choice);
       setRejectTarget(null);
       removeAssemblyLine(recipe);
     }
@@ -181,7 +170,7 @@ export default function ProductionLineComponent(
   }
 
   function splitRecipes() {
-    productionLine.splitRecipeRates();
+    factory.splitRecipeRates(productionLine);
     setPickerManuallyOpened(true);
   }
 
