@@ -12,8 +12,6 @@ import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
 import type Part from "../../models/part";
 import type ProductionLine from "../../models/production-line";
-import SuggestedActions from "../SuggestedActions";
-import TextCalculatorField from "../TextCalculatorField";
 import ActionRow from "../ui/ActionRow";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
@@ -21,6 +19,8 @@ import {
   type InteractiveVariant,
   rowVisualClasses,
 } from "../ui/interactive-styles";
+import TextCalculatorField from "../ui/TextCalculatorField";
+import SuggestedActions from "./SuggestedActions";
 
 interface ProductionLineRowProps {
   productionLine: ProductionLine;

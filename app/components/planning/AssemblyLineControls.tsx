@@ -5,14 +5,14 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
-import type AssemblyLine from "../models/assembly-line";
-import { totalMachines } from "../models/assembly-line";
-import type Factory from "../models/factory";
-import type Recipe from "../models/recipe";
+import type AssemblyLine from "../../models/assembly-line";
+import { totalMachines } from "../../models/assembly-line";
+import type Factory from "../../models/factory";
+import type Recipe from "../../models/recipe";
+import PowerSummary from "../overview/PowerSummary";
+import Icon from "../ui/Icon";
+import TextCalculatorField from "../ui/TextCalculatorField";
 import MachineCountDisplay from "./MachineCountDisplay";
-import PowerSummary from "./overview/PowerSummary";
-import TextCalculatorField from "./TextCalculatorField";
-import Icon from "./ui/Icon";
 
 interface AssemblyLineControlsProps {
   assemblyLine: AssemblyLine;

@@ -4,10 +4,10 @@ import EastIcon from "@mui/icons-material/East";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
-import type AssemblyLine from "../models/assembly-line";
-import { factoryRecipeId } from "../models/factory-recipe";
-import TextCalculatorField from "./TextCalculatorField";
-import Icon from "./ui/Icon";
+import type AssemblyLine from "../../models/assembly-line";
+import { factoryRecipeId } from "../../models/factory-recipe";
+import Icon from "../ui/Icon";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
 interface NestedFactoryRowProps {
   assemblyLine: AssemblyLine;

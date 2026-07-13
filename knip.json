@@ -3,8 +3,8 @@
   "rules": {
     "files": "error",
     "dependencies": "error",
-    "exports": "warn",
-    "types": "warn",
+    "exports": "error",
+    "types": "error",
     "duplicates": "warn"
   },
   "ignoreDependencies": []

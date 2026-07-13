@@ -6,8 +6,8 @@ import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { useNavigation } from "@/app/contexts/NavigationContext";
 import { displayNum } from "@/app/lib/format";
 import { deriveConsumers } from "../../models/consumer-links";
-import { HorizontalDivider } from "../Dividers";
 import CollapsibleSection from "../ui/CollapsibleSection";
+import { HorizontalDivider } from "../ui/Dividers";
 import Icon from "../ui/Icon";
 
 export default function ConsumersSection() {

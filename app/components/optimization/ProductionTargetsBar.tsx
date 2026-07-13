@@ -8,13 +8,13 @@ import TextField from "@mui/material/TextField";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { rateUnit } from "@/app/lib/format";
-import { partSlugLookup } from "../models/game-data";
-import type { Target } from "../models/optimizer-config";
-import PartSelector from "./PartSelector";
-import TextCalculatorField from "./TextCalculatorField";
-import AddItemControl from "./ui/AddItemControl";
-import Icon from "./ui/Icon";
-import IconButton from "./ui/IconButton";
+import { partSlugLookup } from "../../models/game-data";
+import type { Target } from "../../models/optimizer-config";
+import AddItemControl from "../ui/AddItemControl";
+import Icon from "../ui/Icon";
+import IconButton from "../ui/IconButton";
+import PartSelector from "../ui/PartSelector";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
 export default function ProductionTargetsBar() {
   const factory = useFactory();

@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import OptimizationSection from "@/app/components/OptimizationSection";
+import OptimizationSection from "@/app/components/optimization/OptimizationSection";
 import Factory from "@/app/models/factory";
 import { emptyLibrary } from "@/app/models/factory-storage";
 import { renderWithProviders } from "../helpers/render-with-providers";

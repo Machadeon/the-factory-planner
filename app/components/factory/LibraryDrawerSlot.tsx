@@ -1,8 +1,8 @@
 "use client";
 
+import type useFactoryPageFlows from "@/app/hooks/useFactoryPageFlows";
 import type useLibrary from "@/app/hooks/useLibrary";
 import LibraryDrawer from "../library/LibraryDrawer";
-import type useFactoryPageFlows from "./useFactoryPageFlows";
 
 interface LibraryDrawerSlotProps {
   pinned: boolean;

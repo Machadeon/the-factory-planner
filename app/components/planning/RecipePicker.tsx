@@ -5,8 +5,8 @@ import FactoryRecipe from "../../models/factory-recipe";
 import type { SerializedFactory } from "../../models/factory-storage";
 import type ProductionLine from "../../models/production-line";
 import type Recipe from "../../models/recipe";
-import RecipeComponent from "../RecipeComponent";
 import FactoryRecipeCard from "./FactoryRecipeCard";
+import RecipeComp from "./Recipe";
 
 interface RecipePickerProps {
   productionLine: ProductionLine;
@@ -37,7 +37,7 @@ export default function RecipePicker({
           return null;
         }
         return (
-          <RecipeComponent
+          <RecipeComp
             recipe={recipe}
             rate={productionLine.recipeInstanceRate(recipe)}
             onClick={() => onAddRecipe(recipe)}

@@ -9,8 +9,8 @@ import {
   getTotalShards,
   getTotalSloops,
 } from "../../models/factory-metrics";
-import { HorizontalDivider } from "../Dividers";
 import CollapsibleSection from "../ui/CollapsibleSection";
+import { HorizontalDivider } from "../ui/Dividers";
 import Icon from "../ui/Icon";
 import ConsumersSection from "./ConsumersSection";
 import InputsSection from "./InputsSection";

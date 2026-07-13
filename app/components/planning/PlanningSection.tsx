@@ -4,13 +4,13 @@ import {
   useFactory,
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
-import type Factory from "../models/factory";
-import type { SerializedFactory } from "../models/factory-storage";
-import type Part from "../models/part";
-import { HorizontalDivider } from "./Dividers";
-import PartSelector from "./PartSelector";
-import ProductionLineComponent from "./ProductionLineComponent";
-import AddItemControl from "./ui/AddItemControl";
+import type Factory from "../../models/factory";
+import type { SerializedFactory } from "../../models/factory-storage";
+import type Part from "../../models/part";
+import AddItemControl from "../ui/AddItemControl";
+import { HorizontalDivider } from "../ui/Dividers";
+import PartSelector from "../ui/PartSelector";
+import ProductionLine from "./ProductionLine";
 
 interface PlanningSectionProps {
   candidateFactories: { sf: SerializedFactory; factory: Factory }[];
@@ -38,7 +38,7 @@ export default function PlanningSection({
       ) : (
         factory.productionLines.map((product) => (
           <div key={product.part.slug}>
-            <ProductionLineComponent
+            <ProductionLine
               productionLine={product}
               candidateFactories={candidateFactories}
               onDeleteClicked={() => onRemoveProduct(product.part)}

@@ -58,7 +58,7 @@ afterEach(() => {
 });
 
 describe("FactoryPage", () => {
-  it("selecting a part adds a ProductionLineComponent", async () => {
+  it("selecting a part adds a ProductionLine", async () => {
     const user = userEvent.setup();
     render(<FactoryPage />);
 

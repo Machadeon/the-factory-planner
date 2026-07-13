@@ -65,9 +65,3 @@ export const notAutomatable = new Set<string>([
   "yellow-power-slug",
   "purple-power-slug",
 ]);
-
-// Sink point value for resources that cannot actually be sunk. This prevents
-// the sink points optimizer from choosing these as "free" inputs.
-export const syntheticSinkPoints: Record<string, number> = {
-  "power-shard": 14560,
-};

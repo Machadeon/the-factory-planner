@@ -1,7 +1,7 @@
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import AssemblyLineComponent from "@/app/components/AssemblyLineComponent";
+import AssemblyLineComp from "@/app/components/planning/AssemblyLine";
 import AssemblyLine from "@/app/models/assembly-line";
 import Factory from "@/app/models/factory";
 import { partSlugLookup, recipes } from "@/app/models/game-data";
@@ -62,12 +62,12 @@ function buildProps(rate = 30, outputRate = 0) {
   return { factory, assemblyLine: al, mainPart: ironIngotPart };
 }
 
-describe("AssemblyLineComponent — clock speed", () => {
+describe("AssemblyLine — clock speed", () => {
   it("machine count input back-calculates clock speed", async () => {
     const user = userEvent.setup();
     const props = buildProps(30);
     renderWithProviders(
-      <AssemblyLineComponent
+      <AssemblyLineComp
         assemblyLine={props.assemblyLine}
         mainPart={props.mainPart}
       />,
@@ -88,7 +88,7 @@ describe("AssemblyLineComponent — clock speed", () => {
   });
 });
 
-describe("AssemblyLineComponent — somersloop slider", () => {
+describe("AssemblyLine — somersloop slider", () => {
   it("somersloop slider calls setSloopedSlots and updates the assembly line", async () => {
     const props = buildProps(30, 30); // outputRate=30 so LP solve would be triggered
     const _setSloopSpy = vi.spyOn(props.assemblyLine, "setSloopedSlots");
@@ -97,7 +97,7 @@ describe("AssemblyLineComponent — somersloop slider", () => {
       .mockImplementation(() => {});
 
     renderWithProviders(
-      <AssemblyLineComponent
+      <AssemblyLineComp
         assemblyLine={props.assemblyLine}
         mainPart={props.mainPart}
       />,

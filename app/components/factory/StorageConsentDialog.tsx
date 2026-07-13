@@ -8,7 +8,7 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { grantConsent } from "../models/storage-service";
+import { grantConsent } from "../../models/storage-service";
 
 interface Props {
   open: boolean;

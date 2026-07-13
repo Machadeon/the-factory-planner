@@ -1,7 +1,9 @@
 // Pure, framework-free helpers for the logistics graph view. Kept separate from the
 // React Flow components so they are unit-testable without a DOM.
 
+/** @public used via dynamic import() in tests/unit/graph-layout.test.ts, which knip's static analysis can't see. */
 export const MIN_EDGE_WIDTH = 2;
+/** @public used via dynamic import() in tests/unit/graph-layout.test.ts, which knip's static analysis can't see. */
 export const MAX_EDGE_WIDTH = 18;
 
 // Rate floor for the width scale: small factories don't blow every belt up to MAX.
@@ -20,7 +22,7 @@ export function edgeWidth(rate: number, scaleRate: number): number {
   return Math.min(MAX_EDGE_WIDTH, Math.max(MIN_EDGE_WIDTH, w));
 }
 
-export type NodeKind = "source" | "supplier" | "assembly" | "sink" | "consumer";
+type NodeKind = "source" | "supplier" | "assembly" | "sink" | "consumer";
 
 export interface LayoutNode {
   id: string;

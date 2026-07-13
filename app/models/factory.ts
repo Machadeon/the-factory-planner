@@ -236,8 +236,8 @@ export default class Factory {
   }
 
   _hasRecycledRubberPlasticLoop(): boolean {
-    var hasRecycledPlasticRecipe = false;
-    var hasRecycledRubberRecipe = false;
+    let hasRecycledPlasticRecipe = false;
+    let hasRecycledRubberRecipe = false;
 
     for (const productionLine of this.productionLines) {
       for (const assemblyLine of productionLine.assemblyLines) {
@@ -302,7 +302,7 @@ export default class Factory {
   recipeOutputs(): Part[] {
     // Iterate the assembly lines' products directly (O(assemblyLines)) rather
     // than filtering the full parts list (O(parts)) on every call. This runs
-    // per AssemblyLineComponent render, so it must stay cheap.
+    // per AssemblyLine render, so it must stay cheap.
     const seen = new Map<string, Part>();
     for (const productionLine of this.productionLines) {
       for (const assemblyLine of productionLine.assemblyLines) {
@@ -339,7 +339,8 @@ export default class Factory {
       return;
     }
     const demand = this.getPartDemand(part);
-    var productionRate: number, outputRate: number;
+    let productionRate: number;
+    let outputRate: number;
     if (demand === 0) {
       productionRate = outputRate = 10;
     } else {

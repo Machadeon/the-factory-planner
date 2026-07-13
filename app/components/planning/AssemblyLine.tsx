@@ -2,22 +2,22 @@
 
 import type { ReactNode } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
-import type AssemblyLine from "../models/assembly-line";
-import { recipeLookup } from "../models/game-data";
-import type Part from "../models/part";
-import type Recipe from "../models/recipe";
-import type { RecipePart } from "../models/recipe";
+import type AssemblyLineModel from "../../models/assembly-line";
+import { recipeLookup } from "../../models/game-data";
+import type Part from "../../models/part";
+import type Recipe from "../../models/recipe";
+import type { RecipePart } from "../../models/recipe";
 import AssemblyLineControls from "./AssemblyLineControls";
 import NestedFactoryRow from "./NestedFactoryRow";
-import RecipeComponent from "./RecipeComponent";
+import RecipeComp from "./Recipe";
 
-interface AssemblyLineComponentProps {
-  assemblyLine: AssemblyLine;
+interface AssemblyLineProps {
+  assemblyLine: AssemblyLineModel;
   mainPart: Part;
   belowRecipeName?: ReactNode;
 }
 
-function AssemblyLineComponent(props: AssemblyLineComponentProps) {
+function AssemblyLine(props: AssemblyLineProps) {
   const factory = useFactory();
 
   if (props.assemblyLine.recipe.isFactoryRecipe) {
@@ -50,7 +50,7 @@ function AssemblyLineComponent(props: AssemblyLineComponentProps) {
 
   return (
     <div className="flex flex-row items-stretch grow">
-      <RecipeComponent
+      <RecipeComp
         recipe={recipe}
         rate={props.assemblyLine.rate}
         sloopMultiplier={props.assemblyLine.getSloopMultiplier()}
@@ -68,4 +68,4 @@ function AssemblyLineComponent(props: AssemblyLineComponentProps) {
   );
 }
 
-export default AssemblyLineComponent;
+export default AssemblyLine;

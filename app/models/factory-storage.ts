@@ -12,7 +12,7 @@ import {
 } from "./optimizer-config";
 import ProductionLine from "./production-line";
 
-export interface SerializedAssemblyLine {
+interface SerializedAssemblyLine {
   id?: string;
   rows?: number;
   rowSpacing?: number;
@@ -32,7 +32,7 @@ export interface SerializedAssemblyLine {
   autoCreated?: boolean;
 }
 
-export interface SerializedProductionLine {
+interface SerializedProductionLine {
   partSlug: string;
   rate: number;
   outputRate: number;
@@ -216,18 +216,18 @@ export function serializeFactory(
   };
 }
 
-// optimizer is unreleased, but tolerate an older availableParts shape (string[])
-// and missing fields by merging onto the current defaults.
+// Tolerate an older availableParts shape (string[]) and missing fields by
+// merging onto the current defaults.
 function normalizeRecipeOptimizer(
-  raw: RecipeOptimizerConfig | undefined,
+  raw:
+    | (Omit<RecipeOptimizerConfig, "availableParts"> & {
+        availableParts?: (string | AvailablePart)[];
+      })
+    | undefined,
 ): RecipeOptimizerConfig {
   const base = defaultRecipeOptimizerConfig();
   if (!raw) return base;
-  const rawParts = (raw.availableParts ?? []) as unknown as (
-    | string
-    | AvailablePart
-  )[];
-  const availableParts = rawParts.map((p) =>
+  const availableParts = (raw.availableParts ?? []).map((p) =>
     typeof p === "string" ? { partSlug: p, rate: 0 } : p,
   );
   return { ...base, ...raw, availableParts };

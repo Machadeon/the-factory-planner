@@ -43,16 +43,16 @@ const DRILLED = ["library", "currentFactoryId", "onNavigateToFactory"] as const;
 const COMPONENTS = [
   "app/components/factory/FactorySections.tsx",
   "app/components/factory/FactorySidebar.tsx",
-  "app/components/PlanningSection.tsx",
-  "app/components/ProductionLineComponent.tsx",
-  "app/components/AssemblyLineComponent.tsx",
-  "app/components/NestedFactoryRow.tsx",
+  "app/components/planning/PlanningSection.tsx",
+  "app/components/planning/ProductionLine.tsx",
+  "app/components/planning/AssemblyLine.tsx",
+  "app/components/planning/NestedFactoryRow.tsx",
   "app/components/overview/PartRateSummary.tsx",
-  "app/components/FactoryPickerDialog.tsx",
+  "app/components/planning/FactoryPickerDialog.tsx",
   "app/components/overview/OverviewSidebar.tsx",
-  "app/components/OptimizationSection.tsx",
-  "app/components/LogisticsSection.tsx",
-  "app/components/ProductionTargetsBar.tsx",
+  "app/components/optimization/OptimizationSection.tsx",
+  "app/components/logistics/LogisticsSection.tsx",
+  "app/components/optimization/ProductionTargetsBar.tsx",
   "app/components/optimization/OptimizerPanel.tsx",
 ];
 
@@ -70,7 +70,7 @@ describe("prop-contract: drilled props removed (R4.S1)", () => {
 describe("ProductionTargetsBar dead props gone (R8.S2)", () => {
   it("declares no library or currentFactoryId prop", () => {
     const body = propsInterface(
-      read("app/components/ProductionTargetsBar.tsx"),
+      read("app/components/optimization/ProductionTargetsBar.tsx"),
       "ProductionTargetsBar",
     );
     expect(body).not.toMatch(/library\s*[?:]/);
@@ -122,7 +122,7 @@ describe("no root rateLookup whole-tree trigger (R6.S2 neg)", () => {
 
 describe("foreign factories stay data-only (R7.S1, R7.S2)", () => {
   it("FactoryPickerDialog does not render candidates through useFactory leaves", () => {
-    const src = read("app/components/FactoryPickerDialog.tsx");
+    const src = read("app/components/planning/FactoryPickerDialog.tsx");
     // It deserializes candidate factories as local data; it must not re-provide
     // a foreign factory via FactoryProvider nor read the ambient factory as if
     // it were the candidate.

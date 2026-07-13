@@ -8,12 +8,12 @@ import {
   useFactory,
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
-import type { ScoringObjective } from "../models/optimizer-config";
+import type { ScoringObjective } from "../../models/optimizer-config";
+import ConfirmDialog from "../ui/ConfirmDialog";
+import { HorizontalDivider } from "../ui/Dividers";
 import ConstraintsPanel from "./ConstraintsPanel";
-import { HorizontalDivider } from "./Dividers";
-import OptimizerPanel from "./optimization/OptimizerPanel";
+import OptimizerPanel from "./OptimizerPanel";
 import ProductionTargetsBar from "./ProductionTargetsBar";
-import ConfirmDialog from "./ui/ConfirmDialog";
 
 const OBJECTIVE_LABELS: Record<ScoringObjective, string> = {
   minResources: "Min resources",

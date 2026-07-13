@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   CURRENT_SCHEMA_VERSION,
@@ -230,5 +232,42 @@ describe("collectFactoryBundle()", () => {
     const b = factory("B", { productionLines: [nestedRefLine("A")] });
     const bundle = collectFactoryBundle(a, lib(a, b));
     expect(bundle.map((f) => f.id).sort()).toEqual(["A", "B"]);
+  });
+});
+
+describe("normalizeRecipeOptimizer() — cast-free availableParts (optimizer-config R5)", () => {
+  it("R5.S1: factory-storage.ts source contains no as-unknown-as cast", () => {
+    const text = readFileSync(
+      join(process.cwd(), "app/models/factory-storage.ts"),
+      "utf8",
+    );
+    expect(text.includes("as unknown as")).toBe(false);
+  });
+
+  it("R5.S2: legacy string[] availableParts normalizes to AvailablePart[]", () => {
+    // Legacy stored shape predates AvailablePart objects; simulate the raw
+    // JSON a pre-migration localStorage entry would contain.
+    const raw = factory("A", {
+      optimizer: {
+        availableParts: ["iron-ore", "copper-ore"],
+      } as unknown as SerializedFactory["optimizer"],
+    });
+    const f = deserializeFactory(raw);
+    expect(f?.optimizer.availableParts).toEqual([
+      { partSlug: "iron-ore", rate: 0 },
+      { partSlug: "copper-ore", rate: 0 },
+    ]);
+  });
+
+  it("R5.S3: existing AvailablePart[] availableParts passes through unchanged", () => {
+    const raw = factory("A", {
+      optimizer: {
+        availableParts: [{ partSlug: "iron-ore", rate: 60 }],
+      } as unknown as SerializedFactory["optimizer"],
+    });
+    const f = deserializeFactory(raw);
+    expect(f?.optimizer.availableParts).toEqual([
+      { partSlug: "iron-ore", rate: 60 },
+    ]);
   });
 });

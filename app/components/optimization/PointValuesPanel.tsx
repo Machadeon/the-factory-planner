@@ -14,8 +14,8 @@ import {
   computeDefaultPointValues,
   resolveEffectivePointValues,
 } from "../../models/point-values";
-import TextCalculatorField from "../TextCalculatorField";
 import Icon from "../ui/Icon";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
 interface PointValuesPanelProps {
   factory: Factory;

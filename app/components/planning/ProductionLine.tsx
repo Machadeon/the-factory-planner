@@ -2,31 +2,29 @@
 
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
-import type Factory from "../models/factory";
-import FactoryRecipe, { factoryRecipeSlug } from "../models/factory-recipe";
-import type { SerializedFactory } from "../models/factory-storage";
-import { RATE_EPSILON, recipeLookup } from "../models/game-data";
-import type ProductionLine from "../models/production-line";
-import type Recipe from "../models/recipe";
-import type { AnyRecipe } from "../models/recipe-like";
-import { shouldPromptReject } from "../models/suggestions";
+import type Factory from "../../models/factory";
+import FactoryRecipe, { factoryRecipeSlug } from "../../models/factory-recipe";
+import type { SerializedFactory } from "../../models/factory-storage";
+import { RATE_EPSILON, recipeLookup } from "../../models/game-data";
+import type ProductionLineModel from "../../models/production-line";
+import type Recipe from "../../models/recipe";
+import type { AnyRecipe } from "../../models/recipe-like";
+import { shouldPromptReject } from "../../models/suggestions";
 import ProductionLineDetails, {
   type RejectTarget,
-} from "./planning/ProductionLineDetails";
-import ProductionLineRow from "./planning/ProductionLineRow";
+} from "./ProductionLineDetails";
+import ProductionLineRow from "./ProductionLineRow";
 import type { RejectChoice } from "./RecipeRejectDialog";
 
-interface ProductionLineComponentProps {
-  productionLine: ProductionLine;
+interface ProductionLineProps {
+  productionLine: ProductionLineModel;
   candidateFactories: Array<{ sf: SerializedFactory; factory: Factory }>;
   onDeleteClicked: () => void;
   forceExpanded?: boolean | null;
   onToggle?: () => void;
 }
 
-export default function ProductionLineComponent(
-  props: ProductionLineComponentProps,
-) {
+export default function ProductionLine(props: ProductionLineProps) {
   const factory = useFactory();
   const productionLine = props.productionLine;
   const [showFactoryPicker, setShowFactoryPicker] = useState<boolean>(false);

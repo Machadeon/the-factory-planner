@@ -15,8 +15,8 @@ import type {
   FactoryFolder,
   SerializedFactory,
 } from "@/app/models/factory-storage";
-import { HorizontalDivider } from "../Dividers";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import { HorizontalDivider } from "../ui/Dividers";
 import FileImportButton from "../ui/FileImportButton";
 import IconButton from "../ui/IconButton";
 import LibraryFactoryMenu from "./LibraryFactoryMenu";

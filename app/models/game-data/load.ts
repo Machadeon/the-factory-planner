@@ -7,9 +7,11 @@ import Recipe from "../recipe";
 import { rawResources } from "./constants";
 
 export const parts: Part[] = [];
+/** @public game-data barrel export, spec-pinned (game-data R2) — kept despite no current consumer. */
 export const partLookup: { [className: string]: Part } = {};
 export const partSlugLookup: { [partSlug: string]: Part } = {};
 export const buildings: Building[] = [];
+/** @public game-data barrel export, spec-pinned (game-data R2) — kept despite no current consumer. */
 export const buildingLookup: { [className: string]: Building } = {};
 export const recipes: Recipe[] = [];
 export const recipeLookup: { [partSlug: string]: Recipe[] } = {};

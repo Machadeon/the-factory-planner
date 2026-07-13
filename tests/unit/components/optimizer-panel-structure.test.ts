@@ -49,8 +49,8 @@ describe("optimizer panel split into single-purpose files (R3.S1)", () => {
 
 describe("single call site updated (R3.S2)", () => {
   it("OptimizationSection imports OptimizerPanel from the new path", () => {
-    const src = read("app/components/OptimizationSection.tsx");
-    expect(src).toMatch(/from\s+["']\.\/optimization\/OptimizerPanel["']/);
+    const src = read("app/components/optimization/OptimizationSection.tsx");
+    expect(src).toMatch(/from\s+["']\.\/OptimizerPanel["']/);
   });
 
   it("no file under app/ imports the deleted RecipeOptimizerPanel path", () => {

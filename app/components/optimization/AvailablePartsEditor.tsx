@@ -7,11 +7,11 @@ import Tooltip from "@mui/material/Tooltip";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { partSlugLookup } from "../../models/game-data";
 import type { RecipeOptimizerConfig } from "../../models/optimizer-config";
-import PartSelector from "../PartSelector";
-import TextCalculatorField from "../TextCalculatorField";
 import AddItemControl from "../ui/AddItemControl";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
+import PartSelector from "../ui/PartSelector";
+import TextCalculatorField from "../ui/TextCalculatorField";
 
 // Part availability editor, lifted out of the former RecipeOptimizerPanel.
 // Live-write: edits write straight to factory.optimizer.

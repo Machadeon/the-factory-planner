@@ -9,7 +9,7 @@ import {
   writeAutosave,
 } from "../models/storage-service";
 
-export const AUTOSAVE_DEBOUNCE_MS = 400;
+const AUTOSAVE_DEBOUNCE_MS = 400;
 
 interface UseAutosaveDeps {
   // Mute-aware mutation seam from useFactorySession.

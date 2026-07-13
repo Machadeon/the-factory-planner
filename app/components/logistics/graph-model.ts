@@ -36,17 +36,14 @@ export interface FactoryNodeData {
   parts: { part: Part; rate: number }[];
 }
 
-export type GraphNodeData =
-  | AssemblyNodeData
-  | TerminalNodeData
-  | FactoryNodeData;
+type GraphNodeData = AssemblyNodeData | TerminalNodeData | FactoryNodeData;
 
 export interface GraphNode {
   id: string;
   data: GraphNodeData;
 }
 
-export interface GraphEdge {
+interface GraphEdge {
   id: string;
   source: string;
   target: string;

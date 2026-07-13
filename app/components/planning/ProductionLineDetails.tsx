@@ -7,13 +7,13 @@ import type { SerializedFactory } from "../../models/factory-storage";
 import type ProductionLine from "../../models/production-line";
 import type Recipe from "../../models/recipe";
 import type { AnyRecipe } from "../../models/recipe-like";
-import AssemblyLine from "../AssemblyLineComponent";
-import FactoryPickerDialog from "../FactoryPickerDialog";
-import RecipeRejectDialog, { type RejectChoice } from "../RecipeRejectDialog";
-import SuggestedActions from "../SuggestedActions";
 import ActionRow from "../ui/ActionRow";
 import IconButton from "../ui/IconButton";
+import AssemblyLine from "./AssemblyLine";
+import FactoryPickerDialog from "./FactoryPickerDialog";
 import RecipePicker from "./RecipePicker";
+import RecipeRejectDialog, { type RejectChoice } from "./RecipeRejectDialog";
+import SuggestedActions from "./SuggestedActions";
 
 export type RejectTarget =
   | null
@@ -109,33 +109,17 @@ export default function ProductionLineDetails({
           )}
         </div>
       ))}
-      {!showPicker && hasMoreRecipes && (
+      {!showPicker && (
         <div className="flex flex-row items-center gap-x-2">
-          <ActionRow
-            onClick={onSplitRecipes}
-            className="flex flex-row items-center p-1"
-          >
-            <AddIcon />
-            Add Recipe
-          </ActionRow>
-          <ActionRow
-            onClick={onOpenFactoryPicker}
-            className="flex flex-row items-center p-1"
-          >
-            <AddIcon />
-            Use Factory as Recipe
-          </ActionRow>
-          <ActionRow
-            onClick={onOpenSupplyPicker}
-            className="flex flex-row items-center p-1"
-          >
-            <AddIcon />
-            Supply from Factory
-          </ActionRow>
-        </div>
-      )}
-      {!showPicker && !hasMoreRecipes && (
-        <div className="flex flex-row items-center gap-x-2">
+          {hasMoreRecipes && (
+            <ActionRow
+              onClick={onSplitRecipes}
+              className="flex flex-row items-center p-1"
+            >
+              <AddIcon />
+              Add Recipe
+            </ActionRow>
+          )}
           <ActionRow
             onClick={onOpenFactoryPicker}
             className="flex flex-row items-center p-1"

@@ -43,7 +43,6 @@ export default function SourceFactoriesEditor() {
 
   // Resolve selected source factories to their names + produced parts/rates.
   const sourceFactories = useMemo(() => {
-    if (!library) return [];
     return config.availableFactoryIds.map((id) => {
       const sf = library.factories.find((f) => f.id === id);
       const f = sf
@@ -59,7 +58,6 @@ export default function SourceFactoriesEditor() {
   }, [config.availableFactoryIds, library]);
 
   const factoryOptions = useMemo(() => {
-    if (!library) return [];
     return library.factories
       .filter(
         (f) =>
@@ -104,7 +102,7 @@ export default function SourceFactoriesEditor() {
           ))}
         </div>
       ))}
-      {library && factoryOptions.length > 0 && (
+      {factoryOptions.length > 0 && (
         <AddItemControl
           label="Add source factory"
           triggerClassName="flex flex-row items-center p-1 mt-1"

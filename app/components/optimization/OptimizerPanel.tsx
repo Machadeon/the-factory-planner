@@ -14,7 +14,7 @@ import type {
   RecipeOptimizerConfig,
   ScoringObjective,
 } from "../../models/optimizer-config";
-import { HorizontalDivider } from "../Dividers";
+import { HorizontalDivider } from "../ui/Dividers";
 import AvailablePartsEditor from "./AvailablePartsEditor";
 import OptimizerRecipeFilters from "./OptimizerRecipeFilters";
 import PointValuesPanel from "./PointValuesPanel";
