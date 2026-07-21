@@ -90,14 +90,25 @@ export default function ProductionLineRow({
       <ActionRow
         bare
         aria-expanded={isExpanded}
+        aria-label={`${part.name} production line`}
         onClick={onToggleExpand}
-        className="flex flex-row items-center gap-x-2"
+        className="flex flex-row items-center gap-x-2 grow"
       >
         {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
         <div className="flex flex-row items-center gap-2 w-sm flex-none">
           <Icon src={part.iconSmall} label={part.name} size={64} />
           <span className="text-xl">{part.name}</span>
         </div>
+        <span>
+          Actual:{" "}
+          <span className={`font-bold ${actualProductionRateTextColorClass}`}>
+            {displayNum(actualProductionRate)}
+          </span>
+          {unit}
+          <span className={`font-bold ${actualProductionRateTextColorClass}`}>
+            {productionRateDiffStr}
+          </span>
+        </span>
       </ActionRow>
       {productionLine.autoCreated && (
         <SuggestedActions onAccept={onAcceptLine} onReject={onRejectLine} />
@@ -199,16 +210,6 @@ export default function ProductionLineRow({
           />
         </IconButton>
       </div>
-      <p className="grow">
-        Actual:{" "}
-        <span className={`font-bold ${actualProductionRateTextColorClass}`}>
-          {displayNum(actualProductionRate)}
-        </span>
-        {unit}
-        <span className={`font-bold ${actualProductionRateTextColorClass}`}>
-          {productionRateDiffStr}
-        </span>
-      </p>
       <IconButton
         aria-label="Remove product"
         onClick={onRemoveSelf}
