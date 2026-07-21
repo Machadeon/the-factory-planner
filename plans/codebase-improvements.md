@@ -135,6 +135,14 @@ Feature: compress a bundle into the URL fragment (`lz-string` or native `Compres
 
 Offline-capable planner = natural install target; app is fully client-side already (no server round-trips — URL sync deliberately avoids the Next router for this reason, per `FactoryComponent` comments). Manifest + service worker (next-pwa or hand-rolled) is a cheap win. Low priority.
 
+### 17. Split-row hover affordance overstates clickable area
+
+**Evidence:** From `fix-production-line-toggle-click-area` (2026-07-20, closes #22). `rowVisualClasses` (`app/components/ui/interactive-styles.ts`) paints hover/active background across the entire outer `<div>` of a split-row (e.g. `ProductionLineRow`, `LibraryFolderRow`, `LibraryFactoryRow`), including non-toggling sibling controls (rate fields, icon buttons) that sit outside the inner `ActionRow`. Hovering those controls shows the "clickable to toggle" tint even though clicking there doesn't toggle. Scoping hover precisely to `ActionRow`'s bounds requires splitting the bundled `interactiveWarningClass`/`interactiveDangerClass` strings (border+background+hover combined) into layerable pieces — a shared-primitive refactor touching every `rowVisualClasses` consumer. Considered and rejected as out-of-scope for that bug fix (see its `design.md` D4).
+
+### 18. Weak-testability edge cases flagged during `fix-production-line-toggle-click-area` spec review
+
+**Evidence:** Spec review (2026-07-20) flagged the R1.S5 click-drag-to-select scenario and the R1 exclusion-clause scenario (expanded assembly-line list content shouldn't toggle the row) as edge cases with weak jsdom testability. Resolved during implementation: R1.S5 covered via a `mousedown`/`mouseup`-without-`click` assertion (jsdom doesn't simulate native browser text-selection-suppresses-click behavior, so this tests the app-level contract instead); the exclusion clause covered via a sibling-component structural test in `tests/integration/ProductionLine.test.tsx`. No further action needed — recorded here to satisfy the archive gate's requirement to file non-blocking findings.
+
 ## Explicitly considered and rejected
 
 - **i18n** — single-audience hobby tool; cost exceeds value now.
