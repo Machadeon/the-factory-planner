@@ -101,6 +101,8 @@ The component refactor standardizes *components*, not *styling* — without a de
 
 **Evidence:** 3 call sites, all in `FactoryComponent`: unrecognized import JSON, failed JSON parse, failed factory restore ("Could not restore factory…"). Blocking, unstyled, untestable. Replace with a snackbar/toast primitive in `components/ui/` (Phase 1 addition).
 
+**Status:** Done — C2 `toast-primitive-kill-alert` (2026-07-20) added `app/components/ui/toast/` (`ToastProvider`/`useToast`, Top-Layer popover, error/success/info variants) and swapped all 3 `alert()` sites. **Follow-up for C3:** the toast reducer array is uncapped — unclosed sticky `error` toasts accumulate in state (only 3 render). Add a max-queue cap when the success/info call sites are wired in C3 (LOW, from C2 final review).
+
 ### 11. Undo/redo
 
 **Evidence of need:** three "cannot be undone" confirm dialogs (reject-all, delete factory, delete folder) plus unsaved-changes prompts exist *because* nothing is reversible. Serialization already round-trips fully (`serializeFactory`/`deserializeFactory`).

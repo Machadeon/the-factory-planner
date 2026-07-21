@@ -1,6 +1,8 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, screen } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import { subscribe } from "valtio/vanilla";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 import useFactorySession from "@/app/hooks/useFactorySession";
 import {
   CURRENT_SCHEMA_VERSION,
@@ -43,10 +45,15 @@ function libWith(...factories: SerializedFactory[]): StorageLibrary {
   return lib;
 }
 
+function toastWrapper({ children }: { children: ReactNode }) {
+  return createElement(ToastProvider, null, children);
+}
+
 function mount(lib: StorageLibrary = emptyLibrary()) {
   const setLibrary = vi.fn();
-  const view = renderHook(() =>
-    useFactorySession({ library: lib, setLibrary }),
+  const view = renderHook(
+    () => useFactorySession({ library: lib, setLibrary }),
+    { wrapper: toastWrapper },
   );
   return { ...view, setLibrary };
 }
@@ -100,14 +107,17 @@ describe("useFactorySession", () => {
     // deterministic; the random name may only be assigned in an effect.
     const renderNames: string[] = [];
     const setLibrary = vi.fn();
-    renderHook(() => {
-      const session = useFactorySession({
-        library: emptyLibrary(),
-        setLibrary,
-      });
-      renderNames.push(session.factoryName);
-      return session;
-    });
+    renderHook(
+      () => {
+        const session = useFactorySession({
+          library: emptyLibrary(),
+          setLibrary,
+        });
+        renderNames.push(session.factoryName);
+        return session;
+      },
+      { wrapper: toastWrapper },
+    );
     expect(renderNames[0]).toBe("");
     expect(renderNames[renderNames.length - 1]).not.toBe("");
   });
@@ -184,7 +194,13 @@ describe("useFactorySession", () => {
     await settle();
     expect(result.current.factoryName).toBe(nameBefore);
     expect(result.current.currentFactoryId).toBeNull();
-    expect(alertSpy).toHaveBeenCalled();
+    // Surfaced as an error toast, not a blocking alert().
+    expect(alertSpy).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        "Could not restore factory — some recipe or part data may be missing.",
+      ),
+    ).toBeInTheDocument();
     alertSpy.mockRestore();
   });
 

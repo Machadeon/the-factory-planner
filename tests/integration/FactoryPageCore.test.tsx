@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FactoryPage from "@/app/components/factory/FactoryPage";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 
 // Mock next/image
 vi.mock("next/image", () => ({
@@ -60,7 +61,11 @@ afterEach(() => {
 describe("FactoryPage", () => {
   it("selecting a part adds a ProductionLine", async () => {
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    render(
+      <ToastProvider>
+        <FactoryPage />
+      </ToastProvider>,
+    );
 
     // "Add Product" is a Clickable div, not a button — find by text
     const addButton = await screen.findByText(/Add Product/i);
@@ -88,7 +93,11 @@ describe("FactoryPage", () => {
 
   it("expand all and collapse all toggle all production line rows", async () => {
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    render(
+      <ToastProvider>
+        <FactoryPage />
+      </ToastProvider>,
+    );
 
     // Add Iron Rod
     const addButton = await screen.findByText(/Add Product/i);
@@ -135,7 +144,11 @@ describe("FactoryPage", () => {
   // current solver state.
   it("solver warning appears and persists whenever the LP is infeasible", async () => {
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    render(
+      <ToastProvider>
+        <FactoryPage />
+      </ToastProvider>,
+    );
 
     // Add Iron Plate (no recipe). Multi-recipe parts don't auto-select a recipe.
     const addButton = await screen.findByText(/Add Product/i);

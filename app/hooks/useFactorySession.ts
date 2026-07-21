@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { proxy, subscribe } from "valtio/vanilla";
+import { useToast } from "../components/ui/toast/ToastProvider";
 import Factory from "../models/factory";
 import { generateFactoryName } from "../models/factory-names";
 import {
@@ -39,6 +40,7 @@ export default function useFactorySession({
   library,
   setLibrary,
 }: UseFactorySessionDeps) {
+  const { show } = useToast();
   const storeRef = useRef<{ factory: Factory } | null>(null);
   if (storeRef.current === null) {
     storeRef.current = proxy({ factory: new Factory() });
@@ -134,9 +136,11 @@ export default function useFactorySession({
       (id) => lib.factories.find((f) => f.id === id) ?? null,
     );
     if (!loaded) {
-      alert(
-        "Could not restore factory — some recipe or part data may be missing.",
-      );
+      show({
+        variant: "error",
+        message:
+          "Could not restore factory — some recipe or part data may be missing.",
+      });
       return false;
     }
 

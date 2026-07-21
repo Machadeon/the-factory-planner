@@ -1,9 +1,9 @@
 # factory-session
 
+## Purpose
+
 Session-level Factory state: the valtio-proxied Factory instance, session identity fields, the single restore path, and new/clear flows. Owned by `app/hooks/useFactorySession.ts`.
-
 ## Requirements
-
 ### Requirement: R1 — valtio proxy is the only Factory store
 `useFactorySession` SHALL hold the Factory in a valtio proxy container created once — `proxy({ factory })` — where `factory` is `new Factory()` for a fresh session or the deserialized instance on restore; loading swaps the container's `factory` field (a tracked write). The session's Factory SHALL be created or swapped only inside this hook (Factory instances constructed elsewhere — deserialization, nested-factory handling — are not the session store and are unaffected). The root version counter (`setVersion`) SHALL NOT exist anywhere in the component tree.
 
@@ -30,7 +30,7 @@ Session-level Factory state: the valtio-proxied Factory instance, session identi
 - **THEN** the session has a generated name, null id, null slug, null folder id, and is not dirty
 
 ### Requirement: R5 — single restore path
-The four duplicated restore blocks in FactoryComponent (restoreFactory priority 1, priority 3, the popstate handler, `loadFactoryFromSerialized`) SHALL collapse into one `loadSerialized(sf, lib, opts?)` function inside `useFactorySession`. Default behavior: deserialize against the given library, backfill a missing slug via the existing `ensureSlug` semantics (generate unique slug, persist to library), swap the proxied Factory, set all session identity fields from the serialized entry, set dirty=false, and persist the current factory id. These persistence writes are unconditional, matching today's call sites (storage-service functions do not themselves check consent). `opts` SHALL support the variations the existing call sites need: `markDirty` (default false — autosave restore passes true), `backfillSlug` (default true — autosave restore passes false), `persistCurrentId` (default true — autosave restore passes false). On deserialization failure it SHALL leave session state unchanged and surface the existing alert message.
+The four duplicated restore blocks in FactoryComponent (restoreFactory priority 1, priority 3, the popstate handler, `loadFactoryFromSerialized`) SHALL collapse into one `loadSerialized(sf, lib, opts?)` function inside `useFactorySession`. Default behavior: deserialize against the given library, backfill a missing slug via the existing `ensureSlug` semantics (generate unique slug, persist to library), swap the proxied Factory, set all session identity fields from the serialized entry, set dirty=false, and persist the current factory id. These persistence writes are unconditional, matching today's call sites (storage-service functions do not themselves check consent). `opts` SHALL support the variations the existing call sites need: `markDirty` (default false — autosave restore passes true), `backfillSlug` (default true — autosave restore passes false), `persistCurrentId` (default true — autosave restore passes false). On deserialization failure it SHALL leave session state unchanged and surface the existing message as an error toast via `useToast` (see `toast-notifications`), replacing the former `alert()`.
 
 #### Scenario: R5.S1 — successful load
 - **WHEN** `loadSerialized` is called with a valid serialized factory
@@ -46,7 +46,7 @@ The four duplicated restore blocks in FactoryComponent (restoreFactory priority 
 
 #### Scenario: R5.S4 — failed deserialization
 - **WHEN** `deserializeFactory` returns undefined for the entry
-- **THEN** session state is unchanged and the existing "Could not restore factory" alert is shown
+- **THEN** session state is unchanged and the message "Could not restore factory — some recipe or part data may be missing." is shown as an error toast (no blocking `alert()`)
 
 #### Scenario: R5.S5 — no duplicated restore blocks
 - **WHEN** the new code is inspected

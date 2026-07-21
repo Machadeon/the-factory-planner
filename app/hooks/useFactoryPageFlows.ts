@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useToast } from "@/app/components/ui/toast/ToastProvider";
 import type useAutosave from "@/app/hooks/useAutosave";
 import type useFactorySession from "@/app/hooks/useFactorySession";
 import type useLibrary from "@/app/hooks/useLibrary";
@@ -33,6 +34,7 @@ export default function useFactoryPageFlows({
   libraryApi,
   requireConsent,
 }: UseFactoryPageFlowsDeps) {
+  const { show } = useToast();
   const { library, reload, replaceLibrary } = libraryApi;
   const {
     factory,
@@ -162,10 +164,10 @@ export default function useFactoryPageFlows({
         } else if (isSingleFactory) {
           importSingleFactory(parsed as SerializedFactory);
         } else {
-          alert("Unrecognized JSON format.");
+          show({ variant: "error", message: "Unrecognized JSON format." });
         }
       } catch {
-        alert("Failed to parse JSON file.");
+        show({ variant: "error", message: "Failed to parse JSON file." });
       }
     };
     reader.readAsText(file);

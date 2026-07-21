@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FactoryJsonDialog from "@/app/components/factory/FactoryJsonDialog";
 import FactoryPage from "@/app/components/factory/FactoryPage";
 import SectionTabs from "@/app/components/factory/SectionTabs";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 import {
   CURRENT_SCHEMA_VERSION,
   type SerializedFactory,
@@ -125,18 +126,32 @@ function jsonFile(payload: unknown): File {
   });
 }
 
+// FactoryPage's session/flows hooks call useToast(); wrap in the provider so
+// the region mounts and toasts are queryable.
+function renderPage() {
+  return render(
+    <ToastProvider>
+      <FactoryPage />
+    </ToastProvider>,
+  );
+}
+
+function rawFile(contents: string): File {
+  return new File([contents], "import.json", { type: "application/json" });
+}
+
 describe("FactoryPage session flows (1.10)", () => {
   it("factory-session R2.S1 — proxy mutation re-renders the page (no version counter)", async () => {
     grantConsent();
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     await addIronPlate(user);
   });
 
   it("factory-session R7.S2 — dirty + autosave on: New factory saves silently, no dialog", async () => {
     grantConsent();
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     await addIronPlate(user);
     await user.click(screen.getByRole("button", { name: "Clear factory" }));
     expect(screen.queryByText("Clear factory?")).toBeNull();
@@ -153,7 +168,7 @@ describe("FactoryPage session flows (1.10)", () => {
     grantConsent();
     localStorageMock.setItem("sfp:autosave-pref", "false");
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     await addIronPlate(user);
     await user.click(screen.getByRole("button", { name: "Clear factory" }));
     expect(await screen.findByText("Clear factory?")).toBeTruthy();
@@ -165,7 +180,7 @@ describe("FactoryPage session flows (1.10)", () => {
 describe("FactoryPage import wiring (1.11)", () => {
   it("library-ops R5.S1 — single-factory import without consent loads but does not persist", async () => {
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     await user.upload(fileInput(), jsonFile(sf()));
     await waitFor(() => {
       expect(screen.getByLabelText("Factory name")).toHaveValue(
@@ -178,7 +193,7 @@ describe("FactoryPage import wiring (1.11)", () => {
   it("library-ops R5.S2 — bundle import with consent saves and loads root without drawer", async () => {
     grantConsent();
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     const bundle: StorageLibrary = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       folders: [],
@@ -200,7 +215,7 @@ describe("FactoryPage import wiring (1.11)", () => {
 
   it("library-ops R5.S3 — library import without consent: nothing merges, consent prompt", async () => {
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     const nameBefore = (
       screen.getByLabelText("Factory name") as HTMLInputElement
     ).value;
@@ -213,6 +228,30 @@ describe("FactoryPage import wiring (1.11)", () => {
     expect(await screen.findByRole("button", { name: /Allow/i })).toBeTruthy();
     expect(localStorageMock.getItem("sfp:library")).toBeNull();
     expect(screen.getByLabelText("Factory name")).toHaveValue(nameBefore);
+  });
+
+  it("library-ops R5.S4 — unrecognized JSON surfaces an error toast, no alert()", async () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderPage();
+    await user.upload(fileInput(), jsonFile({ nonsense: true }));
+    expect(
+      await screen.findByText("Unrecognized JSON format."),
+    ).toBeInTheDocument();
+    expect(alertSpy).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+
+  it("library-ops R5.S4 — parse failure surfaces an error toast, no alert()", async () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderPage();
+    await user.upload(fileInput(), rawFile("{ not valid json"));
+    expect(
+      await screen.findByText("Failed to parse JSON file."),
+    ).toBeInTheDocument();
+    expect(alertSpy).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
   });
 });
 
@@ -253,7 +292,7 @@ describe("extracted components (1.12)", () => {
   it("lib-utilities R7.S2 — export filename uses sanitizeFilename", async () => {
     grantConsent();
     const user = userEvent.setup();
-    render(<FactoryPage />);
+    renderPage();
     const nameField = screen.getByLabelText("Factory name");
     await user.clear(nameField);
     await user.type(nameField, "Iron Plant #2!");

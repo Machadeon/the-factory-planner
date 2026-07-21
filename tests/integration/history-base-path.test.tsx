@@ -1,6 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FactoryPage from "@/app/components/factory/FactoryPage";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 
 // Mock next/image (same as FactoryPageCore.test.tsx)
 vi.mock("next/image", () => ({
@@ -60,7 +61,11 @@ afterEach(() => {
 describe("FactoryPage history base path", () => {
   it("keeps the URL under the base path on mount when NEXT_PUBLIC_BASE_PATH is set", async () => {
     vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "/the-factory-planner");
-    render(<FactoryPage />);
+    render(
+      <ToastProvider>
+        <FactoryPage />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(window.location.pathname).toBe("/the-factory-planner/");
     });
@@ -69,7 +74,11 @@ describe("FactoryPage history base path", () => {
 
   it("pushes a root-relative URL on mount when NEXT_PUBLIC_BASE_PATH is unset", async () => {
     vi.stubEnv("NEXT_PUBLIC_BASE_PATH", undefined);
-    render(<FactoryPage />);
+    render(
+      <ToastProvider>
+        <FactoryPage />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(window.location.pathname).toBe("/");
     });
