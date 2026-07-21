@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
-import { useState } from "react";
+import { createElement, type ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 import useFactorySession from "@/app/hooks/useFactorySession";
 import useFactoryUrlSync from "@/app/hooks/useFactoryUrlSync";
 import useLibrary from "@/app/hooks/useLibrary";
@@ -46,6 +47,10 @@ function seedLibrary(...factories: SerializedFactory[]) {
 
 const disableAutosave = vi.fn();
 
+function toastWrapper({ children }: { children: ReactNode }) {
+  return createElement(ToastProvider, null, children);
+}
+
 function useHarness() {
   const libraryApi = useLibrary();
   const session = useFactorySession({
@@ -90,7 +95,7 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
       JSON.stringify(sf({ id: "f-2", slug: "other", name: "Other" })),
     );
     setUrl("/?factory=iron-works");
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBe("f-1");
     expect(result.current.session.isDirty).toBe(false);
@@ -101,7 +106,7 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
   it("R1.S2 — autosave restore is dirty", async () => {
     seedLibrary(sf());
     localStorage.setItem("sfp:autosave", JSON.stringify(sf()));
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBe("f-1");
     expect(result.current.session.isDirty).toBe(true);
@@ -113,7 +118,7 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
       "sfp:autosave",
       JSON.stringify(sf({ id: "f-orphan" })),
     );
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBe("f-orphan");
     expect(disableAutosave).toHaveBeenCalled();
@@ -122,14 +127,14 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
   it("R1.S3 — lastId fallback", async () => {
     seedLibrary(sf());
     localStorage.setItem("sfp:current", "f-1");
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBe("f-1");
     expect(result.current.session.isDirty).toBe(false);
   });
 
   it("R1.S4 — nothing to restore starts fresh with generated name", async () => {
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBeNull();
     expect(result.current.session.factoryName).not.toBe("");
@@ -139,7 +144,7 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
     seedLibrary(sf());
     localStorage.setItem("sfp:autosave", JSON.stringify(sf()));
     setUrl("/?factory=no-such-slug");
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.session.currentFactoryId).toBe("f-1");
     expect(result.current.session.isDirty).toBe(true);
@@ -149,13 +154,13 @@ describe("useFactoryUrlSync mount restore (R1)", () => {
 describe("useFactoryUrlSync hash/section (R2)", () => {
   it("R2.S1 — initial hash selects section", async () => {
     setUrl("/#optimization");
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     expect(result.current.activeSection).toBe("optimization");
   });
 
   it("R2.S2 — tab switch updates hash without a new history entry", async () => {
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     const lengthBefore = window.history.length;
     act(() => result.current.setActiveSection("logistics"));
@@ -168,7 +173,7 @@ describe("useFactoryUrlSync hash/section (R2)", () => {
 describe("useFactoryUrlSync pushState (R3)", () => {
   it("R3.S1 — loading a factory pushes a bookmarkable slug URL", async () => {
     const lib = seedLibrary(sf());
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     act(() => {
       result.current.session.loadSerialized(sf(), lib);
@@ -182,7 +187,7 @@ describe("useFactoryUrlSync pushState (R3)", () => {
 describe("useFactoryUrlSync popstate (R4)", () => {
   it("R4.S1 — back restores factory from history state without pushing", async () => {
     seedLibrary(sf());
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     setUrl("/?factory=iron-works");
     act(() => {
@@ -199,7 +204,7 @@ describe("useFactoryUrlSync popstate (R4)", () => {
 
   it("R4.S2 — popstate without state falls back to URL params", async () => {
     seedLibrary(sf());
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     setUrl("/?factory=iron-works#planning");
     act(() => {
@@ -211,7 +216,7 @@ describe("useFactoryUrlSync popstate (R4)", () => {
 
   it("R4.S3 — popstate to clean URL resets to a fresh factory", async () => {
     const lib = seedLibrary(sf());
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     act(() => {
       result.current.session.loadSerialized(sf(), lib);
@@ -228,7 +233,7 @@ describe("useFactoryUrlSync popstate (R4)", () => {
 
   it("R4.S4 — popstate to a deleted factory leaves session untouched", async () => {
     const lib = seedLibrary(sf());
-    const { result } = renderHook(useHarness);
+    const { result } = renderHook(useHarness, { wrapper: toastWrapper });
     await settle();
     act(() => {
       result.current.session.loadSerialized(sf(), lib);
