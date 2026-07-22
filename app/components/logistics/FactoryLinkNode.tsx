@@ -23,7 +23,7 @@ export default function FactoryLinkNode({ data }: NodeProps) {
         className="flex items-center gap-1 text-left text-[11px] font-semibold underline hover:opacity-70"
         onClick={() => navigateToFactory(factoryId)}
       >
-        <FactoryIcon sx={{ fontSize: 14 }} />
+        <FactoryIcon className="text-[14px]!" />
         <span className="truncate">{name}</span>
       </button>
       {parts.map((p) => (

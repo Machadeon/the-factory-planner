@@ -2,8 +2,8 @@
 
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import Chip from "@mui/material/Chip";
 import type { MouseEvent } from "react";
+import Chip from "../ui/Chip";
 import IconButton from "../ui/IconButton";
 
 interface SuggestedActionsProps {

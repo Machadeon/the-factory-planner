@@ -1,15 +1,11 @@
 "use client";
 
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import List from "@mui/material/List";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import { useMemo } from "react";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type Factory from "../../models/factory";
 import { deserializeFactory } from "../../models/factory-storage";
+import ActionRow from "../ui/ActionRow";
+import { Dialog, DialogContent, DialogTitle } from "../ui/Dialog";
 import Icon from "../ui/Icon";
 
 interface FactoryPickerDialogProps {
@@ -59,24 +55,26 @@ export default function FactoryPickerDialog({
             No saved factories produce this part.
           </p>
         ) : (
-          <List disablePadding>
+          <ul>
             {candidates.map(({ sf, factory }) => (
-              <ListItemButton
-                key={sf.id}
-                onClick={() => onPick(sf.id, sf.name, factory)}
-              >
-                {sf.icon && (
-                  <Icon
-                    src={sf.icon}
-                    alt={sf.name}
-                    size={32}
-                    className="mr-2"
-                  />
-                )}
-                <ListItemText primary={sf.name} />
-              </ListItemButton>
+              <li key={sf.id}>
+                <ActionRow
+                  onClick={() => onPick(sf.id, sf.name, factory)}
+                  className="flex flex-row items-center w-full px-3 py-2"
+                >
+                  {sf.icon && (
+                    <Icon
+                      src={sf.icon}
+                      alt={sf.name}
+                      size={32}
+                      className="mr-2"
+                    />
+                  )}
+                  <span>{sf.name}</span>
+                </ActionRow>
+              </li>
             ))}
-          </List>
+          </ul>
         )}
       </DialogContent>
     </Dialog>

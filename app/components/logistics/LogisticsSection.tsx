@@ -314,9 +314,9 @@ export default function LogisticsSection() {
             className="flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-xs text-gray-100 hover:bg-black/70"
           >
             {maximized ? (
-              <CloseFullscreenIcon sx={{ fontSize: 14 }} />
+              <CloseFullscreenIcon className="text-[14px]!" />
             ) : (
-              <OpenInFullIcon sx={{ fontSize: 14 }} />
+              <OpenInFullIcon className="text-[14px]!" />
             )}
           </button>
         </div>

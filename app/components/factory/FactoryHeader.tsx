@@ -8,9 +8,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Badge, Switch, TextField, Tooltip } from "@mui/material";
 import FileImportButton from "../ui/FileImportButton";
 import IconButton from "../ui/IconButton";
+import Switch from "../ui/Switch";
+import TextField from "../ui/TextField";
 import FactoryIconPicker from "./FactoryIconPicker";
 
 interface Props {
@@ -62,33 +63,20 @@ export default function FactoryHeader({
           className="p-1"
           onClick={handleOpenLibrary}
         >
-          <FolderOpenIcon sx={{ fontSize: "2.25rem" }} />
+          <FolderOpenIcon className="text-[2.25rem]!" />
         </IconButton>
       )}
 
       <div className="flex flex-row items-center gap-0.5 grow">
         <FactoryIconPicker icon={factoryIcon} onChange={onIconChange} />
         <TextField
-          variant="outlined"
-          size="small"
+          variant="borderless"
           value={factoryName}
           onChange={(e) => onNameChange(e.target.value)}
           placeholder="Factory Name"
-          slotProps={{
-            htmlInput: { "aria-label": "Factory name" },
-          }}
-          sx={{
-            flexGrow: 1,
-            "& .MuiOutlinedInput-root": {
-              fontWeight: 600,
-              fontSize: "1.5rem",
-              "& fieldset": { borderColor: "transparent" },
-              "&:hover fieldset": { borderColor: "rgba(128,128,128,0.4)" },
-              "&.Mui-focused fieldset": {
-                borderColor: "rgba(128,128,128,0.6)",
-              },
-            },
-          }}
+          aria-label="Factory name"
+          inputClassName="font-semibold text-2xl"
+          fullWidth
         />
       </div>
 
@@ -148,20 +136,16 @@ export default function FactoryHeader({
           aria-label={isDirty ? "Save (unsaved changes)" : "Save"}
           className="p-1"
           onClick={onSave}
+          dotBadge={isDirty}
         >
-          <Badge color="warning" variant="dot" invisible={!isDirty}>
-            <SaveIcon />
-          </Badge>
+          <SaveIcon />
         </IconButton>
-        <Tooltip title={autosaveEnabled ? "Autosave on" : "Autosave off"}>
-          <span className="flex items-center">
-            <Switch
-              size="small"
-              checked={autosaveEnabled}
-              onChange={() => onToggleAutosave()}
-            />
-          </span>
-        </Tooltip>
+        <Switch
+          size="small"
+          checked={autosaveEnabled}
+          onChange={() => onToggleAutosave()}
+          tooltip={autosaveEnabled ? "Autosave on" : "Autosave off"}
+        />
       </div>
     </div>
   );

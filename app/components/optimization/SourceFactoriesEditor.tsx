@@ -1,8 +1,6 @@
 "use client";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
 import { useMemo } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
@@ -11,6 +9,7 @@ import { availableOutputsFrom } from "../../models/factory-metrics";
 import { deserializeFactory } from "../../models/factory-storage";
 import type { RecipeOptimizerConfig } from "../../models/optimizer-config";
 import AddItemControl from "../ui/AddItemControl";
+import FactorySelector from "../ui/FactorySelector";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
 
@@ -109,26 +108,12 @@ export default function SourceFactoriesEditor() {
           className="mt-2"
         >
           {(close) => (
-            <Autocomplete
+            <FactorySelector
               options={factoryOptions}
-              openOnFocus
-              blurOnSelect
-              value={null}
-              onChange={(_, option) => {
-                if (option) {
-                  addSourceFactory(option.id);
-                  close();
-                }
+              onFactorySelected={(option) => {
+                addSourceFactory(option.id);
+                close();
               }}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  size="small"
-                  label="Add source factory"
-                  autoFocus
-                />
-              )}
             />
           )}
         </AddItemControl>

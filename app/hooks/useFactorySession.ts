@@ -41,6 +41,20 @@ export default function useFactorySession({
   setLibrary,
 }: UseFactorySessionDeps) {
   const { show } = useToast();
+  // Same failure-toast wrap as useLibrary.ts's persist() — this hook has its
+  // own 3 saveLibrary call sites (slug-backfill + both doSave branches).
+  function persist(lib: StorageLibrary): boolean {
+    const ok = saveLibrary(lib);
+    if (!ok) {
+      show({
+        variant: "error",
+        message:
+          "Couldn't save your library — your browser's local storage may be full. Export a backup to avoid losing work.",
+      });
+    }
+    return ok;
+  }
+
   const storeRef = useRef<{ factory: Factory } | null>(null);
   if (storeRef.current === null) {
     storeRef.current = proxy({ factory: new Factory() });
@@ -152,7 +166,7 @@ export default function useFactorySession({
       );
       slug = generateSlug(sf.name, existingSlugs);
       const updatedLib = updateFactory(lib, { ...sf, slug });
-      saveLibrary(updatedLib);
+      persist(updatedLib);
       setLibrary(updatedLib);
     }
 
@@ -236,11 +250,13 @@ export default function useFactorySession({
         updatedAt: now,
       });
       const updatedLib = addFactory(library, reserialised);
-      saveLibrary(updatedLib);
+      const saved = persist(updatedLib);
       setLibrary(updatedLib);
-      clearAutosave();
-      persistCurrentFactoryId(newId);
-      setIsDirty(false);
+      if (saved) {
+        clearAutosave();
+        setIsDirty(false);
+        persistCurrentFactoryId(newId);
+      }
       return { firstSave: isFirstSave };
     }
 
@@ -256,11 +272,13 @@ export default function useFactorySession({
       ? updateFactory(library, serialized)
       : addFactory(library, serialized);
 
-    saveLibrary(updatedLib);
+    const saved = persist(updatedLib);
     setLibrary(updatedLib);
-    clearAutosave();
-    persistCurrentFactoryId(id);
-    setIsDirty(false);
+    if (saved) {
+      clearAutosave();
+      setIsDirty(false);
+      persistCurrentFactoryId(id);
+    }
     return { firstSave: isFirstSave };
   }
 

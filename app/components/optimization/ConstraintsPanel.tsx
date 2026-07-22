@@ -1,8 +1,6 @@
 "use client";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import type Factory from "../../models/factory";
 import type { PartConstraint } from "../../models/factory";
 import {
@@ -12,6 +10,7 @@ import {
 } from "../../models/game-data";
 import AddItemControl from "../ui/AddItemControl";
 import Icon from "../ui/Icon";
+import IconButton from "../ui/IconButton";
 import PartSelector from "../ui/PartSelector";
 import TextCalculatorField from "../ui/TextCalculatorField";
 
@@ -79,7 +78,6 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
             <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="w-32 text-sm shrink-0">{part.name}</span>
             <TextCalculatorField
-              variant="outlined"
               size="small"
               label="Min rate"
               className="w-24"
@@ -93,7 +91,6 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
               }
             />
             <TextCalculatorField
-              variant="outlined"
               size="small"
               label="Max rate"
               className="w-24"
@@ -106,15 +103,14 @@ export default function ConstraintsPanel({ factory }: ConstraintsPanelProps) {
                 updateConstraint(constraint.partSlug, "max", undefined)
               }
             />
-            <Tooltip title="Remove constraint">
-              <IconButton
-                aria-label="Remove constraint"
-                size="small"
-                onClick={() => removeConstraint(constraint.partSlug)}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <IconButton
+              aria-label="Remove constraint"
+              title="Remove constraint"
+              onClick={() => removeConstraint(constraint.partSlug)}
+              className="p-1"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
           </div>
         );
       })}

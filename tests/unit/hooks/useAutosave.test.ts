@@ -1,5 +1,7 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, screen } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 import useAutosave from "@/app/hooks/useAutosave";
 import {
   CURRENT_SCHEMA_VERSION,
@@ -39,23 +41,31 @@ function makeSeams() {
   };
 }
 
+function toastWrapper({ children }: { children: ReactNode }) {
+  return createElement(ToastProvider, null, children);
+}
+
 function mount(overrides: { doSave?: () => void } = {}) {
   const seams = makeSeams();
   const doSave = vi.fn(overrides.doSave);
   const buildSerialized = vi.fn(() => serialized);
-  const view = renderHook(() =>
-    useAutosave({
-      onFactoryMutate: seams.onFactoryMutate,
-      onSessionSwap: seams.onSessionSwap,
-      buildSerialized,
-      doSave,
-    }),
+  const view = renderHook(
+    () =>
+      useAutosave({
+        onFactoryMutate: seams.onFactoryMutate,
+        onSessionSwap: seams.onSessionSwap,
+        buildSerialized,
+        doSave,
+      }),
+    { wrapper: toastWrapper },
   );
   return { ...view, seams, doSave, buildSerialized };
 }
 
+let localStorageMock: ReturnType<typeof installLocalStorageMock>;
+
 beforeEach(() => {
-  installLocalStorageMock();
+  localStorageMock = installLocalStorageMock();
   localStorage.setItem("sfp:consent", "true");
   vi.useFakeTimers();
 });
@@ -137,6 +147,45 @@ describe("useAutosave", () => {
     act(() => result.current.flush());
     expect(doSave).not.toHaveBeenCalled();
     expect(localStorage.getItem("sfp:autosave")).toBeTruthy();
+  });
+
+  it("R3.S4 — interactive flush with autosave disabled shows an error toast when the write fails (D-C3.2)", () => {
+    const { result, seams } = mount();
+    act(() => result.current.setAutosaveEnabled(false));
+    act(() => {
+      seams.emitMutate();
+    });
+    const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    try {
+      act(() => result.current.flush());
+      expect(
+        screen.getByText(/Couldn't save your autosave/),
+      ).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("R3.S5 — beforeunload flush does not show a toast even when the write fails", () => {
+    const { result, seams } = mount();
+    act(() => result.current.setAutosaveEnabled(false));
+    act(() => {
+      seams.emitMutate();
+      vi.advanceTimersByTime(100);
+    });
+    const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    try {
+      act(() => {
+        window.dispatchEvent(new Event("beforeunload"));
+      });
+      expect(screen.queryByText(/Couldn't save/)).not.toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("R3.S3 — flush without pending timer writes nothing", () => {

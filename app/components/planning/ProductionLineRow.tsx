@@ -6,7 +6,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TextField from "@mui/material/TextField";
 import type { MouseEvent } from "react";
 import { displayNum, rateUnit } from "@/app/lib/format";
 import { rateStatusColor } from "@/app/lib/rate-status";
@@ -19,7 +18,9 @@ import {
   type InteractiveVariant,
   rowVisualClasses,
 } from "../ui/interactive-styles";
+import RateDisplay, { type RateStatus } from "../ui/RateDisplay";
 import TextCalculatorField from "../ui/TextCalculatorField";
+import TextField from "../ui/TextField";
 import SuggestedActions from "./SuggestedActions";
 
 interface ProductionLineRowProps {
@@ -55,7 +56,7 @@ export default function ProductionLineRow({
   onRejectLine,
   onRemoveSelf,
 }: ProductionLineRowProps) {
-  const unit = part.slug === "power" ? <> MW</> : rateUnit(part);
+  const unit = rateUnit(part);
 
   const isSlooped = productionLine.assemblyLines.some((al) => al.isSlooped());
   const baseProductionRateColorClass = rateStatusColor(productionRateDiff, {
@@ -65,6 +66,14 @@ export default function ProductionLineRow({
     isSlooped && baseProductionRateColorClass === "text-green-500"
       ? "text-pink-600"
       : baseProductionRateColorClass;
+  const actualProductionRateStatus: RateStatus =
+    actualProductionRateTextColorClass === "text-red-500"
+      ? "deficit"
+      : actualProductionRateTextColorClass === "text-amber-500"
+        ? "surplus"
+        : actualProductionRateTextColorClass === "text-pink-600"
+          ? "slooped"
+          : "balanced";
   let productionRateDiffStr: string;
   if (actualProductionRateTextColorClass === "text-amber-500") {
     productionRateDiffStr = ` (+${displayNum(productionRateDiff)})`;
@@ -101,10 +110,13 @@ export default function ProductionLineRow({
         </div>
         <span>
           Actual:{" "}
-          <span className={`font-bold ${actualProductionRateTextColorClass}`}>
-            {displayNum(actualProductionRate)}
-          </span>
-          {unit}
+          <RateDisplay
+            part={part}
+            rate={actualProductionRate}
+            colorClass={actualProductionRateTextColorClass}
+            status={actualProductionRateStatus}
+            className="font-bold"
+          />
           <span className={`font-bold ${actualProductionRateTextColorClass}`}>
             {productionRateDiffStr}
           </span>
@@ -116,62 +128,42 @@ export default function ProductionLineRow({
       <div className="flex flex-row items-center w-sm flex-none gap-x-2">
         {productionLine.maximizeOutput ? (
           <TextField
-            variant="outlined"
             size="small"
             label="Factory Output Rate"
             className="w-40"
+            inputClassName="text-right"
             disabled
             value={outputRateDisplay}
-            slotProps={{
-              htmlInput: { className: "text-right" },
-            }}
           />
         ) : (
           <TextCalculatorField
-            variant="outlined"
             size="small"
             label="Factory Output Rate"
             className="w-40"
+            inputClassName="text-right"
             value={outputRateDisplay}
             onCalculate={onUpdateOutputRate}
             onClick={(e) => e.stopPropagation()}
-            slotProps={{
-              htmlInput: { className: "text-right" },
-            }}
           />
         )}
         {productionLine.autoCalculateRate ? (
           <TextField
-            variant="outlined"
             size="small"
             label="Production Rate"
             className="w-32"
+            inputClassName="text-right"
             disabled
             value={productionLine.rate}
-            slotProps={{
-              htmlInput: {
-                sx: {
-                  textAlign: "right",
-                },
-              },
-            }}
           />
         ) : (
           <TextCalculatorField
-            variant="outlined"
             size="small"
             label="Production Rate"
             className="w-32"
+            inputClassName="text-right"
             value={productionLine.rate}
             onCalculate={onUpdateProductionRate}
             onClick={(e) => e.stopPropagation()}
-            slotProps={{
-              htmlInput: {
-                sx: {
-                  textAlign: "right",
-                },
-              },
-            }}
           />
         )}
         <span>{unit}</span>
@@ -202,11 +194,11 @@ export default function ProductionLineRow({
           className="p-1"
         >
           <TrendingUpIcon
-            sx={{
-              color: productionLine.maximizeOutput
-                ? "primary.main"
-                : "action.active",
-            }}
+            className={
+              productionLine.maximizeOutput
+                ? "text-amber-500!"
+                : "text-gray-400!"
+            }
           />
         </IconButton>
       </div>

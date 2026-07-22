@@ -37,6 +37,10 @@ export function loadLibrary(): StorageLibrary {
     // no schemaVersion comparison needed or possible now that the field is
     // pinned rather than incremented (see storage-migrations R4/R7).
     const migrated = migrateLibrary(parsed);
+    // Write-back failure here is deliberately non-surfacing: this module is
+    // hook-free (AGENTS.md error-handling convention) and can't show a
+    // toast. Callers get the migrated library in memory regardless; the
+    // next explicit save (which does surface failures) retries the write.
     saveLibrary(migrated);
     return migrated;
   } catch {
@@ -44,16 +48,36 @@ export function loadLibrary(): StorageLibrary {
   }
 }
 
-export function saveLibrary(library: StorageLibrary): void {
-  localStorage.setItem(KEY_LIBRARY, JSON.stringify(library));
+export function saveLibrarySerialized(json: string): boolean {
+  try {
+    localStorage.setItem(KEY_LIBRARY, json);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function writeAutosave(factory: SerializedFactory): void {
+export function saveLibrary(library: StorageLibrary): boolean {
+  return saveLibrarySerialized(JSON.stringify(library));
+}
+
+export function writeAutosave(factory: SerializedFactory): boolean {
   try {
     localStorage.setItem(KEY_AUTOSAVE, JSON.stringify(factory));
+    return true;
   } catch {
-    // quota exceeded — silently ignore
+    return false;
   }
+}
+
+export const LOCALSTORAGE_WARN_THRESHOLD_BYTES = 4_500_000; // ~90% of the conservative 5MB quota
+
+export function estimateStorageBytesFromString(json: string): number {
+  return new TextEncoder().encode(json).length;
+}
+
+export function estimateStorageBytes(library: StorageLibrary): number {
+  return estimateStorageBytesFromString(JSON.stringify(library));
 }
 
 export function readAutosave(): SerializedFactory | null {

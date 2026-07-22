@@ -1,15 +1,14 @@
 "use client";
 
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Button from "../ui/Button";
 import {
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+} from "../ui/Dialog";
+import IconButton from "../ui/IconButton";
 
 interface FactoryJsonDialogProps {
   open: boolean;
@@ -26,19 +25,15 @@ export default function FactoryJsonDialog({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle className="flex items-center justify-between">
         Factory JSON
-        <Tooltip title="Copy to clipboard">
-          <IconButton
-            size="small"
-            aria-label="Copy to clipboard"
-            onClick={() =>
-              navigator.clipboard.writeText(
-                JSON.stringify(buildJson(), null, 2),
-              )
-            }
-          >
-            <ContentCopyIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <IconButton
+          aria-label="Copy to clipboard"
+          className="p-1"
+          onClick={() =>
+            navigator.clipboard.writeText(JSON.stringify(buildJson(), null, 2))
+          }
+        >
+          <ContentCopyIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
       <DialogContent>
         <pre className="text-xs overflow-auto whitespace-pre-wrap break-all">

@@ -66,8 +66,10 @@ async function settle() {
   });
 }
 
+let localStorageMock: ReturnType<typeof installLocalStorageMock>;
+
 beforeEach(() => {
-  installLocalStorageMock();
+  localStorageMock = installLocalStorageMock();
   localStorage.setItem("sfp:consent", "true");
 });
 
@@ -237,6 +239,33 @@ describe("useFactorySession", () => {
     expect(result.current.currentSlug).toBeTruthy();
     const persisted = JSON.parse(localStorage.getItem("sfp:library") ?? "{}");
     expect(persisted.factories?.length).toBe(1);
+  });
+
+  it("R6.S4 — doSave leaves isDirty true when the underlying save fails (D-C3.2)", async () => {
+    const { result } = mount();
+    act(() => {
+      result.current.factory.addProductionLine(
+        partSlugLookup["iron-ingot"],
+        false,
+        false,
+      );
+    });
+    await settle();
+    const spy = vi
+      .spyOn(localStorageMock, "setItem")
+      .mockImplementation((key: string) => {
+        if (key === "sfp:library") {
+          throw new DOMException("quota exceeded", "QuotaExceededError");
+        }
+      });
+    try {
+      act(() => {
+        result.current.doSave();
+      });
+      expect(result.current.isDirty).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("R6.S3 — restore-time writes don't dirty; next edit does", async () => {

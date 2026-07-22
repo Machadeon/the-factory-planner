@@ -38,13 +38,12 @@ export default function NestedFactoryRow({
       </button>
       <div className="flex items-center gap-x-1">
         <TextCalculatorField
-          variant="outlined"
           size="small"
           label="Instances"
           className="w-28"
+          inputClassName="text-right"
           value={rate}
           onCalculate={updateRate}
-          slotProps={{ htmlInput: { className: "text-right" } }}
         />
       </div>
       <div className="w-2xs flex flex-row flex-wrap gap-x-2 items-center">

@@ -55,4 +55,28 @@ test.describe("Section tabs", () => {
     await page.getByRole("tab", { name: "Planning" }).click();
     await expect(page.getByText("Production Targets")).toHaveCount(0);
   });
+
+  test("ArrowRight/ArrowLeft on a focused tab moves focus and activates the next/previous tab (D-C1.10)", async ({
+    page,
+  }) => {
+    await seedWithIronPlate(page);
+
+    const planningTab = page.getByRole("tab", { name: "Planning" });
+    const optimizationTab = page.getByRole("tab", { name: "Optimization" });
+    const logisticsTab = page.getByRole("tab", { name: "Logistics" });
+
+    await planningTab.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(optimizationTab).toBeFocused();
+    await expect(optimizationTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByText("Production Targets")).toBeVisible();
+
+    await page.keyboard.press("ArrowRight");
+    await expect(logisticsTab).toBeFocused();
+    await expect(logisticsTab).toHaveAttribute("aria-selected", "true");
+
+    await page.keyboard.press("ArrowLeft");
+    await expect(optimizationTab).toBeFocused();
+    await expect(optimizationTab).toHaveAttribute("aria-selected", "true");
+  });
 });

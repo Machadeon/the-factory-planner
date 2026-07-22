@@ -1,10 +1,6 @@
 "use client";
 
 import TuneIcon from "@mui/icons-material/Tune";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Switch from "@mui/material/Switch";
 import { useState } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { buildings, recipes } from "../../models/game-data";
@@ -18,6 +14,8 @@ import {
 } from "../../models/optimizer-config";
 import ActionRow from "../ui/ActionRow";
 import Icon from "../ui/Icon";
+import Select from "../ui/Select";
+import Switch from "../ui/Switch";
 import RecipeListPanel from "./RecipeListPanel";
 
 // Buildings that actually run craftable recipes, grouped by menuGroup/menuGroupIndex.
@@ -92,51 +90,34 @@ export default function OptimizerRecipeFilters() {
         <span className="text-md w-28 shrink-0">Game phase</span>
         <Select
           size="small"
-          value={config.phase}
-          onChange={(e) =>
-            commit(updatePhase(factory.optimizer, Number(e.target.value)))
-          }
-        >
-          {Array.from({ length: MAX_GAME_PHASE }, (_, i) => i + 1).map((p) => (
-            <MenuItem key={p} value={p}>
-              Phase {p}
-            </MenuItem>
-          ))}
-        </Select>
+          value={`${config.phase}`}
+          onChange={(v) => commit(updatePhase(factory.optimizer, Number(v)))}
+          options={Array.from({ length: MAX_GAME_PHASE }, (_, i) => i + 1).map(
+            (p) => ({ value: `${p}`, label: `Phase ${p}` }),
+          )}
+        />
       </div>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={config.defaultRecipesEnabled}
-            onChange={(_, v) =>
-              commit(toggleCategory(factory.optimizer, "default", v))
-            }
-          />
+      <Switch
+        checked={config.defaultRecipesEnabled}
+        onChange={(v) =>
+          commit(toggleCategory(factory.optimizer, "default", v))
         }
         label="Default recipes"
       />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={config.alternateRecipesEnabled}
-            onChange={(_, v) =>
-              commit(toggleCategory(factory.optimizer, "alternate", v))
-            }
-          />
+      <Switch
+        checked={config.alternateRecipesEnabled}
+        onChange={(v) =>
+          commit(toggleCategory(factory.optimizer, "alternate", v))
         }
         label="Alternate recipes"
       />
-      <FormControlLabel
-        control={
-          <Switch
-            disabled={!config.defaultRecipesEnabled}
-            checked={
-              config.defaultRecipesEnabled && config.oreConversionRecipesEnabled
-            }
-            onChange={(_, v) =>
-              commit(toggleCategory(factory.optimizer, "oreConversion", v))
-            }
-          />
+      <Switch
+        disabled={!config.defaultRecipesEnabled}
+        checked={
+          config.defaultRecipesEnabled && config.oreConversionRecipesEnabled
+        }
+        onChange={(v) =>
+          commit(toggleCategory(factory.optimizer, "oreConversion", v))
         }
         label="Ore conversion recipes"
       />
@@ -153,19 +134,13 @@ export default function OptimizerRecipeFilters() {
               {GROUP_LABEL[group] ?? group}
             </p>
             {groupBuildings.map((building) => (
-              <FormControlLabel
+              <Switch
                 key={building.slug}
-                control={
-                  <Switch
-                    size="small"
-                    checked={config.buildingsEnabled.includes(building.slug)}
-                    disabled={config.phase < building.unlockPhase}
-                    onChange={(_, v) =>
-                      commit(
-                        toggleBuilding(factory.optimizer, building.slug, v),
-                      )
-                    }
-                  />
+                size="small"
+                checked={config.buildingsEnabled.includes(building.slug)}
+                disabled={config.phase < building.unlockPhase}
+                onChange={(v) =>
+                  commit(toggleBuilding(factory.optimizer, building.slug, v))
                 }
                 label={
                   <span className="flex flex-row items-center gap-x-1">

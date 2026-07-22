@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   TOAST_AUTO_DISMISS_MS,
+  TOAST_MAX_QUEUE,
   ToastProvider,
   useToast,
 } from "@/app/components/ui/toast/ToastProvider";
@@ -140,6 +141,34 @@ describe("toast-notifications", () => {
       act(() => firstClose.click());
       expect(screen.getByText("later")).toBeInTheDocument();
     });
+  });
+
+  it("D-C3.5 — showing more than TOAST_MAX_QUEUE drops the oldest queued entry, keeping the array capped", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+    const total = TOAST_MAX_QUEUE + 5;
+    act(() => {
+      for (let i = 0; i < total; i++) {
+        result.current.show({ message: `m${i}`, variant: "error" });
+      }
+    });
+    // Drain every visible+queued toast by repeatedly closing the first
+    // visible one, collecting every message that ever appeared.
+    const seen: string[] = [];
+    for (let i = 0; i < total; i++) {
+      const closes = screen.queryAllByTestId("toast-close");
+      if (closes.length === 0) break;
+      const visibleTexts = screen
+        .queryAllByTestId("toast-message")
+        .map((el) => el.textContent ?? "");
+      for (const t of visibleTexts) if (!seen.includes(t)) seen.push(t);
+      act(() => closes[0].click());
+    }
+    // Only the newest TOAST_MAX_QUEUE entries ever surfaced — the oldest 5
+    // (m0..m4) were dropped from the queue before ever becoming visible.
+    expect(seen).toHaveLength(TOAST_MAX_QUEUE);
+    expect(seen.some((t) => t.includes("m0"))).toBe(false);
+    expect(seen.some((t) => t.includes("m4"))).toBe(false);
+    expect(seen.some((t) => t.includes(`m${total - 1}`))).toBe(true);
   });
 
   it("R2.S3 — manual close removes the toast immediately", async () => {

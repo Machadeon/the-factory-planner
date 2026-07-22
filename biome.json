@@ -15,5 +15,47 @@
   },
   "formatter": {
     "indentStyle": "space"
-  }
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@mui/material": "Import MUI widgets only inside app/components/ui/ (ADR-0001)."
+            },
+            "patterns": [
+              {
+                "group": ["@mui/material/*"],
+                "message": "Import MUI widgets only inside app/components/ui/ (ADR-0001)."
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["app/components/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["app/layout.tsx", "app/components/ThemeRegistry.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
+          }
+        }
+      }
+    }
+  ]
 }

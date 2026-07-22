@@ -1,6 +1,7 @@
 "use client";
 
 import FactoryPage from "./components/factory/FactoryPage";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { withBasePath } from "./lib/base-path";
 
 export default function Home() {
@@ -22,7 +23,9 @@ export default function Home() {
             Planner
           </span>
         </div>
-        <FactoryPage />
+        <ErrorBoundary>
+          <FactoryPage />
+        </ErrorBoundary>
       </main>
     </div>
   );

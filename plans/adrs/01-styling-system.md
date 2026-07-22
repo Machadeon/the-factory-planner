@@ -42,6 +42,7 @@ Adopt **Option B**, made enforceable by a **wrap-and-hide** boundary so "which s
    - `Select` / `Menu` (listbox/popover)
    - `Dialog` (focus trap)
    - `Tooltip` (positioning + a11y)
+   - `Drawer` (focus trap on an off-canvas panel) — **added 2026-07-21 during C1** (`finish-block-c`). `LibraryDrawer` is exactly the surface the drawer-loop bug (fixed, see `bugs`/agent-memory history) lived in; its accessible open/close/focus-restore behavior is hard-won and covered by `tests/e2e/library/open-close-library.spec.ts`. Hand-rolling a Tailwind off-canvas panel would re-implement a focus-trap-adjacent widget from scratch for no `sx`/styling gain (the component was already nearly Tailwind-clean apart from the `Drawer` shell) and risks reintroducing that exact class of bug. Same bar as `Dialog` above.
 
    Simple widgets currently on MUI — `Button`, `TextField`, `IconButton`, `Switch`, `FormControlLabel`, `Chip`, `Radio`/`RadioGroup` — are **not** on the allowlist and move to Tailwind during C1. Adding a new MUI component to the allowlist requires amending this ADR.
 

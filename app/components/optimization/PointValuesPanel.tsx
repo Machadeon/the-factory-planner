@@ -1,10 +1,6 @@
 "use client";
 
 import ClearIcon from "@mui/icons-material/Clear";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import { Fragment, useMemo, useState } from "react";
 import { displayNum } from "@/app/lib/format";
 import type Factory from "../../models/factory";
@@ -15,7 +11,10 @@ import {
   resolveEffectivePointValues,
 } from "../../models/point-values";
 import Icon from "../ui/Icon";
+import IconButton from "../ui/IconButton";
 import TextCalculatorField from "../ui/TextCalculatorField";
+import TextField from "../ui/TextField";
+import Tooltip from "../ui/Tooltip";
 
 interface PointValuesPanelProps {
   factory: Factory;
@@ -77,20 +76,19 @@ export default function PointValuesPanel({
         placeholder="Search parts…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full mb-2"
-        slotProps={{
-          input: search
-            ? {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearch("")}>
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }
-            : undefined,
-        }}
+        className="mb-2"
+        fullWidth
+        endAdornment={
+          search ? (
+            <IconButton
+              aria-label="Clear search"
+              onClick={() => setSearch("")}
+              className="p-1"
+            >
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          ) : undefined
+        }
       />
 
       <div
@@ -141,29 +139,21 @@ export default function PointValuesPanel({
               </div>
               <div className="px-1">
                 <TextCalculatorField
-                  variant="outlined"
                   size="small"
+                  className="w-28"
+                  inputClassName="text-xs text-right"
                   value={gOv !== undefined ? displayNum(gOv) : ""}
                   placeholder={displayNum(def)}
                   onCalculate={(v) => setGlobalOverride(part.slug, v)}
                   onClear={() => clearGlobalOverride(part.slug)}
                   allowClear={gOv !== undefined}
-                  slotProps={{
-                    htmlInput: {
-                      style: {
-                        fontSize: 12,
-                        textAlign: "right",
-                        padding: "2px 6px",
-                      },
-                    },
-                  }}
-                  sx={{ width: "7rem" }}
                 />
               </div>
               <div className="px-1">
                 <TextCalculatorField
-                  variant="outlined"
                   size="small"
+                  className="w-28"
+                  inputClassName="text-xs text-right"
                   value={fOv !== undefined ? displayNum(fOv) : ""}
                   placeholder={
                     gOv !== undefined ? displayNum(gOv) : displayNum(def)
@@ -171,16 +161,6 @@ export default function PointValuesPanel({
                   onCalculate={(v) => setFactoryOverride(part.slug, v)}
                   onClear={() => clearFactoryOverride(part.slug)}
                   allowClear={fOv !== undefined}
-                  slotProps={{
-                    htmlInput: {
-                      style: {
-                        fontSize: 12,
-                        textAlign: "right",
-                        padding: "2px 6px",
-                      },
-                    },
-                  }}
-                  sx={{ width: "7rem" }}
                 />
               </div>
               <div className="col-span-2" />

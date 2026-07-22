@@ -1,9 +1,6 @@
 "use client";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import Tooltip from "@mui/material/Tooltip";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { partSlugLookup } from "../../models/game-data";
 import type { RecipeOptimizerConfig } from "../../models/optimizer-config";
@@ -11,6 +8,7 @@ import AddItemControl from "../ui/AddItemControl";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
 import PartSelector from "../ui/PartSelector";
+import Switch from "../ui/Switch";
 import TextCalculatorField from "../ui/TextCalculatorField";
 
 // Part availability editor, lifted out of the former RecipeOptimizerPanel.
@@ -76,7 +74,6 @@ export default function AvailablePartsEditor() {
             <Icon src={part.iconSmall} alt={part.name} size={24} />
             <span className="text-sm grow">{part.name}</span>
             <TextCalculatorField
-              variant="outlined"
               size="small"
               label="Available /min"
               className="w-32"
@@ -85,21 +82,13 @@ export default function AvailablePartsEditor() {
               onCalculate={(v) => updateAvailablePartRate(ap.partSlug, v)}
               onClear={() => updateAvailablePartRate(ap.partSlug, undefined)}
             />
-            <Tooltip title="Only this supply is used; the optimizer won't produce more of this part.">
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={ap.hardLimit ?? false}
-                    onChange={(_, v) =>
-                      updateAvailablePartHardLimit(ap.partSlug, v)
-                    }
-                  />
-                }
-                label={<span className="text-xs">Hard limit</span>}
-                className="m-0"
-              />
-            </Tooltip>
+            <Switch
+              size="small"
+              checked={ap.hardLimit ?? false}
+              onChange={(v) => updateAvailablePartHardLimit(ap.partSlug, v)}
+              label={<span className="text-xs">Hard limit</span>}
+              tooltip="Only this supply is used; the optimizer won't produce more of this part."
+            />
             <IconButton
               aria-label="Remove available part"
               title=""

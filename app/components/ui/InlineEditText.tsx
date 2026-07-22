@@ -1,5 +1,5 @@
-import { TextField } from "@mui/material";
 import { useRef, useState } from "react";
+import TextField from "./TextField";
 
 export interface InlineEditTextProps {
   value: string;
@@ -38,7 +38,7 @@ export default function InlineEditText({
       size="small"
       value={draft}
       autoFocus
-      slotProps={{ htmlInput: { "aria-label": ariaLabel } }}
+      aria-label={ariaLabel}
       onFocus={() => {
         cancelledRef.current = false;
       }}

@@ -2,13 +2,13 @@
 
 import ClearAllIcon from "@mui/icons-material/ClearAll";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
-import Button from "@mui/material/Button";
 import { useState } from "react";
 import {
   useFactory,
   useFactoryUpdateSubscription,
 } from "@/app/contexts/FactoryContext";
 import type { ScoringObjective } from "../../models/optimizer-config";
+import Button from "../ui/Button";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { HorizontalDivider } from "../ui/Dividers";
 import ConstraintsPanel from "./ConstraintsPanel";
@@ -75,7 +75,7 @@ export default function OptimizationSection() {
             <Button
               fullWidth
               variant="outlined"
-              startIcon={<DoneAllIcon />}
+              startIcon={<DoneAllIcon fontSize="small" />}
               onClick={acceptAll}
             >
               Accept all
@@ -84,7 +84,7 @@ export default function OptimizationSection() {
               fullWidth
               variant="outlined"
               color="warning"
-              startIcon={<ClearAllIcon />}
+              startIcon={<ClearAllIcon fontSize="small" />}
               onClick={() => setShowRejectAllConfirm(true)}
             >
               Reject all
