@@ -1,12 +1,6 @@
 "use client";
 
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
-import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import Switch from "@mui/material/Switch";
-import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
@@ -14,7 +8,11 @@ import type {
   RecipeOptimizerConfig,
   ScoringObjective,
 } from "../../models/optimizer-config";
+import Button from "../ui/Button";
 import { HorizontalDivider } from "../ui/Dividers";
+import { Radio, RadioGroup } from "../ui/RadioGroup";
+import Switch from "../ui/Switch";
+import Tooltip from "../ui/Tooltip";
 import AvailablePartsEditor from "./AvailablePartsEditor";
 import OptimizerRecipeFilters from "./OptimizerRecipeFilters";
 import PointValuesPanel from "./PointValuesPanel";
@@ -80,13 +78,9 @@ export default function OptimizerPanel() {
       <p className="text-lg mb-2">Recipe Optimizer</p>
 
       {/* Run mode */}
-      <FormControlLabel
-        control={
-          <Switch
-            checked={config.eager}
-            onChange={(_, v) => update({ eager: v })}
-          />
-        }
+      <Switch
+        checked={config.eager}
+        onChange={(v) => update({ eager: v })}
         label="Re-run on every edit (eager)"
       />
       <p className="text-xs text-gray-400 mb-1">
@@ -98,18 +92,19 @@ export default function OptimizerPanel() {
       {/* Scoring objective */}
       <p className="text-lg mt-2 mb-1">Optimize for</p>
       <RadioGroup
+        name="optimizer-objective"
         value={config.objective}
-        onChange={(_, v) => update({ objective: v as ScoringObjective })}
+        onChange={(v) => update({ objective: v as ScoringObjective })}
       >
         {OBJECTIVE_OPTIONS.map((o) => (
           <div
             key={o.value}
             className="flex flex-row items-center rounded -mx-1 px-1 hover:bg-white/5"
           >
-            <FormControlLabel
-              className="grow"
+            <Radio
               value={o.value}
-              control={<Radio size="small" />}
+              size="small"
+              className="grow"
               label={
                 <div className="flex">
                   {o.label}
@@ -146,13 +141,9 @@ export default function OptimizerPanel() {
       <div className="text-md mt-2">
         Should the optimizer replace existing recipes?
       </div>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={config.overwrite}
-            onChange={(_, v) => update({ overwrite: v })}
-          />
-        }
+      <Switch
+        checked={config.overwrite}
+        onChange={(v) => update({ overwrite: v })}
         label={
           config.overwrite
             ? "Overwrite all recipes"

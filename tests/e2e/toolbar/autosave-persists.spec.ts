@@ -50,10 +50,8 @@ test.describe("Autosave persistence", () => {
       )
       .toBeGreaterThan(0);
 
-    // Once the autosave completes, the unsaved-changes badge clears.
-    await expect(page.locator(".MuiBadge-dot")).toHaveClass(
-      /MuiBadge-invisible/,
-    );
+    // Once the autosave completes, the unsaved-changes dot badge clears.
+    await expect(page.getByTestId("icon-button-dot-badge")).toHaveCount(0);
   });
 
   test("autosave off: edits survive a refresh", async ({ page }) => {

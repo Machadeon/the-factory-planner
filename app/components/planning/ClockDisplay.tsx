@@ -1,9 +1,8 @@
 "use client";
 
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
+import IconButton from "../ui/IconButton";
 
 interface ClockDisplayProps {
   clock: number;
@@ -22,14 +21,14 @@ export default function ClockDisplay({ clock }: ClockDisplayProps) {
   return (
     <span className="inline-flex items-center gap-x-0.5 ps-1">
       <span>{clock.toFixed(1)}%</span>
-      <Tooltip
-        title={copied ? "Copied!" : `Copy "${fullPrecision}"`}
-        enterDelay={300}
+      <IconButton
+        aria-label={copied ? "Copied!" : `Copy "${fullPrecision}"`}
+        onClick={copy}
+        className="p-0"
+        tooltipEnterDelay={300}
       >
-        <IconButton size="small" onClick={copy} className="p-0">
-          <ContentCopyIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Tooltip>
+        <ContentCopyIcon className="text-[14px]!" />
+      </IconButton>
     </span>
   );
 }

@@ -8,7 +8,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-import { Collapse } from "@mui/material";
 import { memo } from "react";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type useLibrary from "@/app/hooks/useLibrary";
@@ -143,35 +142,37 @@ function LibraryFolderRow({
           </>
         )}
       </div>
-      <Collapse in={isExpanded} unmountOnExit>
-        {childFolders
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((f) => (
-            <LibraryFolderRow
-              key={f.id}
-              folder={f}
-              depth={depth + 1}
-              rowState={rowState}
-              rowActions={rowActions}
-              libraryApi={libraryApi}
-            />
-          ))}
-        {childFactories
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((f) => (
-            <LibraryFactoryRow
-              key={f.id}
-              factory={f}
-              depth={depth + 1}
-              rowState={rowState}
-              rowActions={rowActions}
-              libraryApi={libraryApi}
-            />
-          ))}
-        {childFolders.length === 0 && childFactories.length === 0 && (
-          <p className="text-xs px-4 py-1 opacity-50">Empty folder</p>
-        )}
-      </Collapse>
+      {isExpanded && (
+        <>
+          {childFolders
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((f) => (
+              <LibraryFolderRow
+                key={f.id}
+                folder={f}
+                depth={depth + 1}
+                rowState={rowState}
+                rowActions={rowActions}
+                libraryApi={libraryApi}
+              />
+            ))}
+          {childFactories
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((f) => (
+              <LibraryFactoryRow
+                key={f.id}
+                factory={f}
+                depth={depth + 1}
+                rowState={rowState}
+                rowActions={rowActions}
+                libraryApi={libraryApi}
+              />
+            ))}
+          {childFolders.length === 0 && childFactories.length === 0 && (
+            <p className="text-xs px-4 py-1 opacity-50">Empty folder</p>
+          )}
+        </>
+      )}
     </div>
   );
 }

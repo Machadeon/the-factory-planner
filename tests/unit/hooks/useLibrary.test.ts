@@ -1,5 +1,7 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, renderHook, screen } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/app/components/ui/toast/ToastProvider";
 import useLibrary from "@/app/hooks/useLibrary";
 import {
   CURRENT_SCHEMA_VERSION,
@@ -7,9 +9,19 @@ import {
 } from "@/app/models/factory-storage";
 import { installLocalStorageMock } from "../../helpers/local-storage-mock";
 
+let localStorageMock: ReturnType<typeof installLocalStorageMock>;
+
 beforeEach(() => {
-  installLocalStorageMock();
+  localStorageMock = installLocalStorageMock();
 });
+
+function toastWrapper({ children }: { children: ReactNode }) {
+  return createElement(ToastProvider, null, children);
+}
+
+function mount() {
+  return renderHook(() => useLibrary(), { wrapper: toastWrapper });
+}
 
 function makeFactory(
   overrides: Partial<SerializedFactory> = {},
@@ -30,7 +42,7 @@ function makeFactory(
 
 describe("useLibrary", () => {
   it("page-structure R3.S1 — point-override mutator updates state and persists in one call", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() => result.current.updatePartPointOverrides({ "iron-ingot": 5 }));
     expect(result.current.library.partPointOverrides).toEqual({
       "iron-ingot": 5,
@@ -40,7 +52,7 @@ describe("useLibrary", () => {
   });
 
   it("replaceLibrary pairs state update with persistence", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     const next = {
       ...result.current.library,
       folders: [
@@ -59,7 +71,7 @@ describe("useLibrary", () => {
   });
 
   it("reload reads storage into state and returns the library, normalizing schemaVersion (storage-migrations R7)", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     // Deliberately a foreign/legacy value — loadLibrary normalizes unconditionally.
     localStorage.setItem(
       "sfp:library",
@@ -74,7 +86,7 @@ describe("useLibrary", () => {
 
   // component-structure R2.S1 — mutator surface
   it("renameFactory updates the factory's name in state and persists", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -89,7 +101,7 @@ describe("useLibrary", () => {
   });
 
   it("renameFolder updates the folder's name in state and persists", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -111,7 +123,7 @@ describe("useLibrary", () => {
   });
 
   it("deleteFactory removes the factory from state and persists", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -126,7 +138,7 @@ describe("useLibrary", () => {
   });
 
   it("deleteFolder removes the folder (and its contents) from state and persists", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -150,7 +162,7 @@ describe("useLibrary", () => {
   });
 
   it("duplicateFactory adds a copy with fresh id, suffixed name, and fresh timestamps", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     const original = makeFactory({
       createdAt: "2020-01-01T00:00:00.000Z",
       updatedAt: "2020-01-01T00:00:00.000Z",
@@ -173,7 +185,7 @@ describe("useLibrary", () => {
   });
 
   it("addFolder adds the folder to state, persists, and returns the created folder", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     let returned: { folder: { id: string; name: string } } | undefined;
     act(() => {
       returned = result.current.addFolder("New Folder", null);
@@ -186,7 +198,7 @@ describe("useLibrary", () => {
   });
 
   it("moveFactory updates the factory's folderId in state and persists", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -209,7 +221,7 @@ describe("useLibrary", () => {
 
   // component-structure R2.S3 — mutation on a missing id is a safe no-op
   it("deleteFactory with a missing id persists the library unchanged and throws no exception", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -226,7 +238,7 @@ describe("useLibrary", () => {
   });
 
   it("renameFolder with a missing id persists the library unchanged and throws no exception", () => {
-    const { result } = renderHook(() => useLibrary());
+    const { result } = mount();
     act(() =>
       result.current.replaceLibrary({
         schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -247,5 +259,37 @@ describe("useLibrary", () => {
     expect(result.current.library.folders[0].name).toBe("F");
     const persisted = JSON.parse(localStorage.getItem("sfp:library") ?? "{}");
     expect(persisted.folders[0].name).toBe("F");
+  });
+
+  it("a failed save shows an error toast, keeping the optimistic in-memory update (D-C3.2)", async () => {
+    const { result } = mount();
+    const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    try {
+      act(() => result.current.addFolder("New Folder", null));
+      expect(result.current.library.folders).toHaveLength(1);
+      expect(
+        await screen.findByText(/Couldn't save your library/),
+      ).toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("a save whose serialized size exceeds the quota-warn threshold shows exactly one info toast across repeated saves (D-C3.3)", async () => {
+    const { result } = mount();
+    // Force estimateStorageBytes over LOCALSTORAGE_WARN_THRESHOLD_BYTES by
+    // giving the first folder a name well past the 4.5MB threshold.
+    const bigName = "x".repeat(5_000_000);
+    act(() => result.current.addFolder(bigName, null));
+    expect(
+      await screen.findByText(/approaching the browser storage limit/),
+    ).toBeInTheDocument();
+
+    act(() => result.current.addFolder("Second Folder", null));
+    expect(
+      screen.getAllByText(/approaching the browser storage limit/),
+    ).toHaveLength(1);
   });
 });

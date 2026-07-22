@@ -1,10 +1,10 @@
 "use client";
 
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { recipes } from "../../models/game-data";
 import type Recipe from "../../models/recipe";
+import Switch from "../ui/Switch";
+import TextField from "../ui/TextField";
 import RecipeOverrideRow, { displayRecipeName } from "./RecipeOverrideRow";
 
 const sortedRecipes = [...recipes].sort((a, b) =>
@@ -37,7 +37,7 @@ const RecipeToggleRow = memo(function RecipeToggleRow({
           checked={enabled}
           readOnly
           tabIndex={-1}
-          sx={{ pointerEvents: "none" }}
+          className="pointer-events-none"
         />
       }
     />

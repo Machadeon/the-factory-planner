@@ -10,10 +10,10 @@ const interactiveHoverClass =
   " hover:bg-[rgba(128,128,128,0.3)] active:bg-[rgba(128,128,128,0.2)]";
 
 const interactiveWarningClass =
-  " m-[-2] border-2 border-[rgba(255,128,0,0.75)] hover:bg-[rgba(128,64,0,0.3)] active:bg-[rgba(128,64,0,0.2)]";
+  " m-[-2px] border-2 border-[rgba(255,128,0,0.75)] hover:bg-[rgba(128,64,0,0.3)] active:bg-[rgba(128,64,0,0.2)]";
 
 const interactiveDangerClass =
-  " m-[-2] border-2 border-[rgba(255,0,0,0.75)] hover:bg-[rgba(128,0,0,0.3)] active:bg-[rgba(128,0,0,0.2)]";
+  " m-[-2px] border-2 border-[rgba(255,0,0,0.75)] hover:bg-[rgba(128,0,0,0.3)] active:bg-[rgba(128,0,0,0.2)]";
 
 // No m-0/font utilities: Tailwind preflight already inherits font and zeroes
 // margins, and utility-order conflicts with the variants' m-[-2] would be

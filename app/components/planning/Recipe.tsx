@@ -5,7 +5,7 @@ import EastIcon from "@mui/icons-material/East";
 import EditIcon from "@mui/icons-material/Edit";
 import type { ReactNode } from "react";
 import { type MouseEventHandler, useState } from "react";
-import { displayNum, formatRate } from "@/app/lib/format";
+import { displayNum } from "@/app/lib/format";
 import type Factory from "../../models/factory";
 import type Part from "../../models/part";
 import type RecipeModel from "../../models/recipe";
@@ -13,6 +13,7 @@ import type { RecipePart } from "../../models/recipe";
 import ActionRow from "../ui/ActionRow";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
+import RateDisplay, { type RateStatus } from "../ui/RateDisplay";
 import TextCalculatorField from "../ui/TextCalculatorField";
 
 interface RecipeProps {
@@ -64,8 +65,11 @@ export default function Recipe({
   const mult = sloopMultiplier ?? 1;
   const isSlooped = mult > 1;
   const rateClassName = rate <= 0 ? "font-bold text-amber-500" : "";
+  const rateStatus: RateStatus | undefined = rate <= 0 ? "surplus" : undefined;
   const outputRateClassName =
     rate <= 0 ? rateClassName : isSlooped ? "font-bold text-pink-600" : "";
+  const outputRateStatus: RateStatus | undefined =
+    rate <= 0 ? "surplus" : isSlooped ? "slooped" : undefined;
 
   const content = (
     <>
@@ -121,7 +125,6 @@ export default function Recipe({
               key={`ing-${ing.part.slug}-rate`}
             >
               <TextCalculatorField
-                variant="outlined"
                 size="small"
                 className="w-24"
                 autoFocus
@@ -133,12 +136,14 @@ export default function Recipe({
               /min
             </div>
           ) : (
-            <div
-              className={`text-right ${rateClassName}`}
+            <RateDisplay
+              part={ing.part}
+              rate={ing.quantity * rate}
+              colorClass={rateClassName}
+              status={rateStatus}
+              className="text-right"
               key={`ing-${ing.part.slug}-rate`}
-            >
-              {displayNum(ing.quantity * rate)}/min
-            </div>
+            />
           ),
         ])}
       </div>
@@ -180,14 +185,11 @@ export default function Recipe({
               key={`prod-${prod.part.slug}-rate`}
             >
               <TextCalculatorField
-                variant="outlined"
                 size="small"
                 className="w-24"
+                inputClassName="text-right"
                 autoFocus
                 value={prod.quantity * rate * mult}
-                slotProps={{
-                  htmlInput: { className: "text-right" },
-                }}
                 onCalculate={(newValue) =>
                   setPartRateInternal(prod, true, newValue)
                 }
@@ -195,12 +197,14 @@ export default function Recipe({
               /min
             </div>
           ) : (
-            <div
-              className={`text-right ${outputRateClassName}`}
+            <RateDisplay
+              part={prod.part}
+              rate={prod.quantity * rate * mult}
+              colorClass={outputRateClassName}
+              status={outputRateStatus}
+              className="text-right"
               key={`prod-${prod.part.slug}-rate`}
-            >
-              {formatRate(prod.part, prod.quantity * rate * mult)}
-            </div>
+            />
           ),
         ])}
       </div>

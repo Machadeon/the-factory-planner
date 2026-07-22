@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useToast } from "../components/ui/toast/ToastProvider";
 import type { SerializedFactory } from "../models/factory-storage";
 import {
   getAutosavePref,
@@ -30,6 +31,7 @@ export default function useAutosave({
   buildSerialized,
   doSave,
 }: UseAutosaveDeps) {
+  const { show } = useToast();
   const [autosaveEnabled, setEnabledState] = useState(true);
   const enabledRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,17 +48,30 @@ export default function useAutosave({
     }
   }, []);
 
-  const flush = useCallback(() => {
-    if (timerRef.current === null) return;
-    clearTimeout(timerRef.current);
-    timerRef.current = null;
-    if (!hasConsent()) return;
-    if (enabledRef.current) {
-      doSaveRef.current();
-    } else {
-      writeAutosave(buildRef.current());
-    }
-  }, []);
+  // silent=true for the beforeunload/unmount teardown paths — the page is
+  // closing or the component is gone, so a toast can't paint and shouldn't
+  // be attempted (D-C3.2).
+  const flush = useCallback(
+    (opts: { silent?: boolean } = {}) => {
+      if (timerRef.current === null) return;
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      if (!hasConsent()) return;
+      if (enabledRef.current) {
+        doSaveRef.current();
+      } else {
+        const ok = writeAutosave(buildRef.current());
+        if (!ok && !opts.silent) {
+          show({
+            variant: "error",
+            message:
+              "Couldn't save your autosave — your browser's local storage may be full. Export a backup to avoid losing work.",
+          });
+        }
+      }
+    },
+    [show],
+  );
   const flushRef = useRef(flush);
   flushRef.current = flush;
 
@@ -86,13 +101,14 @@ export default function useAutosave({
     [onSessionSwap, cancelPending],
   );
 
-  // Flush pending edits before the tab closes or the hook unmounts.
+  // Flush pending edits before the tab closes or the hook unmounts. Silent:
+  // the page is tearing down, so a failure toast can't paint (D-C3.2).
   useEffect(() => {
-    const onBeforeUnload = () => flushRef.current();
+    const onBeforeUnload = () => flushRef.current({ silent: true });
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
-      flushRef.current();
+      flushRef.current({ silent: true });
     };
   }, []);
 

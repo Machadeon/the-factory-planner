@@ -6,7 +6,6 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Drawer } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type useLibrary from "@/app/hooks/useLibrary";
@@ -17,6 +16,7 @@ import type {
 } from "@/app/models/factory-storage";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { HorizontalDivider } from "../ui/Dividers";
+import { Drawer } from "../ui/Drawer";
 import FileImportButton from "../ui/FileImportButton";
 import IconButton from "../ui/IconButton";
 import LibraryFactoryMenu from "./LibraryFactoryMenu";
@@ -256,7 +256,7 @@ export default function LibraryDrawer({
       anchor="left"
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { sx: { width: 320 } } }}
+      slotProps={{ paper: { className: "w-80" } }}
     >
       {content}
     </Drawer>

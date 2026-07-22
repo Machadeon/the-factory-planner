@@ -1,9 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { emptyLibrary } from "@/app/models/factory-storage";
 import {
+  estimateStorageBytes,
   getLibraryPinned,
   getSidebarWidth,
+  saveLibrary,
   setLibraryPinned,
   setSidebarWidth,
+  writeAutosave,
 } from "@/app/models/storage-service";
 
 const localStorageMock = (() => {
@@ -47,6 +51,60 @@ describe("getLibraryPinned()", () => {
   it("returns false when stored value is 'false'", () => {
     setLibraryPinned(false);
     expect(getLibraryPinned()).toBe(false);
+  });
+});
+
+describe("saveLibrary()", () => {
+  it("returns true on success", () => {
+    expect(saveLibrary(emptyLibrary())).toBe(true);
+  });
+
+  it("returns false when localStorage.setItem throws (quota exceeded)", () => {
+    const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    try {
+      expect(saveLibrary(emptyLibrary())).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe("writeAutosave()", () => {
+  const factory = {
+    schemaVersion: 1,
+    id: "f1",
+    name: "Test Factory",
+    folderId: null,
+    autoAddProductLines: false,
+    productionLines: [],
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("returns true on success", () => {
+    expect(writeAutosave(factory)).toBe(true);
+  });
+
+  it("returns false when localStorage.setItem throws (quota exceeded)", () => {
+    const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    try {
+      expect(writeAutosave(factory)).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe("estimateStorageBytes()", () => {
+  it("returns the UTF-8 byte size of the serialized library", () => {
+    const lib = emptyLibrary();
+    expect(estimateStorageBytes(lib)).toBe(
+      new TextEncoder().encode(JSON.stringify(lib)).length,
+    );
   });
 });
 

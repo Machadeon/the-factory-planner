@@ -1,3 +1,8 @@
+/* Registers the mui layer as lowest-priority before Tailwind's own layers
+   (theme, base, components, utilities) register — cascade layer priority is
+   last-registered-wins, so every Tailwind utility beats MUI/emotion's runtime
+   styles instead of racing on specificity (ADR-0001). */
+@layer mui;
 @import "tailwindcss";
 
 :root {

@@ -13,6 +13,10 @@ import ToastRegion from "./ToastRegion";
 
 export const TOAST_AUTO_DISMISS_MS = 5000;
 export const TOAST_MAX_VISIBLE = 3;
+// Caps unbounded growth from repeated sticky error toasts (e.g. storage
+// staying full while the user keeps editing) — drops the oldest queued
+// entry past the cap, preserving FIFO surfacing semantics (C2 follow-up).
+export const TOAST_MAX_QUEUE = 20;
 
 export type ToastVariant = "error" | "success" | "info";
 
@@ -38,8 +42,10 @@ type Action = { type: "add"; toast: Toast } | { type: "remove"; id: number };
 
 function reducer(state: Toast[], action: Action): Toast[] {
   switch (action.type) {
-    case "add":
-      return [...state, action.toast];
+    case "add": {
+      const next = [...state, action.toast];
+      return next.length > TOAST_MAX_QUEUE ? next.slice(1) : next;
+    }
     case "remove":
       return state.filter((t) => t.id !== action.id);
   }

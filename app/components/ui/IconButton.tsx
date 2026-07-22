@@ -15,6 +15,8 @@ export interface IconButtonProps {
   className?: string;
   /** Passed to the MUI Tooltip (e.g. delayed hint tooltips). */
   tooltipEnterDelay?: number;
+  /** Small unsaved-changes-style dot overlay (e.g. the dirty-save indicator). */
+  dotBadge?: boolean;
 }
 
 export default function IconButton({
@@ -25,6 +27,7 @@ export default function IconButton({
   variant,
   className,
   tooltipEnterDelay,
+  dotBadge,
 }: IconButtonProps) {
   return (
     <Tooltip title={title ?? ariaLabel} enterDelay={tooltipEnterDelay}>
@@ -32,9 +35,16 @@ export default function IconButton({
         type="button"
         aria-label={ariaLabel}
         onClick={onClick}
-        className={interactiveClasses(variant, className)}
+        className={`relative ${interactiveClasses(variant, className)}`}
       >
         {children}
+        {dotBadge && (
+          <span
+            aria-hidden
+            data-testid="icon-button-dot-badge"
+            className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
+          />
+        )}
       </button>
     </Tooltip>
   );

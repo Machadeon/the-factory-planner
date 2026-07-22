@@ -1,11 +1,6 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-} from "@mui/material";
 import type { ReactNode } from "react";
+import Button from "./Button";
+import { Dialog, DialogActions, DialogContent, DialogTitle } from "./Dialog";
 
 type ConfirmSeverity = "default" | "warning" | "danger";
 
@@ -15,7 +10,7 @@ export interface ConfirmDialogProps {
   message: ReactNode;
   confirmLabel: string;
   cancelLabel?: string;
-  /** Maps the confirm button color: default→primary, warning→warning, danger→error. */
+  /** Maps the confirm button color: default→primary, warning→warning, danger→danger. */
   severity?: ConfirmSeverity;
   /** Optional middle action for three-choice dialogs (e.g. "Discard & load"). */
   secondaryLabel?: string;
@@ -27,7 +22,7 @@ export interface ConfirmDialogProps {
 const severityColor = {
   default: "primary",
   warning: "warning",
-  danger: "error",
+  danger: "danger",
 } as const;
 
 export default function ConfirmDialog({

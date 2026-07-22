@@ -1,29 +1,52 @@
 "use client";
 
-import TextField, {
-  type OutlinedTextFieldProps,
-} from "@mui/material/TextField";
 import {
   type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
   useEffect,
   useState,
 } from "react";
 import { calculate as evaluateExpression } from "@/app/lib/expression";
+import TextField from "./TextField";
 
-export interface TextCalculatorFieldProps extends OutlinedTextFieldProps {
+export interface TextCalculatorFieldProps {
+  value: number | string;
+  label?: string;
+  placeholder?: string;
+  className?: string;
+  inputClassName?: string;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  size?: "small" | "medium";
+  endAdornment?: ReactNode;
   onCalculate?: (newValue: number) => void;
   onClear?: () => void;
   allowClear?: boolean;
+  onClick?: (e: MouseEvent<HTMLInputElement>) => void;
 }
 
+// The onCalculate/onClear/allowClear callback contract is preserved verbatim
+// across the MUI TextField -> ui/TextField swap — callers wire onCalculate
+// to a Factory mutator, so the reads-from-snapshot/writes-to-proxy boundary
+// is unaffected by this refactor.
 export default function TextCalculatorField({
+  value,
+  label,
+  placeholder,
+  className,
+  inputClassName,
+  disabled,
+  autoFocus,
+  size,
+  endAdornment,
   onCalculate,
   onClear,
   allowClear,
-  ...other
+  onClick,
 }: TextCalculatorFieldProps) {
-  const [value, setValue] = useState<string>(`${other.value}`);
+  const [text, setText] = useState<string>(`${value}`);
   const [error, setError] = useState<boolean>(false);
   const [focused, setFocused] = useState(false);
 
@@ -31,20 +54,20 @@ export default function TextCalculatorField({
   // but only while the field is not being actively edited.
   useEffect(() => {
     if (!focused) {
-      setValue(`${other.value}`);
+      setText(`${value}`);
       setError(false);
     }
-  }, [other.value, focused]);
+  }, [value, focused]);
 
-  function parseValue(value: string): number {
-    const result = evaluateExpression(value);
+  function parseValue(v: string): number {
+    const result = evaluateExpression(v);
     if (!Number.isNaN(result)) return result;
-    return parseFloat(value);
+    return parseFloat(v);
   }
 
   function calculate(newValue: string) {
     if (allowClear && newValue.trim() === "") {
-      setValue("");
+      setText("");
       setError(false);
       onClear?.();
       return;
@@ -63,22 +86,21 @@ export default function TextCalculatorField({
       return;
     }
 
-    setValue(result.toString());
+    setText(result.toString());
     setError(false);
 
     if (onCalculate) onCalculate(result);
   }
 
   function finalize() {
-    calculate(value);
+    calculate(text);
   }
 
   function reset() {
-    const originalValue = `${other.value}`;
-    calculate(originalValue);
+    calculate(`${value}`);
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") finalize();
     if (event.key === "Escape") {
       reset();
@@ -97,13 +119,21 @@ export default function TextCalculatorField({
 
   return (
     <TextField
-      {...other}
-      value={value}
+      value={text}
+      label={label}
+      placeholder={placeholder}
+      className={className}
+      inputClassName={inputClassName}
+      disabled={disabled}
+      autoFocus={autoFocus}
+      size={size}
+      endAdornment={endAdornment}
       error={error}
       onFocus={handleFocus}
       onKeyDown={onKeyDown}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={(e) => setText(e.target.value)}
       onBlur={handleBlur}
+      onClick={onClick}
     />
     // TODO: add calculate/reset buttons
   );

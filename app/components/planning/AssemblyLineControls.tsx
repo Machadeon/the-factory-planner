@@ -1,16 +1,13 @@
 "use client";
 
-import FormControlLabel from "@mui/material/FormControlLabel";
-import InputAdornment from "@mui/material/InputAdornment";
-import Slider from "@mui/material/Slider";
-import Switch from "@mui/material/Switch";
-import Tooltip from "@mui/material/Tooltip";
 import type AssemblyLine from "../../models/assembly-line";
 import { totalMachines } from "../../models/assembly-line";
 import type Factory from "../../models/factory";
 import type Recipe from "../../models/recipe";
 import PowerSummary from "../overview/PowerSummary";
 import Icon from "../ui/Icon";
+import Slider from "../ui/Slider";
+import Switch from "../ui/Switch";
 import TextCalculatorField from "../ui/TextCalculatorField";
 import MachineCountDisplay from "./MachineCountDisplay";
 
@@ -72,27 +69,18 @@ export default function AssemblyLineControls({
           marks={speedMarks}
           value={assemblyLine.machineSpeed}
           onChange={(_, v) => setSpeed(v as number)}
-          sx={{
-            flex: 1,
-            "& .MuiSlider-track": {
-              backgroundColor: "#f97316",
-              borderColor: "#f97316",
-            },
-            "& .MuiSlider-thumb": { backgroundColor: "#f97316" },
-            "& .MuiSlider-markActive": { backgroundColor: "#f97316" },
-          }}
+          accentColor="#f97316"
         />
       </div>
 
       {/* Machine count + building name + clock speed */}
       <div className="flex flex-row gap-x-1 items-center">
         <TextCalculatorField
-          variant="outlined"
           size="small"
           className="w-17 shrink-0"
+          inputClassName="text-right"
           value={machineTotal}
           onCalculate={setMachineCount}
-          slotProps={{ htmlInput: { className: "text-right" } }}
         />
         <span className="shrink-0 text-sm text-gray-400">×</span>
         <span className="min-w-0 truncate text-xs text-gray-500">
@@ -100,17 +88,12 @@ export default function AssemblyLineControls({
         </span>
         <span className="shrink-0 text-sm text-gray-400">@</span>
         <TextCalculatorField
-          variant="outlined"
           size="small"
           className="w-20 shrink-0"
+          inputClassName="text-right"
           value={assemblyLine.machineSpeed}
           onCalculate={setSpeed}
-          slotProps={{
-            htmlInput: { className: "text-right" },
-            input: {
-              endAdornment: <InputAdornment position="end">%</InputAdornment>,
-            },
-          }}
+          endAdornment={<span className="text-sm text-gray-400 pl-1">%</span>}
         />
       </div>
 
@@ -118,31 +101,22 @@ export default function AssemblyLineControls({
       <MachineCountDisplay assemblyLine={assemblyLine} />
 
       {/* All-equal toggle */}
-      <Tooltip
-        title={
+      <Switch
+        size="small"
+        checked={!assemblyLine.allowRemainder}
+        onChange={(checked) => setRemainder(!checked)}
+        label={
+          <span className="text-xs text-gray-500 whitespace-nowrap">
+            All machines equal
+          </span>
+        }
+        tooltip={
           assemblyLine.allowRemainder
             ? "Machines run at mixed clock speeds (bank + remainder)"
             : "All machines run at the same clock speed"
         }
-        enterDelay={500}
-      >
-        <FormControlLabel
-          control={
-            <Switch
-              size="small"
-              checked={!assemblyLine.allowRemainder}
-              onChange={(e) => setRemainder(!e.target.checked)}
-            />
-          }
-          label={
-            <span className="text-xs text-gray-500 whitespace-nowrap">
-              All machines equal
-            </span>
-          }
-          labelPlacement="end"
-          className="m-0 gap-x-1"
-        />
-      </Tooltip>
+        className="gap-x-1"
+      />
 
       <div className="flex flex-row gap-x-1 text-xs text-gray-700 dark:text-gray-300">
         {/* Power shard totals (derived) */}
@@ -191,15 +165,8 @@ export default function AssemblyLineControls({
           onChange={(_, v) => {
             factory.setSloopedSlots(assemblyLine, v as number);
           }}
-          sx={{
-            flex: 1,
-            "& .MuiSlider-track": {
-              backgroundColor: "#ec4899",
-              borderColor: "#ec4899",
-            },
-            "& .MuiSlider-thumb": { backgroundColor: sloopColor },
-            "& .MuiSlider-markActive": { backgroundColor: "#ec4899" },
-          }}
+          accentColor="#ec4899"
+          thumbColor={sloopColor}
         />
       </div>
     </div>

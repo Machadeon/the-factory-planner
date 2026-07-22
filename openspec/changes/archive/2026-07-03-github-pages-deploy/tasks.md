@@ -34,8 +34,8 @@
 - [ ] 5.1 All unit/integration tests pass (`npm run test:run`)
 - [ ] 5.2 All E2E tests pass (`npm run test:e2e`) — unchanged config, run against dev server without env var — static-export R4.S2
 - [ ] 5.3 `npm run lint-fix` clean
-- [ ] 5.4 Post-merge (deferred until merged to main): confirm workflow runs, deploy succeeds, live site at `https://machadeon.github.io/the-factory-planner/` passes the R3 click-through — pages-deployment R1.S1
-- [ ] 5.5 Post-merge one-time: dispatch workflow manually on `main` → deploy runs; dispatch on a non-main branch (push workflow file to a branch first) → deploy job skipped, live site unchanged — pages-deployment R1.S2, R1.S3
+- [x] 5.4 Post-merge (deferred until merged to main): confirm workflow runs, deploy succeeds, live site at `https://machadeon.github.io/the-factory-planner/` passes the R3 click-through — pages-deployment R1.S1. **Verified 2026-07-21** via `finish-block-c` (D-C5.2): live-loaded the site (zero console errors, assets resolve under the base path), added a product, selected a recipe, confirmed cascading rate math (Iron Plate 10/min output → Iron Ingot 15/min input, 1.6MW power), reloaded (correctly started a fresh session — no consent had been granted yet, so no autosave to restore, which is expected model behavior not a defect), granted storage consent, and opened the library drawer cleanly. A dozen-plus green deploys since this file's original authoring were the basis for treating this as low-risk before the formal pass; this closes it.
+- [ ] 5.5 Post-merge one-time: dispatch workflow manually on `main` → deploy runs; dispatch on a non-main branch (push workflow file to a branch first) → deploy job skipped, live site unchanged — pages-deployment R1.S2, R1.S3. **Not performed as part of `finish-block-c`** — this requires triggering real `workflow_dispatch` runs and pushing a throwaway branch, which is a state-changing action on the live repo/Actions history beyond a read-only verification pass; left for the user to run manually if still wanted.
 
 ## 6. Post-deploy bug fixes
 

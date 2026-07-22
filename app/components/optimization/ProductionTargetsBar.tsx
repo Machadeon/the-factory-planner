@@ -3,18 +3,18 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 import { useFactory } from "@/app/contexts/FactoryContext";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import { rateUnit } from "@/app/lib/format";
 import { partSlugLookup } from "../../models/game-data";
 import type { Target } from "../../models/optimizer-config";
 import AddItemControl from "../ui/AddItemControl";
+import Button from "../ui/Button";
 import Icon from "../ui/Icon";
 import IconButton from "../ui/IconButton";
 import PartSelector from "../ui/PartSelector";
 import TextCalculatorField from "../ui/TextCalculatorField";
+import TextField from "../ui/TextField";
 
 export default function ProductionTargetsBar() {
   const factory = useFactory();
@@ -80,7 +80,6 @@ export default function ProductionTargetsBar() {
             <span className="text-sm grow">{part.name}</span>
             {t.maximize ? (
               <TextField
-                variant="outlined"
                 size="small"
                 label="Target rate"
                 className="w-32"
@@ -89,7 +88,6 @@ export default function ProductionTargetsBar() {
               />
             ) : (
               <TextCalculatorField
-                variant="outlined"
                 size="small"
                 label="Target rate"
                 className="w-32"
@@ -110,9 +108,7 @@ export default function ProductionTargetsBar() {
               className="p-1"
             >
               <TrendingUpIcon
-                sx={{
-                  color: t.maximize ? "primary.main" : "action.active",
-                }}
+                className={t.maximize ? "text-amber-500!" : "text-gray-400!"}
               />
             </IconButton>
             <IconButton

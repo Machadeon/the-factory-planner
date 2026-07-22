@@ -1,9 +1,9 @@
 "use client";
 
-import { MenuItem, TextField } from "@mui/material";
 import { useLibraryContext } from "@/app/contexts/LibraryContext";
 import type useLibrary from "@/app/hooks/useLibrary";
 import type { SerializedFactory } from "@/app/models/factory-storage";
+import Select from "../ui/Select";
 
 interface MoveToFolderSelectProps {
   factory: SerializedFactory;
@@ -20,24 +20,20 @@ export default function MoveToFolderSelect({
 
   return (
     <div className="px-4 pb-2">
-      <TextField
-        select
+      <Select
         size="small"
         fullWidth
         label="Move to"
         value={factory.folderId ?? ""}
-        onChange={(e) => {
-          libraryApi.moveFactory(factory.id, e.target.value || null);
+        onChange={(v) => {
+          libraryApi.moveFactory(factory.id, v || null);
           onMoved();
         }}
-      >
-        <MenuItem value="">Root (no folder)</MenuItem>
-        {library.folders.map((f) => (
-          <MenuItem key={f.id} value={f.id}>
-            {f.name}
-          </MenuItem>
-        ))}
-      </TextField>
+        options={[
+          { value: "", label: "Root (no folder)" },
+          ...library.folders.map((f) => ({ value: f.id, label: f.name })),
+        ]}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
+// No CssBaseline: Tailwind preflight is the single reset source of truth
+// (ADR-0001) — running both reset layers was a redundant specificity risk.
 export default function ThemeRegistry({
   children,
 }: {
@@ -19,10 +20,5 @@ export default function ThemeRegistry({
     },
   });
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
-  );
+  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 }
