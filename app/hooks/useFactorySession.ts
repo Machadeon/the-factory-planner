@@ -255,8 +255,8 @@ export default function useFactorySession({
       if (saved) {
         clearAutosave();
         setIsDirty(false);
+        persistCurrentFactoryId(newId);
       }
-      persistCurrentFactoryId(newId);
       return { firstSave: isFirstSave };
     }
 
@@ -277,8 +277,8 @@ export default function useFactorySession({
     if (saved) {
       clearAutosave();
       setIsDirty(false);
+      persistCurrentFactoryId(id);
     }
-    persistCurrentFactoryId(id);
     return { firstSave: isFirstSave };
   }
 

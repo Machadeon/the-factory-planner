@@ -266,14 +266,39 @@ describe("useLibrary", () => {
     const spy = vi.spyOn(localStorageMock, "setItem").mockImplementation(() => {
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
+    // persist() must run after setLibrary, not inside its updater — a toast
+    // dispatched from inside a setState updater is a cross-component update
+    // during render and React warns via console.error.
+    const consoleSpy = vi.spyOn(console, "error");
     try {
       act(() => result.current.addFolder("New Folder", null));
       expect(result.current.library.folders).toHaveLength(1);
       expect(
         await screen.findByText(/Couldn't save your library/),
       ).toBeInTheDocument();
+      expect(consoleSpy).not.toHaveBeenCalled();
     } finally {
       spy.mockRestore();
+      consoleSpy.mockRestore();
+    }
+  });
+
+  it("renameFactory persists outside the setState updater (no cross-component update-during-render warning)", async () => {
+    const { result } = mount();
+    act(() =>
+      result.current.replaceLibrary({
+        schemaVersion: CURRENT_SCHEMA_VERSION,
+        folders: [],
+        factories: [makeFactory()],
+      }),
+    );
+    const consoleSpy = vi.spyOn(console, "error");
+    try {
+      act(() => result.current.renameFactory("fa-1", "Renamed"));
+      expect(result.current.library.factories[0].name).toBe("Renamed");
+      expect(consoleSpy).not.toHaveBeenCalled();
+    } finally {
+      consoleSpy.mockRestore();
     }
   });
 

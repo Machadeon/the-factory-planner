@@ -11,14 +11,14 @@ import { generateId } from "../models/factory-storage";
 import {
   addFactory,
   addFolder as addFolderToStorage,
-  estimateStorageBytes,
+  estimateStorageBytesFromString,
   LOCALSTORAGE_WARN_THRESHOLD_BYTES,
   loadLibrary,
   moveFactory as moveFactoryInStorage,
   removeFactory,
   removeFolder,
   renameFolder as renameFolderInStorage,
-  saveLibrary,
+  saveLibrarySerialized,
   updateFactory,
 } from "../models/storage-service";
 
@@ -48,9 +48,21 @@ export default function useLibrary() {
   // so every mutation callback below gets both for free. Persist failures
   // are surfaced but non-fatal: the in-memory library state (already
   // updated by the caller) is the source of truth for this session.
+  //
+  // Must be called outside any setLibrary updater — show() dispatches into
+  // ToastProvider, and calling it from inside a setState updater is a
+  // cross-component update during React's render phase (React warns, and
+  // strict-mode's double-invoke would double-fire the toast). Every mutator
+  // below computes `next` from libraryRef.current, then calls plain
+  // setLibrary(next) followed by persist(next) — both post-render.
+  //
+  // Single JSON.stringify per persist call: saveLibrarySerialized and
+  // estimateStorageBytesFromString both take the same pre-serialized string
+  // instead of each re-stringifying the library.
   const persist = useCallback(
     (lib: StorageLibrary): StorageLibrary => {
-      const ok = saveLibrary(lib);
+      const json = JSON.stringify(lib);
+      const ok = saveLibrarySerialized(json);
       if (!ok) {
         show({
           variant: "error",
@@ -59,7 +71,7 @@ export default function useLibrary() {
         });
       } else if (
         !warnedQuota.current &&
-        estimateStorageBytes(lib) > LOCALSTORAGE_WARN_THRESHOLD_BYTES
+        estimateStorageBytesFromString(json) > LOCALSTORAGE_WARN_THRESHOLD_BYTES
       ) {
         warnedQuota.current = true;
         show({
@@ -83,6 +95,7 @@ export default function useLibrary() {
 
   const replaceLibrary = useCallback(
     (lib: StorageLibrary) => {
+      libraryRef.current = lib;
       setLibrary(lib);
       persist(lib);
     },
@@ -91,57 +104,52 @@ export default function useLibrary() {
 
   const updatePartPointOverrides = useCallback(
     (overrides: Record<string, number>) => {
-      setLibrary((prev) => {
-        const next = { ...prev, partPointOverrides: overrides };
-        persist(next);
-        return next;
-      });
+      const next = { ...libraryRef.current, partPointOverrides: overrides };
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
 
   const renameFactory = useCallback(
     (id: string, name: string) => {
-      setLibrary((prev) => {
-        const factory = prev.factories.find((f) => f.id === id);
-        if (!factory) return prev;
-        const next = updateFactory(prev, { ...factory, name });
-        persist(next);
-        return next;
-      });
+      const factory = libraryRef.current.factories.find((f) => f.id === id);
+      if (!factory) return;
+      const next = updateFactory(libraryRef.current, { ...factory, name });
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
 
   const renameFolder = useCallback(
     (id: string, name: string) => {
-      setLibrary((prev) => {
-        const next = renameFolderInStorage(prev, id, name);
-        persist(next);
-        return next;
-      });
+      const next = renameFolderInStorage(libraryRef.current, id, name);
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
 
   const deleteFactory = useCallback(
     (id: string) => {
-      setLibrary((prev) => {
-        const next = removeFactory(prev, id);
-        persist(next);
-        return next;
-      });
+      const next = removeFactory(libraryRef.current, id);
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
 
   const deleteFolder = useCallback(
     (id: string) => {
-      setLibrary((prev) => {
-        const next = removeFolder(prev, id);
-        persist(next);
-        return next;
-      });
+      const next = removeFolder(libraryRef.current, id);
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
@@ -156,11 +164,10 @@ export default function useLibrary() {
         createdAt: now,
         updatedAt: now,
       };
-      setLibrary((prev) => {
-        const next = addFactory(prev, dupe);
-        persist(next);
-        return next;
-      });
+      const next = addFactory(libraryRef.current, dupe);
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );
@@ -182,11 +189,14 @@ export default function useLibrary() {
 
   const moveFactory = useCallback(
     (factoryId: string, folderId: string | null) => {
-      setLibrary((prev) => {
-        const next = moveFactoryInStorage(prev, factoryId, folderId);
-        persist(next);
-        return next;
-      });
+      const next = moveFactoryInStorage(
+        libraryRef.current,
+        factoryId,
+        folderId,
+      );
+      libraryRef.current = next;
+      setLibrary(next);
+      persist(next);
     },
     [persist],
   );

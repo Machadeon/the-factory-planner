@@ -48,13 +48,17 @@ export function loadLibrary(): StorageLibrary {
   }
 }
 
-export function saveLibrary(library: StorageLibrary): boolean {
+export function saveLibrarySerialized(json: string): boolean {
   try {
-    localStorage.setItem(KEY_LIBRARY, JSON.stringify(library));
+    localStorage.setItem(KEY_LIBRARY, json);
     return true;
   } catch {
     return false;
   }
+}
+
+export function saveLibrary(library: StorageLibrary): boolean {
+  return saveLibrarySerialized(JSON.stringify(library));
 }
 
 export function writeAutosave(factory: SerializedFactory): boolean {
@@ -68,8 +72,12 @@ export function writeAutosave(factory: SerializedFactory): boolean {
 
 export const LOCALSTORAGE_WARN_THRESHOLD_BYTES = 4_500_000; // ~90% of the conservative 5MB quota
 
+export function estimateStorageBytesFromString(json: string): number {
+  return new TextEncoder().encode(json).length;
+}
+
 export function estimateStorageBytes(library: StorageLibrary): number {
-  return new TextEncoder().encode(JSON.stringify(library)).length;
+  return estimateStorageBytesFromString(JSON.stringify(library));
 }
 
 export function readAutosave(): SerializedFactory | null {
